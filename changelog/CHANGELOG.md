@@ -9,3 +9,5 @@ Format berbasis pada [Keep a Changelog](https://keepachangelog.com/id/1.0.0/).
 ### Ditambahkan
 - Dokumentasi arsitektur sistem, spesifikasi tech stack, dan alur pengembangan di docs/PROJECT.md.
 - Standar penulisan kode, arsitektur, dan aturan pengerjaan proyek di docs/RULES.md.
+- Rincian daftar tugas, milestone, dan checklist pelacakan proyek di docs/TASK.md.
+
