@@ -1,0 +1,9 @@
+-- Caelus Cloud - Core Schema Teardown (Down)
+DROP TABLE IF EXISTS audit_logs CASCADE;
+DROP TABLE IF EXISTS servers CASCADE;
+DROP TABLE IF EXISTS credentials CASCADE;
+DROP TABLE IF EXISTS providers CASCADE;
+DROP TABLE IF EXISTS organization_members CASCADE;
+DROP TABLE IF EXISTS organizations CASCADE;
+DROP TABLE IF EXISTS users CASCADE;
+DROP FUNCTION IF EXISTS update_updated_at_column CASCADE;
