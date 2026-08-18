@@ -65,7 +65,13 @@ Format penulisan mengacu pada standar formal dengan pencatatan stempel tanggal d
 
 ### [2026-08-18 15:16:25] - Refaktorisasi Suite Pengujian Use Case Auth (SonarQube Compliance)
 - Membedakan implementasi logika `Create` dan `Update` pada `mockOrgRepo` dan `mockUserRepo` di `backend/tests/auth_usecase_test.go` untuk mengatasi issue duplikasi fungsi identik.
-- Memecah pengujian monolitik `TestRegisterUsecase` dan `TestLoginUsecase` menjadi fungsi pengujian individual terisolasi (`TestRegister_Success`, `TestRegister_DuplicateEmail`, `TestRegister_ShortPassword`, `TestLogin_Success`, `TestLogin_RefreshToken_Success`, `TestLogin_WrongPassword`, `TestLogin_UserNotFound`, `TestLogin_InactiveUser`) sehingga Cognitive Complexity turun drastis ke level minimum<2.
+- Memecah pengujian monolitik `TestRegisterUsecase` dan `TestLoginUsecase` menjadi fungsi pengujian individual terisolasi (`TestRegister_Success`, `TestRegister_DuplicateEmail`, `TestRegister_ShortPassword`, `TestLogin_Success`, `TestLogin_RefreshToken_Success`, `TestLogin_WrongPassword`, `TestLogin_UserNotFound`, `TestLogin_InactiveUser`) sehingga Cognitive Complexity turun drastis ke level minimum (<2).
+
+### [2026-08-18 16:01:53] - Modul Autentikasi: Middleware Autentikasi & RBAC
+- Implementasi HTTP Auth Middleware di `backend/internal/delivery/http/middleware/auth.go` untuk validasi header `Authorization: Bearer <token>` dan injeksi `UserClaims`, `UserID`, dan `OrganizationID` ke dalam request context.
+- Implementasi HTTP RBAC Middleware di `backend/internal/delivery/http/middleware/rbac.go` dengan validasi keanggotaan organisasi target dan hierarki peran pengguna (`owner` > `admin` > `member` > `viewer`).
+- Pembuatan pengujian otomatis unit test di `backend/tests/middleware_test.go` yang menguji skenario token valid/invalid/missing dan otorisasi peran yang diizinkan maupun ditolak dengan hasil kelulusan 100% (`PASS`).
+
 
 
 

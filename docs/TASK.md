@@ -43,7 +43,7 @@ Kategori Layer Slicing:
 ### 1.3 Modul Autentikasi & Otorisasi
 - [x] [BACKEND] Implementasi use case registrasi dan login (hashing password dengan Argon2id / bcrypt).
 - [x] [BACKEND] Implementasi manajemen token otentikasi JWT (Access Token & Refresh Token).
-- [ ] [BACKEND] Implementasi middleware autentikasi dan Role-Based Access Control (RBAC).
+- [x] [BACKEND] Implementasi middleware autentikasi dan Role-Based Access Control (RBAC).
 - [ ] [BACKEND] Implementasi interceptor audit logging untuk setiap request terautentikasi.
 
 ### 1.4 Layer Abstraksi Provider
