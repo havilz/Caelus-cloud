@@ -47,9 +47,9 @@ Kategori Layer Slicing:
 - [x] [BACKEND] Implementasi interceptor audit logging untuk setiap request terautentikasi.
 
 ### 1.4 Layer Abstraksi Provider
-- [ ] [BACKEND] Definisi interface Provider Lifecycle (`CreateServer`, `GetServer`, `ListServers`, `RebootServer`, `ShutdownServer`, `ResizeServer`, `DeleteServer`).
-- [ ] [BACKEND] Implementasi `MockProvider` untuk simulasi lifecycle VPS dan testing end-to-end tanpa dependensi cloud eksternal.
-- [ ] [BACKEND] Use case dan repository manajemen kredensial provider.
+- [x] [BACKEND] Definisi interface Provider Lifecycle (`CreateServer`, `GetServer`, `ListServers`, `RebootServer`, `ShutdownServer`, `ResizeServer`, `DeleteServer`).
+- [x] [BACKEND] Implementasi `MockProvider` untuk simulasi lifecycle VPS dan testing end-to-end tanpa dependensi cloud eksternal.
+- [x] [BACKEND] Use case dan repository manajemen kredensial provider.
 
 ### 1.5 Modul Manajemen Server & VPS
 - [ ] [BACKEND] REST API endpoint untuk CRUD data server.

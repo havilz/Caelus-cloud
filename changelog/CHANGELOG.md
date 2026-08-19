@@ -77,6 +77,24 @@ Format penulisan mengacu pada standar formal dengan pencatatan stempel tanggal d
 - Implementasi HTTP AuditLogInterceptor di `backend/internal/delivery/http/middleware/audit.go` yang secara otomatis mencegat request mutasi data (`POST`, `PUT`, `PATCH`, `DELETE`) dan mencatat `UserID`, `OrganizationID`, alamat IP (`X-Forwarded-For`/`RemoteAddr`), `User-Agent`, endpoint aksi, status code, dan metadata resource terkait.
 - Pembuatan suite unit test di `backend/tests/audit_test.go` untuk repository dan interceptor dengan hasil kelulusan 100% (`PASS`).
 
+### [2026-08-18 20:08:53] - Layer Abstraksi Provider: Definisi Kontrak Lifecycle Driver
+- Pendefinisian interface `ProviderDriver` pada `backend/internal/domain/provider.go` yang mencakup seluruh lifecycle operasi VPS (`CreateServer`, `GetServer`, `ListServers`, `RebootServer`, `ShutdownServer`, `StartServer`, `ResizeServer`, `DeleteServer`).
+- Penambahan struktur Data Transfer Objects (DTO) terstandarisasi untuk provider cloud: `CreateServerRequest`, `ResizeServerRequest`, dan `ProviderServer`.
+
+### [2026-08-18 20:12:21] - Layer Abstraksi Provider: Implementasi MockProvider & Manajemen Kredensial
+- Implementasi modul kriptografi AES-256-GCM di `backend/pkg/encryptor/encryptor.go` untuk enkripsi dan dekripsi field data sensitif (API Key, API Secret, SSH Key).
+- Implementasi driver `MockProvider` di `backend/internal/provider/mock/mock_driver.go` untuk simulasi lokal seluruh siklus hidup VPS (provisioning, restart, stop, start, resize, delete) dengan alokasi IP otomatis.
+- Implementasi repository PostgreSQL untuk Provider (`backend/internal/repository/postgres/provider_repository.go`) dan Credential (`backend/internal/repository/postgres/credential_repository.go`).
+- Implementasi use case manajemen kredensial provider di `backend/internal/usecase/provider/credential_usecase.go` yang memverifikasi kepemilikan organisasi dan mengamankan kredensial cloud.
+- Pembuatan pengujian otomatis unit test di `backend/tests/mock_provider_test.go` dan `backend/tests/credential_usecase_test.go` dengan hasil kelulusan 100% (`PASS`).
+
+### [2026-08-18 20:14:13] - Refaktorisasi Driver MockProvider & Test Suite (SonarQube Compliance)
+- Ekstraksi logika transisi status pada `backend/internal/provider/mock/mock_driver.go` ke dalam fungsi pembantu `updateServerStatus` untuk mengatasi issue implementasi metode identik pada `RebootServer` dan `StartServer`.
+- Dekomposisi suite pengujian `backend/tests/mock_provider_test.go` menjadi fungsi-fungsi pengujian individual (`TestMockDriver_CreateAndGetServer`, `TestMockDriver_ListServers`, `TestMockDriver_PowerControls`, `TestMockDriver_ResizeServer`, `TestMockDriver_DeleteServer`) guna menurunkan Cognitive Complexity ke level minimum ($\le 2$).
+
+
+
+
 
 
 
