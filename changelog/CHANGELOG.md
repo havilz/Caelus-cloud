@@ -72,6 +72,12 @@ Format penulisan mengacu pada standar formal dengan pencatatan stempel tanggal d
 - Implementasi HTTP RBAC Middleware di `backend/internal/delivery/http/middleware/rbac.go` dengan validasi keanggotaan organisasi target dan hierarki peran pengguna (`owner` > `admin` > `member` > `viewer`).
 - Pembuatan pengujian otomatis unit test di `backend/tests/middleware_test.go` yang menguji skenario token valid/invalid/missing dan otorisasi peran yang diizinkan maupun ditolak dengan hasil kelulusan 100% (`PASS`).
 
+### [2026-08-18 17:22:57] - Modul Autentikasi: Interceptor Audit Logging
+- Implementasi PostgreSQL AuditRepository di `backend/internal/repository/postgres/audit_repository.go` untuk persistensi dan paginasi data audit log berdasarkan organisasi.
+- Implementasi HTTP AuditLogInterceptor di `backend/internal/delivery/http/middleware/audit.go` yang secara otomatis mencegat request mutasi data (`POST`, `PUT`, `PATCH`, `DELETE`) dan mencatat `UserID`, `OrganizationID`, alamat IP (`X-Forwarded-For`/`RemoteAddr`), `User-Agent`, endpoint aksi, status code, dan metadata resource terkait.
+- Pembuatan suite unit test di `backend/tests/audit_test.go` untuk repository dan interceptor dengan hasil kelulusan 100% (`PASS`).
+
+
 
 
 

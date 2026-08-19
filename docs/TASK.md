@@ -44,7 +44,7 @@ Kategori Layer Slicing:
 - [x] [BACKEND] Implementasi use case registrasi dan login (hashing password dengan Argon2id / bcrypt).
 - [x] [BACKEND] Implementasi manajemen token otentikasi JWT (Access Token & Refresh Token).
 - [x] [BACKEND] Implementasi middleware autentikasi dan Role-Based Access Control (RBAC).
-- [ ] [BACKEND] Implementasi interceptor audit logging untuk setiap request terautentikasi.
+- [x] [BACKEND] Implementasi interceptor audit logging untuk setiap request terautentikasi.
 
 ### 1.4 Layer Abstraksi Provider
 - [ ] [BACKEND] Definisi interface Provider Lifecycle (`CreateServer`, `GetServer`, `ListServers`, `RebootServer`, `ShutdownServer`, `ResizeServer`, `DeleteServer`).
