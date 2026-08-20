@@ -11,9 +11,13 @@ import (
 
 	deliveryHttp "github.com/havilz/caelus-cloud/backend/internal/delivery/http"
 	v1 "github.com/havilz/caelus-cloud/backend/internal/delivery/http/v1"
+	"github.com/havilz/caelus-cloud/backend/internal/delivery/ws"
+	"github.com/havilz/caelus-cloud/backend/internal/observability/loki"
+	"github.com/havilz/caelus-cloud/backend/internal/observability/prometheus"
 	provFactory "github.com/havilz/caelus-cloud/backend/internal/provider"
 	"github.com/havilz/caelus-cloud/backend/internal/repository/postgres"
 	"github.com/havilz/caelus-cloud/backend/internal/usecase/auth"
+	"github.com/havilz/caelus-cloud/backend/internal/usecase/monitoring"
 	provUsecase "github.com/havilz/caelus-cloud/backend/internal/usecase/provider"
 	"github.com/havilz/caelus-cloud/backend/internal/usecase/server"
 	"github.com/havilz/caelus-cloud/backend/pkg/config"
@@ -56,13 +60,21 @@ func main() {
 	providerRepo := postgres.NewProviderRepository(client.Pool)
 	credRepo := postgres.NewCredentialRepository(client.Pool)
 	auditRepo := postgres.NewAuditRepository(client.Pool)
+	metricRepo := postgres.NewMetricRepository(client.Pool)
+	alertRepo := postgres.NewAlertRepository(client.Pool)
 
 	jwtManager := jwt.NewJWTManager(&cfg.JWT, cfg.App.Name)
 	factory := provFactory.NewDriverFactory()
+	wsHub := ws.NewHub()
 
 	authUc := auth.NewAuthUsecase(userRepo, orgRepo, jwtManager)
 	credUc := provUsecase.NewCredentialUsecase(credRepo, providerRepo, []byte(cfg.JWT.EncryptionKey))
 	serverUc := server.NewServerUsecase(serverRepo, providerRepo, credRepo, factory)
+
+	alertEvaluator := monitoring.NewAlertEvaluator(alertRepo, wsHub)
+	promAdapter := prometheus.NewClient(os.Getenv("PROMETHEUS_URL"))
+	lokiAdapter := loki.NewClient(os.Getenv("LOKI_URL"))
+	monitoringUc := monitoring.NewMonitoringUsecase(metricRepo, alertRepo, serverRepo, alertEvaluator, wsHub, promAdapter, lokiAdapter)
 
 	routerConfig := deliveryHttp.RouterConfig{
 		Config:     cfg,
@@ -70,9 +82,12 @@ func main() {
 		AuditRepo:  auditRepo,
 		Logger:     logger.Get(),
 		Handlers: deliveryHttp.Handlers{
-			AuthHandler:     v1.NewAuthHandler(authUc),
-			ServerHandler:   v1.NewServerHandler(serverUc),
-			ProviderHandler: v1.NewProviderHandler(credUc),
+			AuthHandler:      v1.NewAuthHandler(authUc),
+			ServerHandler:    v1.NewServerHandler(serverUc),
+			ProviderHandler:  v1.NewProviderHandler(credUc),
+			TelemetryHandler: v1.NewTelemetryHandler(monitoringUc),
+			AlertHandler:     v1.NewAlertHandler(monitoringUc),
+			WSHandler:        ws.NewHandler(wsHub, jwtManager),
 		},
 	}
 

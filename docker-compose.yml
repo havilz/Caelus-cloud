@@ -64,6 +64,42 @@ services:
       - caelus-network
 
   # ----------------------------------------------------------------------------
+  # Prometheus Time-Series Observability Service
+  # ----------------------------------------------------------------------------
+  prometheus:
+    image: prom/prometheus:v2.50.0
+    container_name: caelus-prometheus
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=15d'
+      - '--web.enable-lifecycle'
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    volumes:
+      - ./deploy/observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    networks:
+      - caelus-network
+
+  # ----------------------------------------------------------------------------
+  # Grafana Loki Log Aggregation Service
+  # ----------------------------------------------------------------------------
+  loki:
+    image: grafana/loki:2.9.4
+    container_name: caelus-loki
+    restart: unless-stopped
+    command: -config.file=/etc/loki/local-config.yaml
+    ports:
+      - "${LOKI_PORT:-3100}:3100"
+    volumes:
+      - ./deploy/observability/loki/loki-config.yml:/etc/loki/local-config.yaml:ro
+      - loki_data:/tmp/loki
+    networks:
+      - caelus-network
+
+  # ----------------------------------------------------------------------------
   # Caelus Backend API Service
   # ----------------------------------------------------------------------------
   api:
@@ -150,4 +186,8 @@ volumes:
   redis_data:
     driver: local
   minio_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  loki_data:
     driver: local

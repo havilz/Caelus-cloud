@@ -9,15 +9,19 @@ import (
 	customMiddleware "github.com/havilz/caelus-cloud/backend/internal/delivery/http/middleware"
 	"github.com/havilz/caelus-cloud/backend/internal/delivery/http/response"
 	v1 "github.com/havilz/caelus-cloud/backend/internal/delivery/http/v1"
+	"github.com/havilz/caelus-cloud/backend/internal/delivery/ws"
 	"github.com/havilz/caelus-cloud/backend/internal/domain"
 	"github.com/havilz/caelus-cloud/backend/pkg/config"
 	"github.com/havilz/caelus-cloud/backend/pkg/jwt"
 )
 
 type Handlers struct {
-	AuthHandler     *v1.AuthHandler
-	ServerHandler   *v1.ServerHandler
-	ProviderHandler *v1.ProviderHandler
+	AuthHandler      *v1.AuthHandler
+	ServerHandler    *v1.ServerHandler
+	ProviderHandler  *v1.ProviderHandler
+	TelemetryHandler *v1.TelemetryHandler
+	AlertHandler     *v1.AlertHandler
+	WSHandler        *ws.Handler
 }
 
 type RouterConfig struct {
@@ -28,9 +32,7 @@ type RouterConfig struct {
 	Handlers   Handlers
 }
 
-// NewRouter menginisialisasi router Chi dengan middleware global, endpoint kesehatan, rute publik auth, dan rute terproteksi server/provider.
-// Parameter rc memuat dependensi konfigurasi, manajer JWT, repositori audit, logger, dan handler HTTP.
-// Mengembalikan pointer *chi.Mux yang siap digunakan sebagai handler HTTP server.
+// NewRouter menginisialisasi router Chi dengan middleware global, endpoint kesehatan, rute publik auth, telemetri, dan rute terproteksi server/provider/alert.
 func NewRouter(rc RouterConfig) *chi.Mux {
 	r := chi.NewRouter()
 
@@ -49,8 +51,6 @@ func NewRouter(rc RouterConfig) *chi.Mux {
 }
 
 // registerHealthRoutes mendaftarkan endpoint pemantauan kesehatan aplikasi (/health dan /api/v1/health).
-// Parameter r merupakan pointer router Chi utama.
-// Parameter cfg memuat konfigurasi aplikasi.
 func registerHealthRoutes(r *chi.Mux, cfg *config.Config) {
 	serviceName := "caelus-cloud-api"
 	envName := "development"
@@ -76,8 +76,6 @@ func registerHealthRoutes(r *chi.Mux, cfg *config.Config) {
 }
 
 // registerAPIRoutes mendaftarkan seluruh rute API v1 publik dan terproteksi ke router Chi.
-// Parameter r merupakan pointer router Chi utama.
-// Parameter rc memuat konfigurasi dependensi dan handler.
 func registerAPIRoutes(r *chi.Mux, rc RouterConfig) {
 	r.Route("/api/v1", func(apiRouter chi.Router) {
 		if rc.Handlers.AuthHandler != nil {
@@ -92,6 +90,15 @@ func registerAPIRoutes(r *chi.Mux, rc RouterConfig) {
 			apiRouter.Get("/providers", rc.Handlers.ProviderHandler.ListProviders)
 		}
 
+		if rc.Handlers.TelemetryHandler != nil {
+			apiRouter.Post("/telemetry/report", rc.Handlers.TelemetryHandler.IngestReport)
+			apiRouter.Get("/telemetry/stream/{server_id}", rc.Handlers.WSHandler.HandleSSE)
+		}
+
+		if rc.Handlers.WSHandler != nil {
+			apiRouter.Get("/ws", rc.Handlers.WSHandler.HandleWebSocket)
+		}
+
 		if rc.JWTManager != nil {
 			apiRouter.Group(func(protectedRouter chi.Router) {
 				protectedRouter.Use(customMiddleware.Authenticate(rc.JWTManager))
@@ -99,26 +106,47 @@ func registerAPIRoutes(r *chi.Mux, rc RouterConfig) {
 					protectedRouter.Use(customMiddleware.AuditLogInterceptor(rc.AuditRepo, rc.Logger))
 				}
 
-				if rc.Handlers.ServerHandler != nil {
-					registerServerRoutes(protectedRouter, rc.Handlers.ServerHandler)
+				if rc.Handlers.ServerHandler != nil || rc.Handlers.TelemetryHandler != nil {
+					registerServerRoutes(protectedRouter, rc.Handlers.ServerHandler, rc.Handlers.TelemetryHandler)
+				}
+
+				if rc.Handlers.AlertHandler != nil {
+					registerAlertRoutes(protectedRouter, rc.Handlers.AlertHandler)
 				}
 			})
 		}
 	})
 }
 
-// registerServerRoutes mendaftarkan seluruh rute endpoint manajemen server VPS ke router terproteksi.
-// Parameter r merupakan sub-router terproteksi Chi.
-// Parameter h merupakan instance HTTP ServerHandler.
-func registerServerRoutes(r chi.Router, h *v1.ServerHandler) {
+// registerServerRoutes mendaftarkan seluruh rute endpoint manajemen server VPS dan telemetri metrik.
+func registerServerRoutes(r chi.Router, h *v1.ServerHandler, th *v1.TelemetryHandler) {
 	r.Route("/servers", func(serverRouter chi.Router) {
-		serverRouter.Get("/", h.ListServers)
-		serverRouter.Post("/", h.CreateServer)
-		serverRouter.Get("/{id}", h.GetServer)
-		serverRouter.Patch("/{id}/resize", h.ResizeServer)
-		serverRouter.Delete("/{id}", h.DeleteServer)
-		serverRouter.Post("/{id}/reboot", h.RebootServer)
-		serverRouter.Post("/{id}/shutdown", h.ShutdownServer)
-		serverRouter.Post("/{id}/start", h.StartServer)
+		if h != nil {
+			serverRouter.Get("/", h.ListServers)
+			serverRouter.Post("/", h.CreateServer)
+			serverRouter.Get("/{id}", h.GetServer)
+			serverRouter.Patch("/{id}/resize", h.ResizeServer)
+			serverRouter.Delete("/{id}", h.DeleteServer)
+			serverRouter.Post("/{id}/reboot", h.RebootServer)
+			serverRouter.Post("/{id}/shutdown", h.ShutdownServer)
+			serverRouter.Post("/{id}/start", h.StartServer)
+		}
+
+		if th != nil {
+			serverRouter.Get("/{id}/metrics/live", th.GetLiveMetrics)
+			serverRouter.Get("/{id}/metrics/history", th.GetMetricHistory)
+		}
+	})
+}
+
+// registerAlertRoutes mendaftarkan rute endpoint manajemen insiden alert dan aturan threshold.
+func registerAlertRoutes(r chi.Router, ah *v1.AlertHandler) {
+	r.Route("/alerts", func(alertRouter chi.Router) {
+		alertRouter.Get("/", ah.ListAlerts)
+		alertRouter.Post("/{id}/acknowledge", ah.AcknowledgeAlert)
+		alertRouter.Post("/{id}/resolve", ah.ResolveAlert)
+		alertRouter.Get("/rules", ah.ListRules)
+		alertRouter.Post("/rules", ah.CreateRule)
+		alertRouter.Delete("/rules/{id}", ah.DeleteRule)
 	})
 }
