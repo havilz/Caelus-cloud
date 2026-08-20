@@ -100,13 +100,21 @@ Format penulisan mengacu pada standar formal dengan pencatatan stempel tanggal d
 - Pembaruan HTTP Router dan injeksi dependensi pada `backend/cmd/api/main.go`.
 - Pembuatan pengujian otomatis end-to-end dan integrasi HTTP di `backend/tests/server_test.go` dengan hasil kelulusan 100% (`PASS`).
 
+### [2026-08-20 00:11:24] - Frontend Control Panel: Dashboard MVP & Server Management
+- Desain antarmuka modern bertema gelap (*dark mode design system*), token CSS HSL, glassmorphism, dan komponen UI reusable (`Button`, `Card`, `Badge`, `Input`, `Dialog`, `ServerStatusBadge`).
+- Implementasi klien API Axios terpusat dengan request interceptor injeksi token JWT Bearer dan penanganan otomatis sesi kedaluwarsa.
+- Implementasi state management menggunakan Zustand (`useAuthStore`, `useServerStore`, `useThemeStore`).
+- Implementasi halaman Autentikasi (`/login` dan `/register`) dengan validasi form, visibilitas sandi, dan auto-redirect.
+- Implementasi Shell Layout Dashboard (`Sidebar`, `Header` dengan breadcrumbs dinamis, status badge sistem, profil dropdown, dan theme switcher).
+- Implementasi Halaman Overview (`/overview`) dengan kartu metrik agregat total server, status running/stopped, total alokasi vCPU/RAM/Disk, dan ringkasan Sentinel security score.
+- Implementasi Halaman Manajemen VPS (`/infrastructure/vps`) lengkap dengan tabel server, salin IP 1-klik, filter status & pencarian, modal deploy server baru, modal resize spesifikasi, serta tombol aksi cepat reboot/shutdown/start/terminate.
+- Implementasi Halaman Detail Server (`/infrastructure/vps/[id]`) yang menampilkan rincian komputasi, jaringan, dan grafik utilisasi telemetri.
+- Seluruh rute terverifikasi dan berhasil dikompilasi melalui `pnpm run build` dengan status 100% lulus.
 
-
-
-
-
-
-
-
-
-
+### [2026-08-20 00:41:50] - Frontend Design System: Refaktorisasi Tema Supabase Green & Black & Centralized Tokens
+- Pembuatan modul token desain terpusat di `frontend/src/core/theme/` (`app_colors.ts`, `app_text.ts`, `app_containers.ts`, `app_theme.ts`, dan barrel export `index.ts`) guna menghilangkan hardcoded styling.
+- Penerapan palet tema minimalis Supabase Deep Black (`#0f0f0f` / `#171717`) dan Emerald Green (`#3ECF8E` / `emerald-500`) pada seluruh komponen antarmuka, kartu, tombol, badge, dan input.
+- Perbaikan mekanisme fungsionalitas Theme Switcher (`ThemeToggle.tsx` dan `useThemeStore.ts`) dengan reaktivitas penuh pada elemen HTML dan variabel CSS.
+- Perbaikan masalah layout modal dialog pada `dialog.tsx` dengan menambahkan flex container `max-h-[90vh]` dan scroll container internal `overflow-y-auto` agar form tidak terpotong pada layar beresolusi rendah.
+- Pembersihan seluruh fallback URL hardcode pada `services/api.ts` dan penyesuaian `.env.local` / `.env.example`.
+- Verifikasi kompilasi production build Next.js 16 App Router (`pnpm run build`) berstatus 100% lulus tanpa error dan bebas dari peringatan SonarQube.

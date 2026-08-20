@@ -58,13 +58,13 @@ Kategori Layer Slicing:
 - [x] [BACKEND] Unit test dan integration test untuk modul server management.
 
 ### 1.6 Frontend Control Panel (Dashboard MVP)
-- [ ] [FRONTEND] Implementasi halaman Autentikasi (Login & Register form dengan validasi skema).
-- [ ] [FRONTEND] Setup layout Dashboard utama (Sidebar navigasi, Header, Breadcrumbs, Theme Switcher).
-- [ ] [FRONTEND] Halaman Overview Dashboard (Kartu metrik agregat, status server aktif/nonaktif).
-- [ ] [FRONTEND] Halaman Server Management:
-  - [ ] Tabel daftar server dengan status badge, IP address, dan action menu.
-  - [ ] Form / Modal penambahan server baru dan pemilihan provider.
-  - [ ] Halaman detail server (Spesifikasi CPU/RAM/Disk, Uptime, Tombol aksi Reboot/Shutdown).
+- [x] [FRONTEND] Implementasi halaman Autentikasi (Login & Register form dengan validasi skema).
+- [x] [FRONTEND] Setup layout Dashboard utama (Sidebar navigasi, Header, Breadcrumbs, Theme Switcher).
+- [x] [FRONTEND] Halaman Overview Dashboard (Kartu metrik agregat, status server aktif/nonaktif).
+- [x] [FRONTEND] Halaman Server Management:
+  - [x] Tabel daftar server dengan status badge, IP address, dan action menu.
+  - [x] Form / Modal penambahan server baru dan pemilihan provider.
+  - [x] Halaman detail server (Spesifikasi CPU/RAM/Disk, Uptime, Tombol aksi Reboot/Shutdown).
 
 ---
 

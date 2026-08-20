@@ -229,6 +229,8 @@ func handleServerError(w http.ResponseWriter, err error) {
 	switch err {
 	case domain.ErrNotFound:
 		response.Error(w, http.StatusNotFound, "Resource tidak ditemukan", err.Error())
+	case domain.ErrProviderNotSupported:
+		response.Error(w, http.StatusBadRequest, "Provider cloud belum didukung", err.Error())
 	case domain.ErrForbidden:
 		response.Error(w, http.StatusForbidden, "Akses dilarang", err.Error())
 	case domain.ErrBadRequest:

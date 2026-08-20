@@ -15,8 +15,9 @@ import (
 )
 
 type Handlers struct {
-	AuthHandler   *v1.AuthHandler
-	ServerHandler *v1.ServerHandler
+	AuthHandler     *v1.AuthHandler
+	ServerHandler   *v1.ServerHandler
+	ProviderHandler *v1.ProviderHandler
 }
 
 type RouterConfig struct {
@@ -27,7 +28,7 @@ type RouterConfig struct {
 	Handlers   Handlers
 }
 
-// NewRouter menginisialisasi router Chi dengan middleware global, endpoint kesehatan, rute publik auth, dan rute terproteksi server.
+// NewRouter menginisialisasi router Chi dengan middleware global, endpoint kesehatan, rute publik auth, dan rute terproteksi server/provider.
 // Parameter rc memuat dependensi konfigurasi, manajer JWT, repositori audit, logger, dan handler HTTP.
 // Mengembalikan pointer *chi.Mux yang siap digunakan sebagai handler HTTP server.
 func NewRouter(rc RouterConfig) *chi.Mux {
@@ -85,6 +86,10 @@ func registerAPIRoutes(r *chi.Mux, rc RouterConfig) {
 				authRouter.Post("/login", rc.Handlers.AuthHandler.Login)
 				authRouter.Post("/refresh", rc.Handlers.AuthHandler.RefreshToken)
 			})
+		}
+
+		if rc.Handlers.ProviderHandler != nil {
+			apiRouter.Get("/providers", rc.Handlers.ProviderHandler.ListProviders)
 		}
 
 		if rc.JWTManager != nil {

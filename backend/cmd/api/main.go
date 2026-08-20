@@ -14,6 +14,7 @@ import (
 	provFactory "github.com/havilz/caelus-cloud/backend/internal/provider"
 	"github.com/havilz/caelus-cloud/backend/internal/repository/postgres"
 	"github.com/havilz/caelus-cloud/backend/internal/usecase/auth"
+	provUsecase "github.com/havilz/caelus-cloud/backend/internal/usecase/provider"
 	"github.com/havilz/caelus-cloud/backend/internal/usecase/server"
 	"github.com/havilz/caelus-cloud/backend/pkg/config"
 	"github.com/havilz/caelus-cloud/backend/pkg/jwt"
@@ -60,6 +61,7 @@ func main() {
 	factory := provFactory.NewDriverFactory()
 
 	authUc := auth.NewAuthUsecase(userRepo, orgRepo, jwtManager)
+	credUc := provUsecase.NewCredentialUsecase(credRepo, providerRepo, []byte(cfg.JWT.EncryptionKey))
 	serverUc := server.NewServerUsecase(serverRepo, providerRepo, credRepo, factory)
 
 	routerConfig := deliveryHttp.RouterConfig{
@@ -68,8 +70,9 @@ func main() {
 		AuditRepo:  auditRepo,
 		Logger:     logger.Get(),
 		Handlers: deliveryHttp.Handlers{
-			AuthHandler:   v1.NewAuthHandler(authUc),
-			ServerHandler: v1.NewServerHandler(serverUc),
+			AuthHandler:     v1.NewAuthHandler(authUc),
+			ServerHandler:   v1.NewServerHandler(serverUc),
+			ProviderHandler: v1.NewProviderHandler(credUc),
 		},
 	}
 

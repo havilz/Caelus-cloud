@@ -69,9 +69,18 @@ frontend/
 │   │   ├── globals.css                 # Konfigurasi Tailwind CSS & CSS Variables
 │   │   └── layout.tsx                  # Root HTML Layout (Theme Provider, Query Client, Toaster)
 │   │
+│   ├── core/                           # Inti Token Desain, Tema, & Konstanta Global
+│   │   └── theme/                      # Modul Sistem Desain Terpusat (Supabase Theme)
+│   │       ├── app_colors.ts           # Token warna Supabase Deep Black & Emerald Green
+│   │       ├── app_text.ts             # Hierarki & ukuran tipografi terstandarisasi
+│   │       ├── app_containers.ts       # Batasan container, card padding, & modal scroll constraints
+│   │       ├── app_theme.ts            # Konfigurasi mode tema (Dark / Light)
+│   │       └── index.ts                # Barrel export (@/core/theme)
+│   │
 │   ├── components/                     # Komponen UI Reusable
 │   │   ├── ui/                         # Primitif Design System (Button, Input, Card, Table, Dialog, Badge)
-│   │   └── layout/                     # Komponen layout (SidebarNav, Topbar, UserMenu, BreadcrumbNav)
+│   │   ├── layout/                     # Komponen layout (Sidebar, Header, Breadcrumbs)
+│   │   └── server/                     # Komponen modul server (ServerStatusBadge, CreateServerModal, ResizeServerModal)
 │   │
 │   ├── features/                       # Modul Tampilan Per Fitur Dashboard (UI Components & Logic)
 │   │   ├── auth/                       # LoginForm, RegisterForm, useAuth hook
@@ -82,22 +91,22 @@ frontend/
 │   │   └── automation/                 # RuleBuilderForm, TriggerPicker, ActionForm
 │   │
 │   ├── services/                       # HTTP API Client (Jembatan komunikasi ke Backend Go)
-│   │   ├── api-client.ts               # Axios / Fetch instance (Base URL backend Go, Auth Token Interceptor)
-│   │   ├── auth.service.ts             # Panggilan ke POST /api/v1/auth/login, register
+│   │   ├── api.ts                      # Axios instance terpusat (Base URL backend Go, Auth Bearer Interceptor)
+│   │   ├── auth.service.ts             # Panggilan ke POST /api/v1/auth/login, register, refresh
 │   │   ├── server.service.ts           # Panggilan ke GET /api/v1/servers, POST /api/v1/servers/:id/reboot
+│   │   ├── provider.service.ts         # Panggilan ke GET /api/v1/providers
 │   │   ├── storage.service.ts          # Panggilan ke GET /api/v1/storage/buckets, objects
 │   │   ├── monitoring.service.ts       # Panggilan ke endpoint metrik & WebSocket stream
 │   │   └── security.service.ts         # Panggilan ke GET /api/v1/sentinel/findings, scan
 │   │
 │   ├── stores/                         # State Management Browser (Zustand)
-│   │   ├── auth.store.ts               # Menyimpan data session user & token login aktif
-│   │   ├── server.store.ts             # State cache daftar server & filter aktif
-│   │   └── theme.store.ts              # Pengaturan tema (Dark / Light mode)
+│   │   ├── useAuthStore.ts             # Menyimpan data session user & token login aktif
+│   │   └── useServerStore.ts           # State cache daftar server & filter aktif
 │   │
 │   ├── types/                          # Definisi Tipe TypeScript (DTO response dari API Go)
 │   │   ├── api.ts                      # Standard ApiResponse<T>, ErrorResponse
 │   │   ├── auth.ts                     # UserProfile, LoginCredentials, AuthTokens
-│   │   ├── server.ts                   # ServerItem, ServerDetail, ServerMetrics
+│   │   ├── server.ts                   # Server, Provider, CreateServerPayload, ResizeServerPayload
 │   │   ├── storage.ts                  # BucketItem, StorageObjectItem
 │   │   ├── monitoring.ts               # MetricSeries, LogMessage
 │   │   └── security.ts                 # SentinelFinding, SecurityReport
@@ -106,7 +115,8 @@ frontend/
 │       ├── utils.ts                    # Utility `cn` (clsx + tailwind-merge)
 │       └── formatters.ts               # Formatter byte size, durasi uptime, tanggal
 │
-├── .env.example                        # NEXT_PUBLIC_API_URL=http://localhost:8080
+├── .env.example                        # Template environment variabel frontend (NEXT_PUBLIC_API_URL)
+├── .env.local                          # Konfigurasi environment aktif lokal (git-ignored)
 ├── package.json
 └── tsconfig.json
 ```

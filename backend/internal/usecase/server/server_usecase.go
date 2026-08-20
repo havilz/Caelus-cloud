@@ -45,10 +45,10 @@ type ServerUsecase interface {
 }
 
 type serverUsecase struct {
-	serverRepo      domain.ServerRepository
-	providerRepo    domain.ProviderRepository
-	credRepo        domain.CredentialRepository
-	driverFactory   provFactory.Factory
+	serverRepo    domain.ServerRepository
+	providerRepo  domain.ProviderRepository
+	credRepo      domain.CredentialRepository
+	driverFactory provFactory.Factory
 }
 
 // NewServerUsecase menginisialisasi use case manajemen server VPS dengan integrasi repositori dan driver provider.
