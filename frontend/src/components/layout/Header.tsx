@@ -1,15 +1,32 @@
-"use client";
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Breadcrumbs } from "./Breadcrumbs";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useRouter } from "next/navigation";
-import { LogOut, Building2, ChevronDown } from "lucide-react";
+import { LogOut, Building2, ChevronDown, Bell } from "lucide-react";
+import { AlertDrawer } from "@/components/monitoring/AlertDrawer";
+import { monitoringService } from "@/services/monitoring.service";
 
 export const Header: React.FC = () => {
   const { user, organization, logout } = useAuthStore();
   const router = useRouter();
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [isAlertDrawerOpen, setIsAlertDrawerOpen] = useState(false);
+  const [activeAlertsCount, setActiveAlertsCount] = useState<number>(0);
+
+  const fetchActiveAlertsCount = async () => {
+    try {
+      const res = await monitoringService.listAlerts("active", 1, 1);
+      setActiveAlertsCount(res.meta?.total_items || 0);
+    } catch {
+      // Abaikan error saat fetch
+    }
+  };
+
+  useEffect(() => {
+    fetchActiveAlertsCount();
+    const interval = setInterval(fetchActiveAlertsCount, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -17,20 +34,36 @@ export const Header: React.FC = () => {
   };
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-[#262626] bg-[#121212]/90 px-6 backdrop-blur-sm">
-      <div className="flex items-center gap-4">
-        <Breadcrumbs />
-      </div>
-
-      <div className="flex items-center gap-4">
-        {/* System Status Indicator */}
-        <div className="hidden sm:flex items-center gap-2 rounded-md border border-emerald-800/40 bg-emerald-950/40 px-2.5 py-1 text-xs text-emerald-400">
-          <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-          </span>
-          <span className="font-medium text-[11px]">System Operational</span>
+    <>
+      <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-[#262626] bg-[#121212]/90 px-6 backdrop-blur-sm">
+        <div className="flex items-center gap-4">
+          <Breadcrumbs />
         </div>
+
+        <div className="flex items-center gap-3">
+          {/* Notification Bell with Active Alert Count */}
+          <button
+            type="button"
+            onClick={() => setIsAlertDrawerOpen(true)}
+            className="relative flex h-9 w-9 items-center justify-center rounded-lg border border-[#262626] bg-[#171717] text-[#a1a1a1] hover:text-[#ededed] hover:bg-[#222222] transition-colors cursor-pointer"
+            aria-label="Buka notifikasi alert"
+          >
+            <Bell className="h-4 w-4" />
+            {activeAlertsCount > 0 && (
+              <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white shadow-xs">
+                {activeAlertsCount > 9 ? "9+" : activeAlertsCount}
+              </span>
+            )}
+          </button>
+
+          {/* System Status Indicator */}
+          <div className="hidden sm:flex items-center gap-2 rounded-md border border-emerald-800/40 bg-emerald-950/40 px-2.5 py-1 text-xs text-emerald-400">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+            </span>
+            <span className="font-medium text-[11px]">System Operational</span>
+          </div>
 
         {/* User / Workspace Dropdown */}
         <div className="relative">
@@ -88,5 +121,12 @@ export const Header: React.FC = () => {
         </div>
       </div>
     </header>
-  );
+
+    <AlertDrawer
+      isOpen={isAlertDrawerOpen}
+      onClose={() => setIsAlertDrawerOpen(false)}
+      onAlertUpdated={fetchActiveAlertsCount}
+    />
+  </>
+);
 };
