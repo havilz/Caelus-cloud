@@ -16,14 +16,15 @@ import (
 )
 
 type Handlers struct {
-	AuthHandler      *v1.AuthHandler
-	ServerHandler    *v1.ServerHandler
-	ProviderHandler  *v1.ProviderHandler
-	TelemetryHandler *v1.TelemetryHandler
-	AlertHandler     *v1.AlertHandler
-	StorageHandler   *v1.StorageHandler
-	BackupHandler    *v1.BackupHandler
-	WSHandler        *ws.Handler
+	AuthHandler       *v1.AuthHandler
+	ServerHandler     *v1.ServerHandler
+	ProviderHandler   *v1.ProviderHandler
+	TelemetryHandler  *v1.TelemetryHandler
+	AlertHandler      *v1.AlertHandler
+	StorageHandler    *v1.StorageHandler
+	BackupHandler     *v1.BackupHandler
+	AutomationHandler *v1.AutomationHandler
+	WSHandler         *ws.Handler
 }
 
 type RouterConfig struct {
@@ -123,6 +124,10 @@ func registerAPIRoutes(r *chi.Mux, rc RouterConfig) {
 				if rc.Handlers.BackupHandler != nil {
 					registerBackupRoutes(protectedRouter, rc.Handlers.BackupHandler)
 				}
+
+				if rc.Handlers.AutomationHandler != nil {
+					registerAutomationRoutes(protectedRouter, rc.Handlers.AutomationHandler)
+				}
 			})
 		}
 	})
@@ -187,5 +192,19 @@ func registerBackupRoutes(r chi.Router, bh *v1.BackupHandler) {
 		backupRouter.Post("/trigger/{server_id}", bh.TriggerBackup)
 		backupRouter.Get("/records", bh.ListRecords)
 		backupRouter.Delete("/records/{id}", bh.DeleteRecord)
+	})
+}
+
+// registerAutomationRoutes mendaftarkan rute endpoint aturan otomasi dan riwayat log eksekusi.
+func registerAutomationRoutes(r chi.Router, autoH *v1.AutomationHandler) {
+	r.Route("/automation", func(autoRouter chi.Router) {
+		autoRouter.Get("/rules", autoH.ListRules)
+		autoRouter.Post("/rules", autoH.CreateRule)
+		autoRouter.Get("/rules/{id}", autoH.GetRule)
+		autoRouter.Put("/rules/{id}", autoH.UpdateRule)
+		autoRouter.Delete("/rules/{id}", autoH.DeleteRule)
+		autoRouter.Post("/rules/{id}/test", autoH.TestRule)
+
+		autoRouter.Get("/logs", autoH.ListLogs)
 	})
 }

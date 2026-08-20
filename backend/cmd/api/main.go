@@ -9,16 +9,21 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/havilz/caelus-cloud/backend/internal/domain"
+	"github.com/havilz/caelus-cloud/backend/internal/automation"
 	deliveryHttp "github.com/havilz/caelus-cloud/backend/internal/delivery/http"
 	v1 "github.com/havilz/caelus-cloud/backend/internal/delivery/http/v1"
 	"github.com/havilz/caelus-cloud/backend/internal/delivery/ws"
+	"github.com/havilz/caelus-cloud/backend/internal/domain"
+	"github.com/havilz/caelus-cloud/backend/internal/notification"
+	"github.com/havilz/caelus-cloud/backend/internal/notification/email"
+	"github.com/havilz/caelus-cloud/backend/internal/notification/webhook"
 	"github.com/havilz/caelus-cloud/backend/internal/observability/loki"
 	"github.com/havilz/caelus-cloud/backend/internal/observability/prometheus"
 	provFactory "github.com/havilz/caelus-cloud/backend/internal/provider"
 	"github.com/havilz/caelus-cloud/backend/internal/repository/postgres"
 	storageFactory "github.com/havilz/caelus-cloud/backend/internal/storage"
 	minioStorage "github.com/havilz/caelus-cloud/backend/internal/storage/minio"
+	automationUsecase "github.com/havilz/caelus-cloud/backend/internal/usecase/automation"
 	"github.com/havilz/caelus-cloud/backend/internal/usecase/auth"
 	backupUsecase "github.com/havilz/caelus-cloud/backend/internal/usecase/backup"
 	"github.com/havilz/caelus-cloud/backend/internal/usecase/monitoring"
@@ -69,6 +74,7 @@ func main() {
 	alertRepo := postgres.NewAlertRepository(client.Pool)
 	bucketRepo := postgres.NewBucketRepository(client.Pool)
 	backupRepo := postgres.NewBackupRepository(client.Pool)
+	automationRepo := postgres.NewAutomationRepository(client.Pool)
 
 	jwtManager := jwt.NewJWTManager(&cfg.JWT, cfg.App.Name)
 	factory := provFactory.NewDriverFactory()
@@ -110,6 +116,26 @@ func main() {
 	storageUc := storageUsecase.NewStorageUsecase(bucketRepo, storageFactoryInstance)
 	backupUc := backupUsecase.NewBackupUsecase(backupRepo, serverRepo, bucketRepo, storageFactoryInstance)
 
+	// Inisialisasi Automation & Notification Dispatcher
+	webhookClient := webhook.NewClient(os.Getenv("WEBHOOK_SIGNING_SECRET"))
+	emailClient := email.NewClient(email.Config{
+		Host:     os.Getenv("SMTP_HOST"),
+		Port:     587,
+		Username: os.Getenv("SMTP_USER"),
+		Password: os.Getenv("SMTP_PASS"),
+		From:     os.Getenv("SMTP_FROM"),
+	})
+	unifiedNotifier := notification.NewUnifiedDispatcher(webhookClient, emailClient)
+
+	// Inisialisasi Central Event Dispatcher & Rule Engine
+	centralDispatcher := automation.NewCentralEventDispatcher()
+	ruleEngine := automation.NewEngine(automationRepo, nil, unifiedNotifier, serverUc, backupUc)
+	centralDispatcher.Subscribe(func(ctx context.Context, event domain.SystemEvent) error {
+		return ruleEngine.EvaluateEvent(ctx, event)
+	})
+
+	automationUc := automationUsecase.NewAutomationUsecase(automationRepo, ruleEngine, centralDispatcher)
+
 	// Background Backup Scheduler & Retention Cleaner Worker
 	backupScheduler := backupUsecase.NewScheduler(backupRepo, backupUc, logger.Get())
 	backupScheduler.Start(60 * time.Second)
@@ -121,14 +147,15 @@ func main() {
 		AuditRepo:  auditRepo,
 		Logger:     logger.Get(),
 		Handlers: deliveryHttp.Handlers{
-			AuthHandler:      v1.NewAuthHandler(authUc),
-			ServerHandler:    v1.NewServerHandler(serverUc),
-			ProviderHandler:  v1.NewProviderHandler(credUc),
-			TelemetryHandler: v1.NewTelemetryHandler(monitoringUc),
-			AlertHandler:     v1.NewAlertHandler(monitoringUc),
-			StorageHandler:   v1.NewStorageHandler(storageUc),
-			BackupHandler:    v1.NewBackupHandler(backupUc),
-			WSHandler:        ws.NewHandler(wsHub, jwtManager),
+			AuthHandler:       v1.NewAuthHandler(authUc),
+			ServerHandler:     v1.NewServerHandler(serverUc),
+			ProviderHandler:   v1.NewProviderHandler(credUc),
+			TelemetryHandler:  v1.NewTelemetryHandler(monitoringUc),
+			AlertHandler:      v1.NewAlertHandler(monitoringUc),
+			StorageHandler:    v1.NewStorageHandler(storageUc),
+			BackupHandler:     v1.NewBackupHandler(backupUc),
+			AutomationHandler: v1.NewAutomationHandler(automationUc),
+			WSHandler:         ws.NewHandler(wsHub, jwtManager),
 		},
 	}
 
