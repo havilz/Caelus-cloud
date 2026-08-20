@@ -114,3 +114,24 @@ type StorageFactory interface {
 	// RegisterAdapter mendaftarkan implementasi ObjectStorageAdapter baru ke dalam factory.
 	RegisterAdapter(providerType StorageProviderType, adapter ObjectStorageAdapter)
 }
+
+// BucketRepository mendefinisikan kontrak persistensi metadata bucket ke basis data.
+type BucketRepository interface {
+	// Create menyimpan rekaman metadata bucket baru ke basis data.
+	Create(ctx context.Context, bucket *Bucket) error
+
+	// GetByID mengambil data bucket berdasarkan ID unik.
+	GetByID(ctx context.Context, id uuid.UUID) (*Bucket, error)
+
+	// GetByName mengambil data bucket berdasarkan nama uniknya.
+	GetByName(ctx context.Context, name string) (*Bucket, error)
+
+	// ListByOrgID mengambil daftar seluruh bucket milik organisasi tertentu dengan paginasi.
+	ListByOrgID(ctx context.Context, orgID uuid.UUID, limit, offset int) ([]Bucket, int, error)
+
+	// Delete menghapus rekaman metadata bucket dari basis data.
+	Delete(ctx context.Context, id uuid.UUID) error
+
+	// CountByOrgID menghitung total jumlah bucket milik organisasi.
+	CountByOrgID(ctx context.Context, orgID uuid.UUID) (int, error)
+}

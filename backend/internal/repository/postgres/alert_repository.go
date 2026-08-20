@@ -247,19 +247,20 @@ func (r *AlertRepository) ListActiveAlertsByServer(ctx context.Context, serverID
 // UpdateAlertStatus memperbarui status siklus hidup alert (misal Acknowledged atau Resolved).
 func (r *AlertRepository) UpdateAlertStatus(ctx context.Context, id uuid.UUID, status domain.AlertStatus, userID *uuid.UUID, timestamp *time.Time) error {
 	var query string
-	if status == domain.AlertStatusAcknowledged {
+	switch status {
+	case domain.AlertStatusAcknowledged:
 		query = `
 			UPDATE alerts
 			SET status = $2, acknowledged_at = $3, acknowledged_by = $4
 			WHERE id = $1;
 		`
-	} else if status == domain.AlertStatusResolved {
+	case domain.AlertStatusResolved:
 		query = `
 			UPDATE alerts
 			SET status = $2, resolved_at = $3, resolved_by = $4
 			WHERE id = $1;
 		`
-	} else {
+	default:
 		query = `
 			UPDATE alerts
 			SET status = $2

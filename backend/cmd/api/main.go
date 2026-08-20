@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/havilz/caelus-cloud/backend/internal/domain"
 	deliveryHttp "github.com/havilz/caelus-cloud/backend/internal/delivery/http"
 	v1 "github.com/havilz/caelus-cloud/backend/internal/delivery/http/v1"
 	"github.com/havilz/caelus-cloud/backend/internal/delivery/ws"
@@ -16,10 +17,14 @@ import (
 	"github.com/havilz/caelus-cloud/backend/internal/observability/prometheus"
 	provFactory "github.com/havilz/caelus-cloud/backend/internal/provider"
 	"github.com/havilz/caelus-cloud/backend/internal/repository/postgres"
+	storageFactory "github.com/havilz/caelus-cloud/backend/internal/storage"
+	minioStorage "github.com/havilz/caelus-cloud/backend/internal/storage/minio"
 	"github.com/havilz/caelus-cloud/backend/internal/usecase/auth"
+	backupUsecase "github.com/havilz/caelus-cloud/backend/internal/usecase/backup"
 	"github.com/havilz/caelus-cloud/backend/internal/usecase/monitoring"
 	provUsecase "github.com/havilz/caelus-cloud/backend/internal/usecase/provider"
 	"github.com/havilz/caelus-cloud/backend/internal/usecase/server"
+	storageUsecase "github.com/havilz/caelus-cloud/backend/internal/usecase/storage"
 	"github.com/havilz/caelus-cloud/backend/pkg/config"
 	"github.com/havilz/caelus-cloud/backend/pkg/jwt"
 	"github.com/havilz/caelus-cloud/backend/pkg/logger"
@@ -62,10 +67,36 @@ func main() {
 	auditRepo := postgres.NewAuditRepository(client.Pool)
 	metricRepo := postgres.NewMetricRepository(client.Pool)
 	alertRepo := postgres.NewAlertRepository(client.Pool)
+	bucketRepo := postgres.NewBucketRepository(client.Pool)
+	backupRepo := postgres.NewBackupRepository(client.Pool)
 
 	jwtManager := jwt.NewJWTManager(&cfg.JWT, cfg.App.Name)
 	factory := provFactory.NewDriverFactory()
 	wsHub := ws.NewHub()
+
+	// Inisialisasi Storage Factory & Adapters
+	storageFactoryInstance := storageFactory.NewStorageFactory()
+	minioEndpoint := os.Getenv("STORAGE_ENDPOINT")
+	if minioEndpoint == "" {
+		minioEndpoint = "http://localhost:9000"
+	}
+	minioAccessKey := os.Getenv("STORAGE_ACCESS_KEY")
+	if minioAccessKey == "" {
+		minioAccessKey = "minioadmin"
+	}
+	minioSecretKey := os.Getenv("STORAGE_SECRET_KEY")
+	if minioSecretKey == "" {
+		minioSecretKey = "minioadmin"
+	}
+
+	if minioAdapter, err := minioStorage.NewAdapter(minioStorage.Config{
+		Endpoint:        minioEndpoint,
+		AccessKeyID:     minioAccessKey,
+		SecretAccessKey: minioSecretKey,
+		Region:          "us-east-1",
+	}); err == nil {
+		storageFactoryInstance.RegisterAdapter(domain.StorageProviderMinIO, minioAdapter)
+	}
 
 	authUc := auth.NewAuthUsecase(userRepo, orgRepo, jwtManager)
 	credUc := provUsecase.NewCredentialUsecase(credRepo, providerRepo, []byte(cfg.JWT.EncryptionKey))
@@ -75,6 +106,14 @@ func main() {
 	promAdapter := prometheus.NewClient(os.Getenv("PROMETHEUS_URL"))
 	lokiAdapter := loki.NewClient(os.Getenv("LOKI_URL"))
 	monitoringUc := monitoring.NewMonitoringUsecase(metricRepo, alertRepo, serverRepo, alertEvaluator, wsHub, promAdapter, lokiAdapter)
+
+	storageUc := storageUsecase.NewStorageUsecase(bucketRepo, storageFactoryInstance)
+	backupUc := backupUsecase.NewBackupUsecase(backupRepo, serverRepo, bucketRepo, storageFactoryInstance)
+
+	// Background Backup Scheduler & Retention Cleaner Worker
+	backupScheduler := backupUsecase.NewScheduler(backupRepo, backupUc, logger.Get())
+	backupScheduler.Start(60 * time.Second)
+	defer backupScheduler.Stop()
 
 	routerConfig := deliveryHttp.RouterConfig{
 		Config:     cfg,
@@ -87,6 +126,8 @@ func main() {
 			ProviderHandler:  v1.NewProviderHandler(credUc),
 			TelemetryHandler: v1.NewTelemetryHandler(monitoringUc),
 			AlertHandler:     v1.NewAlertHandler(monitoringUc),
+			StorageHandler:   v1.NewStorageHandler(storageUc),
+			BackupHandler:    v1.NewBackupHandler(backupUc),
 			WSHandler:        ws.NewHandler(wsHub, jwtManager),
 		},
 	}

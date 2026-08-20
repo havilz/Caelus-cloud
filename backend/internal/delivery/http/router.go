@@ -21,6 +21,8 @@ type Handlers struct {
 	ProviderHandler  *v1.ProviderHandler
 	TelemetryHandler *v1.TelemetryHandler
 	AlertHandler     *v1.AlertHandler
+	StorageHandler   *v1.StorageHandler
+	BackupHandler    *v1.BackupHandler
 	WSHandler        *ws.Handler
 }
 
@@ -113,6 +115,14 @@ func registerAPIRoutes(r *chi.Mux, rc RouterConfig) {
 				if rc.Handlers.AlertHandler != nil {
 					registerAlertRoutes(protectedRouter, rc.Handlers.AlertHandler)
 				}
+
+				if rc.Handlers.StorageHandler != nil {
+					registerStorageRoutes(protectedRouter, rc.Handlers.StorageHandler)
+				}
+
+				if rc.Handlers.BackupHandler != nil {
+					registerBackupRoutes(protectedRouter, rc.Handlers.BackupHandler)
+				}
 			})
 		}
 	})
@@ -148,5 +158,34 @@ func registerAlertRoutes(r chi.Router, ah *v1.AlertHandler) {
 		alertRouter.Get("/rules", ah.ListRules)
 		alertRouter.Post("/rules", ah.CreateRule)
 		alertRouter.Delete("/rules/{id}", ah.DeleteRule)
+	})
+}
+
+// registerStorageRoutes mendaftarkan rute endpoint pengelolaan bucket dan file object storage.
+func registerStorageRoutes(r chi.Router, sh *v1.StorageHandler) {
+	r.Route("/storage", func(storageRouter chi.Router) {
+		storageRouter.Get("/buckets", sh.ListBuckets)
+		storageRouter.Post("/buckets", sh.CreateBucket)
+		storageRouter.Get("/buckets/{name}", sh.GetBucket)
+		storageRouter.Delete("/buckets/{name}", sh.DeleteBucket)
+
+		storageRouter.Get("/buckets/{name}/objects", sh.ListObjects)
+		storageRouter.Post("/buckets/{name}/objects", sh.UploadObject)
+		storageRouter.Get("/buckets/{name}/objects/download", sh.DownloadObject)
+		storageRouter.Delete("/buckets/{name}/objects", sh.DeleteObject)
+		storageRouter.Post("/buckets/{name}/objects/signed-url", sh.GenerateSignedURL)
+	})
+}
+
+// registerBackupRoutes mendaftarkan rute endpoint kebijakan dan riwayat backup server.
+func registerBackupRoutes(r chi.Router, bh *v1.BackupHandler) {
+	r.Route("/backups", func(backupRouter chi.Router) {
+		backupRouter.Get("/policies", bh.ListPolicies)
+		backupRouter.Post("/policies", bh.CreatePolicy)
+		backupRouter.Delete("/policies/{id}", bh.DeletePolicy)
+
+		backupRouter.Post("/trigger/{server_id}", bh.TriggerBackup)
+		backupRouter.Get("/records", bh.ListRecords)
+		backupRouter.Delete("/records/{id}", bh.DeleteRecord)
 	})
 }
