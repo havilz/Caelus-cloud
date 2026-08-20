@@ -1,0 +1,23 @@
+# Caelus Cloud Host Agent Configuration Example
+# Variabel dapat diinjeksikan via file .env atau environment variables
+
+# UUID Server yang didaftarkan di Caelus Cloud Control Plane (Wajib)
+SERVER_ID: "00000000-0000-0000-0000-000000000000"
+
+# Token / Secret autentikasi agent (Wajib)
+AGENT_SECRET: "caelus_agent_secret_key_here"
+
+# Endpoint URL backend Caelus API Control Plane
+API_ENDPOINT: "http://localhost:8080"
+
+# Interval pengumpulan dan pengiriman metrik (detik)
+COLLECTION_INTERVAL_SEC: 15
+
+# Path Unix Domain Socket Docker daemon
+DOCKER_SOCKET_PATH: "/var/run/docker.sock"
+
+# Melewati verifikasi sertifikat SSL/TLS (hanya untuk development)
+TLS_SKIP_VERIFY: false
+
+# Level logging: debug | info | warn | error
+LOG_LEVEL: "info"

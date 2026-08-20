@@ -36,6 +36,8 @@ yarn-error.log*
 .DS_Store
 Thumbs.db
 
-# Internal Docs
-#docs/
-#changelog/
+# Internal Docs and module
+docs/
+changelog/
+graphify-out/
+.agents/
