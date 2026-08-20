@@ -21,7 +21,7 @@ func TestHealthCheckEndpoints(t *testing.T) {
 		},
 	}
 
-	router := deliveryHttp.NewRouter(cfg)
+	router := deliveryHttp.NewRouter(deliveryHttp.RouterConfig{Config: cfg})
 
 	t.Run("GET /health", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/health", nil)

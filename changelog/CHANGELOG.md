@@ -92,6 +92,15 @@ Format penulisan mengacu pada standar formal dengan pencatatan stempel tanggal d
 - Ekstraksi logika transisi status pada `backend/internal/provider/mock/mock_driver.go` ke dalam fungsi pembantu `updateServerStatus` untuk mengatasi issue implementasi metode identik pada `RebootServer` dan `StartServer`.
 - Dekomposisi suite pengujian `backend/tests/mock_provider_test.go` menjadi fungsi-fungsi pengujian individual (`TestMockDriver_CreateAndGetServer`, `TestMockDriver_ListServers`, `TestMockDriver_PowerControls`, `TestMockDriver_ResizeServer`, `TestMockDriver_DeleteServer`) guna menurunkan Cognitive Complexity ke level minimum ($\le 2$).
 
+### [2026-08-19 22:37:53] - Modul Manajemen Server & VPS: REST API & Lifecycle Controls
+- Implementasi PostgreSQL ServerRepository di `backend/internal/repository/postgres/server_repository.go` untuk operasi CRUD, paginasi per organisasi, dan pembaruan status server.
+- Implementasi Provider Factory di `backend/internal/provider/factory.go` untuk registrasi dan pemanggilan dinamis instance `ProviderDriver`.
+- Implementasi use case server di `backend/internal/usecase/server/server_usecase.go` yang mengorkestrasi provisioning, reboot, shutdown, start, resize spesifikasi, dan penghapusan server dengan integrasi driver provider.
+- Implementasi HTTP AuthHandler (`backend/internal/delivery/http/v1/auth_handler.go`) dan ServerHandler (`backend/internal/delivery/http/v1/server_handler.go`) untuk endpoint REST API (`/api/v1/auth/*` dan `/api/v1/servers/*`).
+- Pembaruan HTTP Router dan injeksi dependensi pada `backend/cmd/api/main.go`.
+- Pembuatan pengujian otomatis end-to-end dan integrasi HTTP di `backend/tests/server_test.go` dengan hasil kelulusan 100% (`PASS`).
+
+
 
 
 

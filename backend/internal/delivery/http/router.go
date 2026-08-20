@@ -1,43 +1,119 @@
 package http
 
 import (
+	"log/slog"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
 	customMiddleware "github.com/havilz/caelus-cloud/backend/internal/delivery/http/middleware"
 	"github.com/havilz/caelus-cloud/backend/internal/delivery/http/response"
+	v1 "github.com/havilz/caelus-cloud/backend/internal/delivery/http/v1"
+	"github.com/havilz/caelus-cloud/backend/internal/domain"
 	"github.com/havilz/caelus-cloud/backend/pkg/config"
+	"github.com/havilz/caelus-cloud/backend/pkg/jwt"
 )
 
-// NewRouter menginisialisasi router Chi dengan middleware global dan rute inti sistem.
-// Parameter cfg merupakan pointer *config.Config yang memuat konfigurasi aplikasi dan origin CORS.
+type Handlers struct {
+	AuthHandler   *v1.AuthHandler
+	ServerHandler *v1.ServerHandler
+}
+
+type RouterConfig struct {
+	Config     *config.Config
+	JWTManager jwt.Manager
+	AuditRepo  domain.AuditLogRepository
+	Logger     *slog.Logger
+	Handlers   Handlers
+}
+
+// NewRouter menginisialisasi router Chi dengan middleware global, endpoint kesehatan, rute publik auth, dan rute terproteksi server.
+// Parameter rc memuat dependensi konfigurasi, manajer JWT, repositori audit, logger, dan handler HTTP.
 // Mengembalikan pointer *chi.Mux yang siap digunakan sebagai handler HTTP server.
-func NewRouter(cfg *config.Config) *chi.Mux {
+func NewRouter(rc RouterConfig) *chi.Mux {
 	r := chi.NewRouter()
 
 	r.Use(chimiddleware.RequestID)
 	r.Use(chimiddleware.RealIP)
 	r.Use(chimiddleware.Recoverer)
-	r.Use(customMiddleware.CORS(cfg.App.CorsOrigins))
+	if rc.Config != nil {
+		r.Use(customMiddleware.CORS(rc.Config.App.CorsOrigins))
+	}
 	r.Use(customMiddleware.RequestLogger())
+
+	registerHealthRoutes(r, rc.Config)
+	registerAPIRoutes(r, rc)
+
+	return r
+}
+
+// registerHealthRoutes mendaftarkan endpoint pemantauan kesehatan aplikasi (/health dan /api/v1/health).
+// Parameter r merupakan pointer router Chi utama.
+// Parameter cfg memuat konfigurasi aplikasi.
+func registerHealthRoutes(r *chi.Mux, cfg *config.Config) {
+	serviceName := "caelus-cloud-api"
+	envName := "development"
+	if cfg != nil {
+		serviceName = cfg.App.Name
+		envName = cfg.App.Env
+	}
 
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 		response.Success(w, http.StatusOK, "Caelus Cloud API is healthy", map[string]string{
 			"status":  "ok",
-			"service": cfg.App.Name,
-			"env":     cfg.App.Env,
+			"service": serviceName,
+			"env":     envName,
 		})
 	})
 
-	r.Route("/api/v1", func(r chi.Router) {
-		r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
-			response.Success(w, http.StatusOK, "API v1 is operational", map[string]string{
-				"status":  "ok",
-				"version": "v1",
+	r.Get("/api/v1/health", func(w http.ResponseWriter, r *http.Request) {
+		response.Success(w, http.StatusOK, "API v1 is operational", map[string]string{
+			"status":  "ok",
+			"version": "v1",
+		})
+	})
+}
+
+// registerAPIRoutes mendaftarkan seluruh rute API v1 publik dan terproteksi ke router Chi.
+// Parameter r merupakan pointer router Chi utama.
+// Parameter rc memuat konfigurasi dependensi dan handler.
+func registerAPIRoutes(r *chi.Mux, rc RouterConfig) {
+	r.Route("/api/v1", func(apiRouter chi.Router) {
+		if rc.Handlers.AuthHandler != nil {
+			apiRouter.Route("/auth", func(authRouter chi.Router) {
+				authRouter.Post("/register", rc.Handlers.AuthHandler.Register)
+				authRouter.Post("/login", rc.Handlers.AuthHandler.Login)
+				authRouter.Post("/refresh", rc.Handlers.AuthHandler.RefreshToken)
 			})
-		})
-	})
+		}
 
-	return r
+		if rc.JWTManager != nil {
+			apiRouter.Group(func(protectedRouter chi.Router) {
+				protectedRouter.Use(customMiddleware.Authenticate(rc.JWTManager))
+				if rc.AuditRepo != nil {
+					protectedRouter.Use(customMiddleware.AuditLogInterceptor(rc.AuditRepo, rc.Logger))
+				}
+
+				if rc.Handlers.ServerHandler != nil {
+					registerServerRoutes(protectedRouter, rc.Handlers.ServerHandler)
+				}
+			})
+		}
+	})
+}
+
+// registerServerRoutes mendaftarkan seluruh rute endpoint manajemen server VPS ke router terproteksi.
+// Parameter r merupakan sub-router terproteksi Chi.
+// Parameter h merupakan instance HTTP ServerHandler.
+func registerServerRoutes(r chi.Router, h *v1.ServerHandler) {
+	r.Route("/servers", func(serverRouter chi.Router) {
+		serverRouter.Get("/", h.ListServers)
+		serverRouter.Post("/", h.CreateServer)
+		serverRouter.Get("/{id}", h.GetServer)
+		serverRouter.Patch("/{id}/resize", h.ResizeServer)
+		serverRouter.Delete("/{id}", h.DeleteServer)
+		serverRouter.Post("/{id}/reboot", h.RebootServer)
+		serverRouter.Post("/{id}/shutdown", h.ShutdownServer)
+		serverRouter.Post("/{id}/start", h.StartServer)
+	})
 }

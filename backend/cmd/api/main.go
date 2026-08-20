@@ -10,11 +10,17 @@ import (
 	"time"
 
 	deliveryHttp "github.com/havilz/caelus-cloud/backend/internal/delivery/http"
+	v1 "github.com/havilz/caelus-cloud/backend/internal/delivery/http/v1"
+	provFactory "github.com/havilz/caelus-cloud/backend/internal/provider"
+	"github.com/havilz/caelus-cloud/backend/internal/repository/postgres"
+	"github.com/havilz/caelus-cloud/backend/internal/usecase/auth"
+	"github.com/havilz/caelus-cloud/backend/internal/usecase/server"
 	"github.com/havilz/caelus-cloud/backend/pkg/config"
+	"github.com/havilz/caelus-cloud/backend/pkg/jwt"
 	"github.com/havilz/caelus-cloud/backend/pkg/logger"
 )
 
-// main menginisialisasi konfigurasi sistem, logging terstruktur, router HTTP, dan menjalankan HTTP server dengan mekanisme graceful shutdown.
+// main menginisialisasi konfigurasi sistem, logging terstruktur, koneksi database, usecase, router HTTP, dan menjalankan server API.
 func main() {
 	cfg, err := config.Load()
 	if err != nil {
@@ -33,7 +39,41 @@ func main() {
 		"port", cfg.App.Port,
 	)
 
-	router := deliveryHttp.NewRouter(cfg)
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+
+	client, err := postgres.NewClient(ctx, &cfg.Database)
+	if err != nil {
+		logger.Error("Gagal menghubungkan ke database PostgreSQL", "error", err)
+		os.Exit(1)
+	}
+	defer client.Close()
+
+	userRepo := postgres.NewUserRepository(client.Pool)
+	orgRepo := postgres.NewOrganizationRepository(client.Pool)
+	serverRepo := postgres.NewServerRepository(client.Pool)
+	providerRepo := postgres.NewProviderRepository(client.Pool)
+	credRepo := postgres.NewCredentialRepository(client.Pool)
+	auditRepo := postgres.NewAuditRepository(client.Pool)
+
+	jwtManager := jwt.NewJWTManager(&cfg.JWT, cfg.App.Name)
+	factory := provFactory.NewDriverFactory()
+
+	authUc := auth.NewAuthUsecase(userRepo, orgRepo, jwtManager)
+	serverUc := server.NewServerUsecase(serverRepo, providerRepo, credRepo, factory)
+
+	routerConfig := deliveryHttp.RouterConfig{
+		Config:     cfg,
+		JWTManager: jwtManager,
+		AuditRepo:  auditRepo,
+		Logger:     logger.Get(),
+		Handlers: deliveryHttp.Handlers{
+			AuthHandler:   v1.NewAuthHandler(authUc),
+			ServerHandler: v1.NewServerHandler(serverUc),
+		},
+	}
+
+	router := deliveryHttp.NewRouter(routerConfig)
 
 	serverAddr := fmt.Sprintf("%s:%s", cfg.App.Host, cfg.App.Port)
 	srv := &http.Server{
@@ -58,10 +98,10 @@ func main() {
 
 	logger.Info("Menerima sinyal terminasi, mematikan server secara graceful...")
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer shutdownCancel()
 
-	if err := srv.Shutdown(ctx); err != nil {
+	if err := srv.Shutdown(shutdownCtx); err != nil {
 		logger.Error("Server dipaksa berhenti karena error pada shutdown", "error", err)
 		os.Exit(1)
 	}

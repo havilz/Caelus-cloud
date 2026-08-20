@@ -52,10 +52,10 @@ Kategori Layer Slicing:
 - [x] [BACKEND] Use case dan repository manajemen kredensial provider.
 
 ### 1.5 Modul Manajemen Server & VPS
-- [ ] [BACKEND] REST API endpoint untuk CRUD data server.
-- [ ] [BACKEND] REST API endpoint untuk aksi kontrol server (Reboot, Shutdown, Power On).
-- [ ] [BACKEND] Validasi input request (request DTO) dan standarisasi response payload.
-- [ ] [BACKEND] Unit test dan integration test untuk modul server management.
+- [x] [BACKEND] REST API endpoint untuk CRUD data server.
+- [x] [BACKEND] REST API endpoint untuk aksi kontrol server (Reboot, Shutdown, Power On).
+- [x] [BACKEND] Validasi input request (request DTO) dan standarisasi response payload.
+- [x] [BACKEND] Unit test dan integration test untuk modul server management.
 
 ### 1.6 Frontend Control Panel (Dashboard MVP)
 - [ ] [FRONTEND] Implementasi halaman Autentikasi (Login & Register form dengan validasi skema).
