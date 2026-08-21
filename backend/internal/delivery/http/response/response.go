@@ -71,6 +71,12 @@ func Error(w http.ResponseWriter, statusCode int, message string, errDetails any
 // Parameter limit menentukan batas jumlah data per halaman.
 // Parameter totalItems menentukan total keseluruhan data di database.
 func Paginated(w http.ResponseWriter, statusCode int, message string, data any, page, limit int, totalItems int64) {
+	if limit <= 0 {
+		limit = 20
+	}
+	if page <= 0 {
+		page = 1
+	}
 	totalPages := int((totalItems + int64(limit) - 1) / int64(limit))
 	if totalPages == 0 {
 		totalPages = 1

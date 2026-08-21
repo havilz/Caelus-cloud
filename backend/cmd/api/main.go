@@ -21,13 +21,15 @@ import (
 	"github.com/havilz/caelus-cloud/backend/internal/observability/prometheus"
 	provFactory "github.com/havilz/caelus-cloud/backend/internal/provider"
 	"github.com/havilz/caelus-cloud/backend/internal/repository/postgres"
+	"github.com/havilz/caelus-cloud/backend/internal/sentinel"
 	storageFactory "github.com/havilz/caelus-cloud/backend/internal/storage"
 	minioStorage "github.com/havilz/caelus-cloud/backend/internal/storage/minio"
-	automationUsecase "github.com/havilz/caelus-cloud/backend/internal/usecase/automation"
 	"github.com/havilz/caelus-cloud/backend/internal/usecase/auth"
+	automationUsecase "github.com/havilz/caelus-cloud/backend/internal/usecase/automation"
 	backupUsecase "github.com/havilz/caelus-cloud/backend/internal/usecase/backup"
 	"github.com/havilz/caelus-cloud/backend/internal/usecase/monitoring"
 	provUsecase "github.com/havilz/caelus-cloud/backend/internal/usecase/provider"
+	securityUsecase "github.com/havilz/caelus-cloud/backend/internal/usecase/security"
 	"github.com/havilz/caelus-cloud/backend/internal/usecase/server"
 	storageUsecase "github.com/havilz/caelus-cloud/backend/internal/usecase/storage"
 	"github.com/havilz/caelus-cloud/backend/pkg/config"
@@ -154,6 +156,12 @@ func main() {
 	watchdog.Start()
 	defer watchdog.Stop()
 
+	securityRepo := postgres.NewSecurityRepository(client.Pool)
+	sentinelOrchestrator := sentinel.NewOrchestrator(securityRepo, func(ctx context.Context, event domain.SystemEvent) {
+		centralDispatcher.Publish(ctx, event)
+	})
+	securityUc := securityUsecase.NewSecurityUsecase(securityRepo, serverRepo, metricRepo, sentinelOrchestrator)
+
 	routerConfig := deliveryHttp.RouterConfig{
 		Config:     cfg,
 		JWTManager: jwtManager,
@@ -168,6 +176,7 @@ func main() {
 			StorageHandler:    v1.NewStorageHandler(storageUc),
 			BackupHandler:     v1.NewBackupHandler(backupUc),
 			AutomationHandler: v1.NewAutomationHandler(automationUc),
+			SecurityHandler:   v1.NewSecurityHandler(securityUc),
 			WSHandler:         ws.NewHandler(wsHub, jwtManager),
 		},
 	}

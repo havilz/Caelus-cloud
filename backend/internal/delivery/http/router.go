@@ -24,6 +24,7 @@ type Handlers struct {
 	StorageHandler    *v1.StorageHandler
 	BackupHandler     *v1.BackupHandler
 	AutomationHandler *v1.AutomationHandler
+	SecurityHandler   *v1.SecurityHandler
 	WSHandler         *ws.Handler
 }
 
@@ -190,8 +191,30 @@ func registerAPIRoutes(r *chi.Mux, rc RouterConfig) {
 				if rc.Handlers.AutomationHandler != nil {
 					registerAutomationRoutes(protectedRouter, rc.Handlers.AutomationHandler)
 				}
+
+				if rc.Handlers.SecurityHandler != nil {
+					registerSecurityRoutes(protectedRouter, rc.Handlers.SecurityHandler)
+				}
 			})
 		}
+	})
+}
+
+// registerSecurityRoutes mendaftarkan rute endpoint manajemen keamanan Sentinel.
+func registerSecurityRoutes(r chi.Router, secH *v1.SecurityHandler) {
+	r.Route("/security", func(secRouter chi.Router) {
+		secRouter.Get("/overview", secH.GetPostureOverview)
+		secRouter.Post("/scans", secH.TriggerScan)
+		secRouter.Get("/scans", secH.ListScans)
+		secRouter.Get("/scans/{id}", secH.GetScan)
+
+		secRouter.Get("/findings", secH.ListFindings)
+		secRouter.Get("/findings/{id}", secH.GetFinding)
+		secRouter.Patch("/findings/{id}/status", secH.UpdateFindingStatus)
+
+		secRouter.Get("/incidents", secH.ListIncidents)
+		secRouter.Post("/incidents", secH.CreateIncident)
+		secRouter.Patch("/incidents/{id}/status", secH.UpdateIncidentStatus)
 	})
 }
 

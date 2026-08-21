@@ -19,12 +19,12 @@ yarn-debug.log*
 yarn-error.log*
 
 # Environment files
-.env
-.env.example
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+#.env
+#.env.example
+#.env.local
+#.env.development.local
+#.env.test.local
+#.env.production.local
 
 # IDE & Editor
 .vscode/
@@ -37,7 +37,7 @@ yarn-error.log*
 Thumbs.db
 
 # Internal Docs and module
-docs/
-changelog/
-graphify-out/
-.agents/
+#docs/
+#changelog/
+#graphify-out/
+#.agents/
