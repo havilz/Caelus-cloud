@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/havilz/caelus-cloud/backend/internal/domain"
+	"github.com/havilz/caelus-cloud/backend/internal/provider/custom"
 	"github.com/havilz/caelus-cloud/backend/internal/provider/mock"
 )
 
@@ -18,13 +19,14 @@ type driverFactory struct {
 	drivers map[string]domain.ProviderDriver
 }
 
-// NewDriverFactory menginisialisasi factory registri driver provider cloud dengan driver bawaan MockDriver.
+// NewDriverFactory menginisialisasi factory registri driver provider cloud dengan driver bawaan MockDriver dan CustomDriver.
 // Mengembalikan implementasi interface Factory.
 func NewDriverFactory() Factory {
 	f := &driverFactory{
 		drivers: make(map[string]domain.ProviderDriver),
 	}
 	f.RegisterDriver("mock", mock.NewMockDriver())
+	f.RegisterDriver("custom", custom.NewCustomDriver())
 	return f
 }
 

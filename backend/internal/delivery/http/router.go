@@ -76,6 +76,68 @@ func registerHealthRoutes(r *chi.Mux, cfg *config.Config) {
 			"version": "v1",
 		})
 	})
+
+	r.Get("/install.sh", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/x-shellscript; charset=utf-8")
+		w.WriteHeader(http.StatusOK)
+		script := `#!/usr/bin/env bash
+set -e
+
+echo "=== Caelus Cloud Agent Auto-Installer ==="
+
+SERVER_ID=""
+AGENT_SECRET=""
+API_ENDPOINT="http://localhost:8080"
+
+for arg in "$@"; do
+  case $arg in
+    --server-id=*) SERVER_ID="${arg#*=}" ;;
+    --secret=*) AGENT_SECRET="${arg#*=}" ;;
+    --api=*) API_ENDPOINT="${arg#*=}" ;;
+  esac
+done
+
+if [ -z "$SERVER_ID" ] || [ -z "$AGENT_SECRET" ]; then
+  echo "Error: --server-id and --secret are required."
+  exit 1
+fi
+
+echo ">> Configured for Server ID: $SERVER_ID"
+echo ">> API Endpoint: $API_ENDPOINT"
+
+sudo mkdir -p /etc/caelus /var/log/caelus /opt/caelus
+
+sudo tee /etc/caelus/agent.env > /dev/null <<EOF
+SERVER_ID=$SERVER_ID
+AGENT_SECRET=$AGENT_SECRET
+API_ENDPOINT=$API_ENDPOINT
+COLLECTION_INTERVAL_SEC=5
+LOG_LEVEL=info
+EOF
+
+sudo tee /etc/systemd/system/caelus-agent.service > /dev/null <<EOF
+[Unit]
+Description=Caelus Cloud Telemetry & Management Agent
+After=network.target
+
+[Service]
+Type=simple
+EnvironmentFile=/etc/caelus/agent.env
+ExecStart=/opt/caelus/caelus-agent
+Restart=always
+RestartSec=5s
+StandardOutput=append:/var/log/caelus/agent.log
+StandardError=append:/var/log/caelus/agent.log
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+echo ">> Caelus Agent service installed at /etc/systemd/system/caelus-agent.service"
+echo ">> You can now start the agent daemon."
+`
+		_, _ = w.Write([]byte(script))
+	})
 }
 
 // registerAPIRoutes mendaftarkan seluruh rute API v1 publik dan terproteksi ke router Chi.

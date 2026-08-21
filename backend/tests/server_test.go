@@ -51,6 +51,16 @@ func (m *mockServerRepo) ListByOrg(ctx context.Context, orgID uuid.UUID, page, l
 	return list, int64(len(list)), nil
 }
 
+func (m *mockServerRepo) ListAllRunning(ctx context.Context) ([]domain.Server, error) {
+	var list []domain.Server
+	for _, s := range m.servers {
+		if s.Status == domain.ServerStatusRunning {
+			list = append(list, *s)
+		}
+	}
+	return list, nil
+}
+
 func (m *mockServerRepo) Update(ctx context.Context, s *domain.Server) error {
 	if _, exists := m.servers[s.ID]; !exists {
 		return domain.ErrNotFound

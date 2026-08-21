@@ -15,6 +15,7 @@ import {
   Check,
   ExternalLink,
   RotateCcw,
+  Terminal,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { ServerStatusBadge } from "@/components/server/ServerStatusBadge";
 import { CreateServerModal } from "@/components/server/CreateServerModal";
 import { ResizeServerModal } from "@/components/server/ResizeServerModal";
+import { ConnectAgentModal } from "@/components/server/ConnectAgentModal";
 import { useServerStore } from "@/stores/useServerStore";
 import { Server } from "@/types/server";
 import { AppContainers, AppText } from "@/core/theme";
@@ -42,6 +44,7 @@ export default function VPSManagementPage() {
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [resizeTarget, setResizeTarget] = useState<Server | null>(null);
+  const [connectTarget, setConnectTarget] = useState<Server | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [copiedIP, setCopiedIP] = useState<string | null>(null);
@@ -100,9 +103,13 @@ export default function VPSManagementPage() {
             <span>Refresh</span>
           </Button>
 
-          <Button size="sm" onClick={() => setIsCreateOpen(true)} className="cursor-pointer">
-            <Plus className="h-3.5 w-3.5" />
-            <span>Deploy Server Baru</span>
+          <Button
+            size="sm"
+            onClick={() => setIsCreateOpen(true)}
+            className="cursor-pointer"
+          >
+            <Plus className="h-4 w-4" />
+            <span>Tambah / Hubungkan Server</span>
           </Button>
         </div>
       </div>
@@ -229,6 +236,16 @@ export default function VPSManagementPage() {
                       {/* Actions */}
                       <td className="px-5 py-4 text-right">
                         <div className="flex items-center justify-end gap-1.5">
+                          {/* Connect Agent Instructions Button */}
+                          <button
+                            type="button"
+                            onClick={() => setConnectTarget(server)}
+                            className="p-1.5 rounded-md text-emerald-400 hover:bg-emerald-950/40 border border-emerald-500/20 transition-colors cursor-pointer"
+                            title="Petunjuk Hubungkan Agent"
+                          >
+                            <Terminal className="h-3.5 w-3.5" />
+                          </button>
+
                           {/* Reboot Button */}
                           <button
                             type="button"
@@ -332,6 +349,11 @@ export default function VPSManagementPage() {
         server={resizeTarget}
         isOpen={Boolean(resizeTarget)}
         onClose={() => setResizeTarget(null)}
+      />
+      <ConnectAgentModal
+        server={connectTarget}
+        isOpen={Boolean(connectTarget)}
+        onClose={() => setConnectTarget(null)}
       />
     </div>
   );

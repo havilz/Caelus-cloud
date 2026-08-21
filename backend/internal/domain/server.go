@@ -42,6 +42,7 @@ type ServerRepository interface {
 	Create(ctx context.Context, server *Server) error
 	GetByID(ctx context.Context, id uuid.UUID) (*Server, error)
 	ListByOrg(ctx context.Context, orgID uuid.UUID, page, limit int) ([]Server, int64, error)
+	ListAllRunning(ctx context.Context) ([]Server, error)
 	Update(ctx context.Context, server *Server) error
 	UpdateStatus(ctx context.Context, id uuid.UUID, status ServerStatus) error
 	Delete(ctx context.Context, id uuid.UUID) error

@@ -141,6 +141,19 @@ func main() {
 	backupScheduler.Start(60 * time.Second)
 	defer backupScheduler.Stop()
 
+	// Background Heartbeat Liveness Watchdog (Mendeteksi server mati setelah 15s tanpa telemetri)
+	watchdog := monitoring.NewHeartbeatWatchdog(
+		serverRepo,
+		metricRepo,
+		wsHub,
+		func(ctx context.Context, event domain.SystemEvent) {
+			centralDispatcher.Publish(ctx, event)
+		},
+		15*time.Second,
+	)
+	watchdog.Start()
+	defer watchdog.Stop()
+
 	routerConfig := deliveryHttp.RouterConfig{
 		Config:     cfg,
 		JWTManager: jwtManager,

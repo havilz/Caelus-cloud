@@ -88,8 +88,34 @@ func (u *monitoringUsecase) IngestTelemetry(ctx context.Context, payload *domain
 		return fmt.Errorf("failed to persist server metric: %w", err)
 	}
 
+	needsUpdate := false
 	if server.Status != domain.ServerStatusRunning {
-		_ = u.serverRepo.UpdateStatus(ctx, server.ID, domain.ServerStatusRunning)
+		server.Status = domain.ServerStatusRunning
+		needsUpdate = true
+	}
+	if payload.Host.CPUCores > 0 && server.CPUCores != payload.Host.CPUCores {
+		server.CPUCores = payload.Host.CPUCores
+		needsUpdate = true
+	}
+	if payload.Host.MemoryTotalMB > 0 && server.MemoryMB != int(payload.Host.MemoryTotalMB) {
+		server.MemoryMB = int(payload.Host.MemoryTotalMB)
+		needsUpdate = true
+	}
+	if payload.Host.DiskTotalGB > 0 && server.DiskGB != int(payload.Host.DiskTotalGB) {
+		server.DiskGB = int(payload.Host.DiskTotalGB)
+		needsUpdate = true
+	}
+	if payload.Host.Platform != "" && server.OSType != payload.Host.Platform {
+		server.OSType = payload.Host.Platform
+		needsUpdate = true
+	}
+	if payload.Host.Hostname != "" && (server.Hostname == nil || *server.Hostname != payload.Host.Hostname) {
+		h := payload.Host.Hostname
+		server.Hostname = &h
+		needsUpdate = true
+	}
+	if needsUpdate {
+		_ = u.serverRepo.Update(ctx, server)
 	}
 
 	if u.evaluator != nil {

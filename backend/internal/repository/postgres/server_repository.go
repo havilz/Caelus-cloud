@@ -226,6 +226,51 @@ func (r *ServerRepository) UpdateStatus(ctx context.Context, id uuid.UUID, statu
 	return nil
 }
 
+// ListAllRunning mengambil seluruh data server yang berstatus running lintas organisasi untuk keperluan evaluasi liveness.
+// Parameter ctx merupakan konteks eksekusi query.
+// Mengembalikan slice []domain.Server.
+func (r *ServerRepository) ListAllRunning(ctx context.Context) ([]domain.Server, error) {
+	query := `
+		SELECT s.id, s.organization_id, s.credential_id, s.provider_id, s.external_server_id, s.name, s.hostname, s.ip_address, s.status, s.os_type, s.cpu_cores, s.memory_mb, s.disk_gb, s.region, s.created_at, s.updated_at
+		FROM servers s
+		WHERE s.status = 'running';
+	`
+
+	rows, err := r.pool.Query(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("gagal query server running: %w", err)
+	}
+	defer rows.Close()
+
+	var servers []domain.Server
+	for rows.Next() {
+		var s domain.Server
+		if err := rows.Scan(
+			&s.ID,
+			&s.OrganizationID,
+			&s.CredentialID,
+			&s.ProviderID,
+			&s.ExternalServerID,
+			&s.Name,
+			&s.Hostname,
+			&s.IPAddress,
+			&s.Status,
+			&s.OSType,
+			&s.CPUCores,
+			&s.MemoryMB,
+			&s.DiskGB,
+			&s.Region,
+			&s.CreatedAt,
+			&s.UpdatedAt,
+		); err != nil {
+			return nil, fmt.Errorf("gagal scan server: %w", err)
+		}
+		servers = append(servers, s)
+	}
+
+	return servers, nil
+}
+
 // Delete menghapus server dari tabel servers berdasarkan identifier UUID.
 // Parameter ctx merupakan konteks eksekusi query database.
 // Parameter id merupakan UUID server yang akan dihapus.

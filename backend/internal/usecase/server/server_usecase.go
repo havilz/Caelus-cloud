@@ -263,11 +263,23 @@ func validateCreateServerInput(input *CreateServerInput) error {
 	input.Region = strings.TrimSpace(input.Region)
 	input.OSType = strings.TrimSpace(input.OSType)
 
-	if input.Name == "" || input.Region == "" || input.OSType == "" || input.OrganizationID == uuid.Nil || input.ProviderID == uuid.Nil {
+	if input.Name == "" || input.OrganizationID == uuid.Nil || input.ProviderID == uuid.Nil {
 		return domain.ErrBadRequest
 	}
-	if input.CPUCores <= 0 || input.MemoryMB <= 0 || input.DiskGB <= 0 {
-		return domain.ErrBadRequest
+	if input.Region == "" {
+		input.Region = "custom"
+	}
+	if input.OSType == "" {
+		input.OSType = "auto-detect"
+	}
+	if input.CPUCores <= 0 {
+		input.CPUCores = 1
+	}
+	if input.MemoryMB <= 0 {
+		input.MemoryMB = 1024
+	}
+	if input.DiskGB <= 0 {
+		input.DiskGB = 25
 	}
 	return nil
 }
