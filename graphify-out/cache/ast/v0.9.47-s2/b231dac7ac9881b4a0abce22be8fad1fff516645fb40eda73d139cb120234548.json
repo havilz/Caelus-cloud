@@ -1,1 +1,0 @@
-{"nodes": [{"id": "$graphify-root$_backend_migrations_000006_create_automation_rules_and_logs_down_sql", "label": "000006_create_automation_rules_and_logs.down.sql", "file_type": "code", "source_file": "backend/migrations/000006_create_automation_rules_and_logs.down.sql", "source_location": null}], "edges": []}
