@@ -3,6 +3,8 @@ package http
 import (
 	"log/slog"
 	"net/http"
+	"os"
+	"path/filepath"
 
 	"github.com/go-chi/chi/v5"
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
@@ -78,6 +80,32 @@ func registerHealthRoutes(r *chi.Mux, cfg *config.Config) {
 		})
 	})
 
+	r.Get("/agent-bin", func(w http.ResponseWriter, r *http.Request) {
+		candidatePaths := []string{
+			filepath.Join("agent", "bin", "caelus-agent"),
+			filepath.Join("..", "agent", "bin", "caelus-agent"),
+			filepath.Join("..", "..", "agent", "bin", "caelus-agent"),
+			filepath.Join("/opt", "caelus", "caelus-agent"),
+		}
+
+		var targetBin string
+		for _, path := range candidatePaths {
+			if info, err := os.Stat(path); err == nil && !info.IsDir() {
+				targetBin = path
+				break
+			}
+		}
+
+		if targetBin == "" {
+			response.Error(w, http.StatusNotFound, "Binary caelus-agent belum dikompilasi pada server API (Jalankan 'make build-agent')", nil)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/octet-stream")
+		w.Header().Set("Content-Disposition", "attachment; filename=caelus-agent")
+		http.ServeFile(w, r, targetBin)
+	})
+
 	r.Get("/install.sh", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/x-shellscript; charset=utf-8")
 		w.WriteHeader(http.StatusOK)
@@ -116,6 +144,11 @@ COLLECTION_INTERVAL_SEC=5
 LOG_LEVEL=info
 EOF
 
+echo ">> Mengunduh binary daemon caelus-agent dari $API_ENDPOINT/agent-bin..."
+sudo curl -sSL "$API_ENDPOINT/agent-bin" -o /opt/caelus/caelus-agent
+sudo chmod +x /opt/caelus/caelus-agent
+sudo ln -sf /opt/caelus/caelus-agent /usr/local/bin/caelus-agent 2>/dev/null || true
+
 sudo tee /etc/systemd/system/caelus-agent.service > /dev/null <<EOF
 [Unit]
 Description=Caelus Cloud Telemetry & Management Agent
@@ -134,8 +167,16 @@ StandardError=append:/var/log/caelus/agent.log
 WantedBy=multi-user.target
 EOF
 
-echo ">> Caelus Agent service installed at /etc/systemd/system/caelus-agent.service"
-echo ">> You can now start the agent daemon."
+if command -v systemctl >/dev/null 2>&1; then
+  echo ">> Mengaktifkan dan menjalankan service systemd caelus-agent..."
+  sudo systemctl daemon-reload
+  sudo systemctl enable --now caelus-agent.service
+  echo ">> Caelus Agent berhasil terpasang dan aktif di background!"
+else
+  echo ">> Menjalankan daemon di background..."
+  nohup /opt/caelus/caelus-agent > /var/log/caelus/agent.log 2>&1 &
+  echo ">> Caelus Agent berhasil berjalan di background!"
+fi
 `
 		_, _ = w.Write([]byte(script))
 	})

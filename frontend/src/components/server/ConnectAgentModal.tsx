@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { Dialog } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Copy, Check, Terminal, ShieldCheck, RefreshCw, CheckCircle2 } from "lucide-react";
+import { Copy, Check, Terminal, RefreshCw, CheckCircle2 } from "lucide-react";
 import { AppText, AppTheme } from "@/core/theme";
 import { Server } from "@/types/server";
 
@@ -26,7 +26,6 @@ export const ConnectAgentModal: React.FC<ConnectAgentModalProps> = ({
   const agentSecret = "caelus_agent_sec_" + server.id.replace(/-/g, "").substring(0, 16);
 
   const oneLineCommand = `curl -sSL ${apiEndpoint}/install.sh | sudo bash -s -- --server-id="${server.id}" --secret="${agentSecret}" --api="${apiEndpoint}"`;
-  const manualGoCommand = `export SERVER_ID="${server.id}" AGENT_SECRET="${agentSecret}" API_ENDPOINT="${apiEndpoint}" && caelus-agent`;
 
   const handleCopy = (text: string, type: string) => {
     navigator.clipboard.writeText(text);
@@ -68,15 +67,26 @@ export const ConnectAgentModal: React.FC<ConnectAgentModalProps> = ({
           </div>
         </div>
 
-        {/* Option 1: 1-Line Script (Recommended for Ubuntu/Linux) */}
-        <div className="space-y-2">
+        {/* Mode Selector Tabs */}
+        <div className="flex border-b border-[#262626] gap-2 pt-1">
+          <button
+            type="button"
+            onClick={() => setCopiedType(null)}
+            className="pb-2 text-xs font-semibold border-b-2 border-emerald-500 text-emerald-400 flex items-center gap-1.5 cursor-pointer"
+          >
+            <Terminal className="w-3.5 h-3.5" />
+            Metode 1: Otomatis (Rekomendasi VPS)
+          </button>
+        </div>
+
+        {/* Tab Content: 1-Line Script (Recommended for Ubuntu/Linux) */}
+        <div className="space-y-3 pt-1">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Terminal className="w-4 h-4 text-emerald-400" />
-              <span className="text-xs font-semibold text-[#ededed]">1. Perintah 1-Line Auto Installer (Rekomendasi Linux / Ubuntu VPS)</span>
-            </div>
-            <span className="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded">
-              Systemd Auto-Start
+            <span className="text-xs text-[#a1a1a1]">
+              Jalankan perintah 1-baris berikut di terminal VPS Anda untuk menginstal dan menjalankan agent otomatis via <code>systemd</code>:
+            </span>
+            <span className="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded whitespace-nowrap">
+              Auto-Start Service
             </span>
           </div>
 
@@ -96,45 +106,16 @@ export const ConnectAgentModal: React.FC<ConnectAgentModalProps> = ({
               ) : (
                 <>
                   <Copy className="w-3.5 h-3.5" />
-                  <span className="text-[11px]">Salin</span>
+                  <span className="text-[11px]">Salin Perintah</span>
                 </>
               )}
             </button>
           </div>
-          <p className="text-[11px] text-[#707070]">
-            Script ini akan mengunduh binary daemon, membuat service systemd di <code>/etc/systemd/system/caelus-agent.service</code>, dan langsung mengaktifkannya.
-          </p>
-        </div>
 
-        {/* Option 2: Manual Go / Binary Run */}
-        <div className="space-y-2 pt-2 border-t border-[#202020]">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-cyan-400" />
-              <span className="text-xs font-semibold text-[#ededed]">2. Jalankan Manual via Binary / Terminal Lokal</span>
-            </div>
-          </div>
-
-          <div className="relative group">
-            <pre className="p-3 rounded-xl bg-[#0d0d0d] border border-[#222222] text-xs font-mono text-[#a1a1a1] overflow-x-auto whitespace-pre-wrap break-all select-all">
-              {manualGoCommand}
-            </pre>
-            <button
-              onClick={() => handleCopy(manualGoCommand, "manual")}
-              className="absolute top-2.5 right-2.5 px-2.5 py-1 rounded-lg bg-[#1f1f1f] hover:bg-[#2a2a2a] text-[#ededed] border border-[#333333] text-xs flex items-center gap-1.5 transition-colors cursor-pointer shadow-md"
-            >
-              {copiedType === "manual" ? (
-                <>
-                  <Check className="w-3.5 h-3.5 text-emerald-400" />
-                  <span className="text-emerald-400 text-[11px]">Tersalin!</span>
-                </>
-              ) : (
-                <>
-                  <Copy className="w-3.5 h-3.5" />
-                  <span className="text-[11px]">Salin</span>
-                </>
-              )}
-            </button>
+          <div className="p-2.5 rounded-lg bg-[#141414] border border-[#222222] text-[11px] text-[#888888] space-y-1">
+            <p className="font-semibold text-[#cccccc]">Catatan:</p>
+            <p>• Perintah di atas akan langsung menjalankan agent di latar belakang sebagai system service (tidak perlu menjalankan perintah tambahan apa pun lagi).</p>
+            <p>• Untuk mengecek status di VPS: <code>sudo systemctl status caelus-agent</code></p>
           </div>
         </div>
 
