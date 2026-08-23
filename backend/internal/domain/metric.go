@@ -83,3 +83,10 @@ type MetricRepository interface {
 	GetLatestByServerID(ctx context.Context, serverID uuid.UUID) (*ServerMetric, error)
 	GetHistoryByServerID(ctx context.Context, serverID uuid.UUID, from, to time.Time, limit int) ([]ServerMetric, error)
 }
+
+// TelemetryBroadcaster mendefinisikan kontrak pengiriman data telemetri dan status server secara realtime ke client.
+type TelemetryBroadcaster interface {
+	BroadcastToServer(serverID uuid.UUID, event string, data any)
+	BroadcastToOrg(orgID uuid.UUID, event string, data any)
+}
+

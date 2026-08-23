@@ -30,20 +30,37 @@ Konfigurasi diatur melalui variabel lingkungan (*environment variables*):
 
 ## 3. Kompilasi & Menjalankan Agent
 
-### A. Menjalankan Mode Development
+Anda dapat menjalankan atau mengompilasi agent menggunakan target **`Makefile`** dari root monorepo atau menggunakan Go CLI langsung.
+
+### A. Menggunakan Makefile (Dari Root Monorepo)
+
+| Perintah | Deskripsi |
+| :--- | :--- |
+| **`make deps-agent`** | Mengunduh dan memverifikasi dependensi Go agent |
+| **`make agent`** | Menjalankan daemon telemetri agent secara lokal |
+| **`make test-agent`** | Menjalankan seluruh suite pengujian otomatis agent |
+| **`make build-agent`** | Melakukan kompilasi binary produksi `agent/bin/caelus-agent` |
+
+### B. Menjalankan Langsung via Go CLI (Dari Direktori `agent/`)
+
+#### 1. Menjalankan Mode Development
 ```bash
+cd agent
 export SERVER_ID="11111111-2222-3333-4444-555555555555"
 export AGENT_SECRET="your_agent_secret_key"
 go run ./cmd
 ```
 
-### B. Melakukan Kompilasi Binary Produksi
+#### 2. Melakukan Kompilasi Binary Produksi
 ```bash
+cd agent
 go build -ldflags="-s -w" -o bin/caelus-agent ./cmd
 ./bin/caelus-agent
 ```
 
-### C. Menjalankan Suite Pengujian Otomatis
+#### 3. Menjalankan Suite Pengujian Otomatis
 ```bash
+cd agent
 go test -v ./tests/...
 ```
+

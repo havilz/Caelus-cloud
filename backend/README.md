@@ -9,17 +9,23 @@ Layanan Backend RESTful API untuk platform **Caelus Cloud** yang dibangun menggu
 ```text
 backend/
 ├── cmd/
-│   ├── api/          # Entry point aplikasi HTTP API server
-│   └── migrate/      # Standalone CLI tool untuk migrasi skema database
+│   ├── api/          # Entry point aplikasi HTTP API server (make api)
+│   ├── migrate/      # Standalone CLI tool untuk migrasi skema PostgreSQL (make migrate-up)
+│   └── worker/       # Background worker, task queue, & cron scheduler (make worker)
 ├── internal/
-│   ├── delivery/
-│   │   └── http/     # HTTP router, middleware (auth, rbac, audit, cors, logger), dan v1 handlers
+│   ├── delivery/     # HTTP router, middleware (auth, rbac, audit, cors, logger), v1 handlers, WS/SSE Hub
 │   ├── domain/       # Entitas bisnis murni, interface kontrak, dan error types
-│   ├── provider/     # Implementasi driver cloud (MockDriver) dan Driver Factory
-│   ├── repository/   # PostgreSQL repository implementations (User, Org, Server, Provider, Credential, Audit)
-│   └── usecase/      # Interactor logika bisnis (Auth, Server, Credential)
+│   ├── provider/     # Implementasi multi-cloud drivers (AWS, Hetzner, DO, Contabo, Mock) & Sync Engine
+│   ├── iac/          # Parser manifest YAML, Plan engine, dan Apply rollback engine
+│   ├── orchestration/# Docker container deployment pipeline & streaming log emitter
+│   ├── storage/      # Adapter S3-compatible (MinIO, AWS S3, Cloudflare R2)
+│   ├── sentinel/     # Subsistem Sentinel Security (Scanner workers, Normalizer, Risk Engine)
+│   ├── automation/   # Central event dispatcher & Rule engine
+│   ├── queue/        # Distributed task queue engine (Redis)
+│   ├── repository/   # PostgreSQL repository implementations dengan Row Level Security (RLS)
+│   └── usecase/      # Interactor logika bisnis seluruh domain
 ├── pkg/              # Paket pembantu (config, hasher, jwt, encryptor, logger, validator, response)
-├── migrations/       # Berkas DDL SQL migrasi (000001, 000002, 000003)
+├── migrations/       # Berkas DDL SQL migrasi (000001 hingga 000008)
 └── tests/            # Test suite terpusat (Unit & Integration tests)
 ```
 
@@ -61,28 +67,50 @@ ENCRYPTION_KEY=super_secret_encryption_key_32_bytes!
 
 ## 3. Cara Menjalankan Aplikasi
 
-### A. Menjalankan Migrasi Skema Basis Data
-```powershell
+Anda dapat menjalankan backend service dengan cepat menggunakan perintah **`Makefile`** dari root direktori proyek, atau menjalankan perintah `go` secara langsung.
+
+### A. Menggunakan Makefile (Direkomendasikan dari Root Monorepo)
+
+| Perintah | Deskripsi |
+| :--- | :--- |
+| **`make deps-backend`** | Mengunduh dan memverifikasi modul dependensi Go backend |
+| **`make infra-up`** | Menjalankan infrastruktur lokal (PostgreSQL, Redis, MinIO) via Docker |
+| **`make migrate-up`** | Menjalankan migrasi basis data pending ke versi terbaru (*Up*) |
+| **`make api`** | Menjalankan Backend REST API Server pada `http://localhost:8080` |
+| **`make worker`** | Menjalankan Asynchronous Background Worker & Task Scheduler |
+| **`make test-backend`** | Menjalankan seluruh test suite unit & integrasi backend |
+| **`make build-backend`** | Melakukan kompilasi binary produksi `backend/bin/api` |
+
+### B. Menjalankan Langsung via Go CLI (Dari Direktori `backend/`)
+
+#### 1. Menjalankan Migrasi Skema Basis Data
+```bash
 cd backend
-go run ./cmd/migrate -direction=up
+go run cmd/migrate/main.go -direction=up
 ```
 
-### B. Menjalankan Server API (Development Mode)
-```powershell
+#### 2. Menjalankan Server API (Development Mode)
+```bash
 cd backend
-go run ./cmd/api
+go run cmd/api/main.go
 ```
 
-### C. Melakukan Kompilasi dan Menjalankan Binary
-```powershell
+#### 3. Menjalankan Background Worker & Task Scheduler
+```bash
 cd backend
-go build -o bin/api.exe ./cmd/api
-.\bin\api.exe
+go run cmd/worker/main.go
 ```
 
-### D. Menjalankan Pengujian Otomatis (Test Suite)
+#### 4. Melakukan Kompilasi dan Menjalankan Binary Produksi
+```bash
+cd backend
+go build -ldflags="-s -w" -o bin/caelus-api cmd/api/main.go
+./bin/caelus-api
+```
+
+#### 5. Menjalankan Pengujian Otomatis (Test Suite)
 Seluruh pengujian unit dan integrasi tersimpan terpusat di direktori `tests/`:
-```powershell
+```bash
 cd backend
 go test -v ./tests/...
 ```
@@ -431,6 +459,109 @@ curl -X POST http://localhost:8080/api/v1/credentials/55555555-5555-5555-5555-55
 
 ---
 
+### 4.5. Endpoint Declarative Infrastructure as Code (IaC)
+
+#### `POST /api/v1/iac/validate`
+Memvalidasi sintaks dan skema semantik manifest YAML deklaratif sebelum disimpan.
+```bash
+curl -X POST http://localhost:8080/api/v1/iac/validate \
+  -H "Authorization: Bearer <ACCESS_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "raw_yaml": "version: \"1.0\"\nresources:\n  servers:\n    - name: api-prod\n      provider: aws\n      region: us-east-1\n      instance_type: t3.micro"
+  }'
+```
+
+#### `POST /api/v1/iac/configurations`
+Membuat atau mendaftarkan konfigurasi manifest IaC baru.
+```bash
+curl -X POST http://localhost:8080/api/v1/iac/configurations \
+  -H "Authorization: Bearer <ACCESS_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Production Infrastructure",
+    "raw_yaml": "version: \"1.0\"\nresources:\n  servers:\n    - name: web-node\n      provider: digitalocean\n      region: sgp1\n      instance_type: s-1vcpu-1gb"
+  }'
+```
+
+#### `GET /api/v1/iac/configurations`
+Mengambil seluruh daftar konfigurasi manifest IaC milik organisasi.
+
+#### `POST /api/v1/iac/configurations/{id}/plan`
+Mengomputasi rencana perubahan (*Plan*) dengan membandingkan Desired State vs Actual State.
+```bash
+curl -X POST http://localhost:8080/api/v1/iac/configurations/33333333-3333-3333-3333-333333333333/plan \
+  -H "Authorization: Bearer <ACCESS_TOKEN>"
+```
+
+#### `POST /api/v1/iac/configurations/{id}/apply`
+Mengeksekusi rencana IaC yang telah dibuat dengan garansi LIFO rollback jika terjadi kegagalan.
+```bash
+curl -X POST http://localhost:8080/api/v1/iac/configurations/33333333-3333-3333-3333-333333333333/apply \
+  -H "Authorization: Bearer <ACCESS_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "plan_id": "44444444-4444-4444-4444-444444444444"
+  }'
+```
+
+#### `POST /api/v1/iac/configurations/{id}/rollback`
+Mengembalikan infrastruktur ke versi snapshot state sebelumnya.
+```bash
+curl -X POST http://localhost:8080/api/v1/iac/configurations/33333333-3333-3333-3333-333333333333/rollback \
+  -H "Authorization: Bearer <ACCESS_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "target_version": 1
+  }'
+```
+
+#### `GET /api/v1/iac/configurations/{id}/states`
+Mengambil riwayat snapshot state versi terdahulu berserta checksum integritas SHA-256.
+
+---
+
+### 4.6. Endpoint Container Orchestration & Live Stream Logs
+
+#### `POST /api/v1/deployments`
+Mendistribusikan dan meluncurkan kontainer Docker baru ke host target.
+```bash
+curl -X POST http://localhost:8080/api/v1/deployments \
+  -H "Authorization: Bearer <ACCESS_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "app_name": "web-nginx",
+    "image_tag": "nginx:alpine",
+    "container_name": "caelus-web-nginx",
+    "port_bindings": [{"host_port": 80, "container_port": 80, "protocol": "tcp"}],
+    "environment_variables": {"NODE_ENV": "production"}
+  }'
+```
+
+#### `GET /api/v1/deployments`
+Mengambil daftar kontainer dan deployment aktif.
+
+#### `GET /api/v1/deployments/{id}`
+Mengambil detail dan status terkini spesifik deployment kontainer.
+
+#### `GET /api/v1/deployments/{id}/logs`
+Mengambil histori log deployment (stdout, stderr, system) dari database.
+
+#### `GET /api/v1/deployments/{id}/logs/stream`
+Endpoint live streaming Server-Sent Events (SSE) untuk konsol terminal frontend.
+```bash
+curl -N http://localhost:8080/api/v1/deployments/55555555-5555-5555-5555-555555555555/logs/stream \
+  -H "Authorization: Bearer <ACCESS_TOKEN>"
+```
+
+#### `POST /api/v1/deployments/{id}/stop`
+Menghentikan kontainer yang sedang berjalan.
+
+#### `POST /api/v1/deployments/{id}/rollback`
+Mengembalikan deployment ke image tag versi sebelumnya.
+
+---
+
 ## 5. Keamanan & Proteksi Kredensial Sensitif (Encrypted at Rest)
 
 Caelus Cloud menerapkan standar keamanan data tingkat perbankan dan enterprise untuk melindungi seluruh informasi sensitif pengguna:
@@ -454,5 +585,7 @@ Caelus Cloud menerapkan standar keamanan data tingkat perbankan dan enterprise u
 
 1. **Heartbeat Liveness Watchdog**: Memantau detak jantung telemetri agent setiap 15 detik. Mengubah status server menjadi `stopped` jika tidak ada telemetri yang diterima.
 2. **Multi-Provider Sync Engine (`provSync.SyncEngine`)**: Melakukan rekonsiliasi otomatis setiap 60 detik antara status instance di cloud provider eksternal (AWS, Hetzner, DigitalOcean, Contabo) dengan basis data lokal Caelus. Memperbarui IP publik dan status daya secara otomatis jika terjadi perubahan dari konsol cloud pihak ketiga.
-3. **Backup Scheduler**: Mengevaluasi kebijakan snapshot dan backup server secara periodik.
+3. **Docker Deployment Pipeline**: Mengeksekusi pipeline container asynchronous (Pull -> Validate -> Configure -> Start -> Healthcheck) dan menyiarkan log realtime.
+4. **Backup Scheduler & Retention Cleaner**: Mengevaluasi kebijakan snapshot dan backup server secara periodik serta membersihkan backup kadaluarsa.
+
 

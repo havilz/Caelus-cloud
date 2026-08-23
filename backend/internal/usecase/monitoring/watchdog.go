@@ -6,16 +6,15 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/havilz/caelus-cloud/backend/internal/delivery/ws"
 	"github.com/havilz/caelus-cloud/backend/internal/domain"
 	"github.com/havilz/caelus-cloud/backend/pkg/logger"
 )
 
 // HeartbeatWatchdog memantau liveness dan detak jantung (heartbeat) telemetri seluruh instance server.
 type HeartbeatWatchdog struct {
-	serverRepo     domain.ServerRepository
-	metricRepo     domain.MetricRepository
-	wsHub          *ws.Hub
+	serverRepo    domain.ServerRepository
+	metricRepo    domain.MetricRepository
+	broadcaster   domain.TelemetryBroadcaster
 	eventEmitter   func(ctx context.Context, event domain.SystemEvent)
 	timeout        time.Duration
 	checkInterval  time.Duration
@@ -34,7 +33,7 @@ type HeartbeatWatchdog struct {
 func NewHeartbeatWatchdog(
 	serverRepo domain.ServerRepository,
 	metricRepo domain.MetricRepository,
-	wsHub *ws.Hub,
+	broadcaster domain.TelemetryBroadcaster,
 	eventEmitter func(ctx context.Context, event domain.SystemEvent),
 	timeout time.Duration,
 ) *HeartbeatWatchdog {
@@ -44,7 +43,7 @@ func NewHeartbeatWatchdog(
 	return &HeartbeatWatchdog{
 		serverRepo:    serverRepo,
 		metricRepo:    metricRepo,
-		wsHub:         wsHub,
+		broadcaster:   broadcaster,
 		eventEmitter:  eventEmitter,
 		timeout:       timeout,
 		checkInterval: 10 * time.Second,
@@ -134,8 +133,8 @@ func (w *HeartbeatWatchdog) evaluateHeartbeats() {
 			}
 
 			// Broadcast realtime event ke frontend via WebSocket
-			if w.wsHub != nil {
-				w.wsHub.BroadcastToOrg(srv.OrganizationID, "server.status_changed", map[string]any{
+			if w.broadcaster != nil {
+				w.broadcaster.BroadcastToOrg(srv.OrganizationID, "server.status_changed", map[string]any{
 					"server_id":   srv.ID,
 					"old_status":  "running",
 					"new_status":  "stopped",

@@ -18,6 +18,7 @@ import {
   Settings,
   ChevronDown,
   Cloud,
+  Code2,
 } from "lucide-react";
 import { AppText } from "@/core/theme";
 
@@ -46,6 +47,7 @@ const navItems: readonly NavItem[] = [
     children: [
       { name: "VPS & Servers", href: "/infrastructure/vps", icon: Server },
       { name: "Cloud Providers", href: "/infrastructure/providers", icon: Cloud },
+      { name: "Declarative IaC", href: "/infrastructure/iac", icon: Code2 },
       { name: "Containers", href: "/infrastructure/containers", icon: Box },
       { name: "Networks", href: "/infrastructure/networks", icon: Network },
       { name: "Volumes", href: "/infrastructure/volumes", icon: HardDrive },

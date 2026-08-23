@@ -75,22 +75,27 @@ export function useRealtimeTelemetry({
         }
       };
 
-      ws.onclose = () => {
-        setIsConnected(false);
-        // Jadwalkan rekoneksi otomatis setelah 3 detik
-        reconnectTimeoutRef.current = setTimeout(() => {
-          connect();
-        }, 3000);
-      };
-
-      ws.onerror = () => {
-        setIsConnected(false);
-        ws.close();
-      };
-    } catch {
+    ws.onclose = () => {
       setIsConnected(false);
-    }
-  }, [accessToken, serverId, orgId, onMetricUpdate, onAlert]);
+      // Jadwalkan rekoneksi otomatis setelah 3 detik
+      reconnectTimeoutRef.current = setTimeout(() => {
+        connectRef.current?.();
+      }, 3000);
+    };
+
+    ws.onerror = () => {
+      setIsConnected(false);
+      ws.close();
+    };
+  } catch {
+    setIsConnected(false);
+  }
+}, [accessToken, serverId, orgId, onMetricUpdate, onAlert]);
+
+const connectRef = useRef<() => void>(connect);
+useEffect(() => {
+  connectRef.current = connect;
+}, [connect]);
 
   useEffect(() => {
     connect();

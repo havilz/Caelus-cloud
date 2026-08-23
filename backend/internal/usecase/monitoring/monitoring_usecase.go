@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/havilz/caelus-cloud/backend/internal/delivery/ws"
 	"github.com/havilz/caelus-cloud/backend/internal/domain"
 )
 
@@ -25,13 +24,13 @@ type MonitoringUsecase interface {
 }
 
 type monitoringUsecase struct {
-	metricRepo     domain.MetricRepository
-	alertRepo      domain.AlertRepository
-	serverRepo     domain.ServerRepository
-	evaluator      *AlertEvaluator
-	wsHub          *ws.Hub
-	promAdapter    domain.MetricsQueryAdapter
-	lokiAdapter    domain.LogQueryAdapter
+	metricRepo  domain.MetricRepository
+	alertRepo   domain.AlertRepository
+	serverRepo  domain.ServerRepository
+	evaluator   *AlertEvaluator
+	broadcaster domain.TelemetryBroadcaster
+	promAdapter domain.MetricsQueryAdapter
+	lokiAdapter domain.LogQueryAdapter
 }
 
 // NewMonitoringUsecase membuat instance baru implementasi MonitoringUsecase.
@@ -40,7 +39,7 @@ func NewMonitoringUsecase(
 	alertRepo domain.AlertRepository,
 	serverRepo domain.ServerRepository,
 	evaluator *AlertEvaluator,
-	wsHub *ws.Hub,
+	broadcaster domain.TelemetryBroadcaster,
 	promAdapter domain.MetricsQueryAdapter,
 	lokiAdapter domain.LogQueryAdapter,
 ) MonitoringUsecase {
@@ -49,7 +48,7 @@ func NewMonitoringUsecase(
 		alertRepo:   alertRepo,
 		serverRepo:  serverRepo,
 		evaluator:   evaluator,
-		wsHub:       wsHub,
+		broadcaster: broadcaster,
 		promAdapter: promAdapter,
 		lokiAdapter: lokiAdapter,
 	}
@@ -122,9 +121,9 @@ func (u *monitoringUsecase) IngestTelemetry(ctx context.Context, payload *domain
 		_ = u.evaluator.EvaluateMetrics(ctx, server, metric)
 	}
 
-	if u.wsHub != nil {
-		u.wsHub.BroadcastToServer(server.ID, "metrics.updated", metric)
-		u.wsHub.BroadcastToOrg(server.OrganizationID, "server.telemetry", map[string]any{
+	if u.broadcaster != nil {
+		u.broadcaster.BroadcastToServer(server.ID, "metrics.updated", metric)
+		u.broadcaster.BroadcastToOrg(server.OrganizationID, "server.telemetry", map[string]any{
 			"server_id":   server.ID,
 			"cpu_pct":     metric.CPUUsagePct,
 			"mem_pct":     metric.MemoryUsagePct,

@@ -28,7 +28,9 @@ import (
 	"github.com/havilz/caelus-cloud/backend/internal/usecase/auth"
 	automationUsecase "github.com/havilz/caelus-cloud/backend/internal/usecase/automation"
 	backupUsecase "github.com/havilz/caelus-cloud/backend/internal/usecase/backup"
+	iacUsecase "github.com/havilz/caelus-cloud/backend/internal/usecase/iac"
 	"github.com/havilz/caelus-cloud/backend/internal/usecase/monitoring"
+	orchestrationUsecase "github.com/havilz/caelus-cloud/backend/internal/usecase/orchestration"
 	provUsecase "github.com/havilz/caelus-cloud/backend/internal/usecase/provider"
 	securityUsecase "github.com/havilz/caelus-cloud/backend/internal/usecase/security"
 	"github.com/havilz/caelus-cloud/backend/internal/usecase/server"
@@ -177,6 +179,12 @@ func main() {
 	})
 	securityUc := securityUsecase.NewSecurityUsecase(securityRepo, serverRepo, metricRepo, sentinelOrchestrator)
 
+	// Inisialisasi Repositori dan Usecase IaC & Orkestrasi Deployment
+	iacRepo := postgres.NewIaCRepository(client.Pool)
+	deploymentRepo := postgres.NewDeploymentRepository(client.Pool)
+	iacUc := iacUsecase.NewUseCase(iacRepo)
+	deploymentUc := orchestrationUsecase.NewUseCase(deploymentRepo, wsHub)
+
 	routerConfig := deliveryHttp.RouterConfig{
 		Config:     cfg,
 		JWTManager: jwtManager,
@@ -193,6 +201,8 @@ func main() {
 			BackupHandler:     v1.NewBackupHandler(backupUc),
 			AutomationHandler: v1.NewAutomationHandler(automationUc),
 			SecurityHandler:   v1.NewSecurityHandler(securityUc),
+			IaCHandler:        v1.NewIaCHandler(iacUc),
+			DeploymentHandler: v1.NewDeploymentHandler(deploymentUc),
 			WSHandler:         ws.NewHandler(wsHub, jwtManager),
 		},
 	}

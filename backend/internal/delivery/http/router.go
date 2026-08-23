@@ -28,6 +28,8 @@ type Handlers struct {
 	BackupHandler     *v1.BackupHandler
 	AutomationHandler *v1.AutomationHandler
 	SecurityHandler   *v1.SecurityHandler
+	IaCHandler        *v1.IaCHandler
+	DeploymentHandler *v1.DeploymentHandler
 	WSHandler         *ws.Handler
 }
 
@@ -113,85 +115,74 @@ func registerHealthRoutes(r *chi.Mux, cfg *config.Config) {
 		script := `#!/usr/bin/env bash
 set -e
 
-echo "=== Caelus Cloud Agent Auto-Installer ==="
-
 SERVER_ID=""
 AGENT_SECRET=""
 API_ENDPOINT="http://localhost:8080"
 
-for arg in "$@"; do
-  case $arg in
-    --server-id=*) SERVER_ID="${arg#*=}" ;;
-    --secret=*) AGENT_SECRET="${arg#*=}" ;;
-    --api=*) API_ENDPOINT="${arg#*=}" ;;
-  esac
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        --server-id) SERVER_ID="$2"; shift ;;
+        --secret) AGENT_SECRET="$2"; shift ;;
+        --endpoint) API_ENDPOINT="$2"; shift ;;
+        *) echo "Unknown parameter: $1"; exit 1 ;;
+    esac
+    shift
 done
 
 if [ -z "$SERVER_ID" ] || [ -z "$AGENT_SECRET" ]; then
-  echo "Error: --server-id and --secret are required."
-  exit 1
+    echo "Usage: curl -sSL https://caelus.cloud/install.sh | bash -s -- --server-id <ID> --secret <SECRET> [--endpoint <URL>]"
+    exit 1
 fi
 
-echo ">> Configured for Server ID: $SERVER_ID"
-echo ">> API Endpoint: $API_ENDPOINT"
+INSTALL_DIR="/opt/caelus"
+mkdir -p "$INSTALL_DIR"
 
-sudo mkdir -p /etc/caelus /var/log/caelus /opt/caelus
+echo "-> Mengunduh binary agent..."
+curl -sSL "$API_ENDPOINT/agent-bin" -o "$INSTALL_DIR/caelus-agent"
+chmod +x "$INSTALL_DIR/caelus-agent"
 
-sudo tee /etc/caelus/agent.env > /dev/null <<EOF
-SERVER_ID=$SERVER_ID
-AGENT_SECRET=$AGENT_SECRET
-API_ENDPOINT=$API_ENDPOINT
-COLLECTION_INTERVAL_SEC=5
-LOG_LEVEL=info
+echo "-> Membuat konfigurasi agent..."
+cat <<EOF > "$INSTALL_DIR/agent.env"
+CAELUS_SERVER_ID=$SERVER_ID
+CAELUS_AGENT_SECRET=$AGENT_SECRET
+CAELUS_API_ENDPOINT=$API_ENDPOINT
+CAELUS_INTERVAL=5s
 EOF
 
-echo ">> Mengunduh binary daemon caelus-agent dari $API_ENDPOINT/agent-bin..."
-sudo curl -sSL "$API_ENDPOINT/agent-bin" -o /opt/caelus/caelus-agent
-sudo chmod +x /opt/caelus/caelus-agent
-sudo ln -sf /opt/caelus/caelus-agent /usr/local/bin/caelus-agent 2>/dev/null || true
-
-sudo tee /etc/systemd/system/caelus-agent.service > /dev/null <<EOF
+echo "-> Mendaftarkan service systemd..."
+cat <<EOF > /etc/systemd/system/caelus-agent.service
 [Unit]
-Description=Caelus Cloud Telemetry & Management Agent
+Description=Caelus Cloud Monitoring & Telemetry Agent
 After=network.target
 
 [Service]
 Type=simple
-EnvironmentFile=/etc/caelus/agent.env
-ExecStart=/opt/caelus/caelus-agent
+EnvironmentFile=$INSTALL_DIR/agent.env
+ExecStart=$INSTALL_DIR/caelus-agent
 Restart=always
 RestartSec=5s
-StandardOutput=append:/var/log/caelus/agent.log
-StandardError=append:/var/log/caelus/agent.log
 
 [Install]
 WantedBy=multi-user.target
 EOF
 
-if command -v systemctl >/dev/null 2>&1; then
-  echo ">> Mengaktifkan dan menjalankan service systemd caelus-agent..."
-  sudo systemctl daemon-reload
-  sudo systemctl enable --now caelus-agent.service
-  echo ">> Caelus Agent berhasil terpasang dan aktif di background!"
-else
-  echo ">> Menjalankan daemon di background..."
-  nohup /opt/caelus/caelus-agent > /var/log/caelus/agent.log 2>&1 &
-  echo ">> Caelus Agent berhasil berjalan di background!"
-fi
+systemctl daemon-reload
+systemctl enable caelus-agent
+systemctl restart caelus-agent
+
+echo "=== Caelus Cloud Agent Berhasil Diinstal dan Berjalan! ==="
 `
 		_, _ = w.Write([]byte(script))
 	})
 }
 
-// registerAPIRoutes mendaftarkan seluruh rute API v1 publik dan terproteksi ke router Chi.
+// registerAPIRoutes mendaftarkan seluruh rute prefix /api/v1 (Auth, Server, Metrics, Providers, Alerts, Storage, Backup, Automation, Security, IaC, Deployments).
 func registerAPIRoutes(r *chi.Mux, rc RouterConfig) {
 	r.Route("/api/v1", func(apiRouter chi.Router) {
 		if rc.Handlers.AuthHandler != nil {
-			apiRouter.Route("/auth", func(authRouter chi.Router) {
-				authRouter.Post("/register", rc.Handlers.AuthHandler.Register)
-				authRouter.Post("/login", rc.Handlers.AuthHandler.Login)
-				authRouter.Post("/refresh", rc.Handlers.AuthHandler.RefreshToken)
-			})
+			apiRouter.Post("/auth/register", rc.Handlers.AuthHandler.Register)
+			apiRouter.Post("/auth/login", rc.Handlers.AuthHandler.Login)
+			apiRouter.Post("/auth/refresh", rc.Handlers.AuthHandler.RefreshToken)
 		}
 
 		if rc.Handlers.ProviderHandler != nil {
@@ -241,8 +232,46 @@ func registerAPIRoutes(r *chi.Mux, rc RouterConfig) {
 				if rc.Handlers.SecurityHandler != nil {
 					registerSecurityRoutes(protectedRouter, rc.Handlers.SecurityHandler)
 				}
+
+				if rc.Handlers.IaCHandler != nil {
+					registerIaCRoutes(protectedRouter, rc.Handlers.IaCHandler)
+				}
+
+				if rc.Handlers.DeploymentHandler != nil {
+					registerDeploymentRoutes(protectedRouter, rc.Handlers.DeploymentHandler)
+				}
 			})
 		}
+	})
+}
+
+// registerIaCRoutes mendaftarkan rute endpoint Declarative Infrastructure as Code.
+func registerIaCRoutes(r chi.Router, iacH *v1.IaCHandler) {
+	r.Route("/iac", func(iacRouter chi.Router) {
+		iacRouter.Post("/validate", iacH.ValidateYAML)
+		iacRouter.Get("/configs", iacH.ListConfigs)
+		iacRouter.Post("/configs", iacH.CreateConfig)
+		iacRouter.Get("/configs/{id}", iacH.GetConfig)
+		iacRouter.Put("/configs/{id}", iacH.UpdateConfig)
+		iacRouter.Delete("/configs/{id}", iacH.DeleteConfig)
+		iacRouter.Post("/configs/{id}/plan", iacH.GeneratePlan)
+		iacRouter.Get("/configs/{id}/plan", iacH.GetLatestPlan)
+		iacRouter.Post("/plans/{id}/apply", iacH.ApplyPlan)
+		iacRouter.Post("/configs/{id}/rollback", iacH.RollbackState)
+		iacRouter.Get("/configs/{id}/states", iacH.ListStates)
+	})
+}
+
+// registerDeploymentRoutes mendaftarkan rute endpoint Container Deployment & Orchestration.
+func registerDeploymentRoutes(r chi.Router, depH *v1.DeploymentHandler) {
+	r.Route("/deployments", func(depRouter chi.Router) {
+		depRouter.Post("/", depH.CreateDeployment)
+		depRouter.Get("/", depH.ListDeployments)
+		depRouter.Get("/{id}", depH.GetDeployment)
+		depRouter.Get("/{id}/logs", depH.GetLogs)
+		depRouter.Get("/{id}/logs/stream", depH.StreamLogsSSE)
+		depRouter.Post("/{id}/stop", depH.StopDeployment)
+		depRouter.Post("/{id}/rollback", depH.RollbackDeployment)
 	})
 }
 

@@ -170,6 +170,21 @@ func (h *Hub) BroadcastToOrg(orgID uuid.UUID, event string, data any) {
 	}
 }
 
+// BroadcastDeployment mengirimkan event deployment ke client yang mendengarkan deployment tertentu.
+func (h *Hub) BroadcastDeployment(deploymentID uuid.UUID, event string, data any) {
+	topic := fmt.Sprintf("deployment:%s", deploymentID)
+	h.broadcast <- &EventMessage{
+		Topic: topic,
+		Event: event,
+		Data:  data,
+	}
+}
+
+// BroadcastDeploymentLog mengirimkan baris log deployment secara realtime.
+func (h *Hub) BroadcastDeploymentLog(deploymentID uuid.UUID, log any) {
+	h.BroadcastDeployment(deploymentID, "deployment.log", log)
+}
+
 // LogActiveClients mencatat jumlah koneksi aktif untuk keperluan pemantauan.
 func (h *Hub) LogActiveClients(logger *slog.Logger) {
 	h.mu.RLock()
@@ -178,3 +193,4 @@ func (h *Hub) LogActiveClients(logger *slog.Logger) {
 		logger.Debug("active real-time stream connections", "total_clients", len(h.clients))
 	}
 }
+

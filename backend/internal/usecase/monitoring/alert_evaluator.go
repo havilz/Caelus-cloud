@@ -6,21 +6,20 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/havilz/caelus-cloud/backend/internal/delivery/ws"
 	"github.com/havilz/caelus-cloud/backend/internal/domain"
 )
 
 // AlertEvaluator mengevaluasi metrik server terhadap aturan ambang batas (threshold rules).
 type AlertEvaluator struct {
-	alertRepo domain.AlertRepository
-	wsHub     *ws.Hub
+	alertRepo   domain.AlertRepository
+	broadcaster domain.TelemetryBroadcaster
 }
 
 // NewAlertEvaluator membuat instance baru evaluator ambang batas alert.
-func NewAlertEvaluator(alertRepo domain.AlertRepository, wsHub *ws.Hub) *AlertEvaluator {
+func NewAlertEvaluator(alertRepo domain.AlertRepository, broadcaster domain.TelemetryBroadcaster) *AlertEvaluator {
 	return &AlertEvaluator{
-		alertRepo: alertRepo,
-		wsHub:     wsHub,
+		alertRepo:   alertRepo,
+		broadcaster: broadcaster,
 	}
 }
 
@@ -105,9 +104,9 @@ func (e *AlertEvaluator) triggerAlert(ctx context.Context, server *domain.Server
 		return err
 	}
 
-	if e.wsHub != nil {
-		e.wsHub.BroadcastToOrg(server.OrganizationID, "alert.created", alert)
-		e.wsHub.BroadcastToServer(server.ID, "alert.created", alert)
+	if e.broadcaster != nil {
+		e.broadcaster.BroadcastToOrg(server.OrganizationID, "alert.created", alert)
+		e.broadcaster.BroadcastToServer(server.ID, "alert.created", alert)
 	}
 
 	return nil
