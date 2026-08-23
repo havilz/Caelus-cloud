@@ -45,6 +45,7 @@ const navItems: readonly NavItem[] = [
     icon: Server,
     children: [
       { name: "VPS & Servers", href: "/infrastructure/vps", icon: Server },
+      { name: "Cloud Providers", href: "/infrastructure/providers", icon: Cloud },
       { name: "Containers", href: "/infrastructure/containers", icon: Box },
       { name: "Networks", href: "/infrastructure/networks", icon: Network },
       { name: "Volumes", href: "/infrastructure/volumes", icon: HardDrive },

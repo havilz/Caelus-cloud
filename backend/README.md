@@ -327,3 +327,132 @@ Menterminasi instance dari provider cloud dan menghapus rekaman server dari sist
 curl -X DELETE http://localhost:8080/api/v1/servers/33333333-3333-3333-3333-333333333333 \
   -H "Authorization: Bearer <ACCESS_TOKEN>"
 ```
+
+---
+
+### 4.5. Modul Kredensial Multi-Provider Cloud (Protected)
+
+Semua endpoint kredensial membutuhkan header otorisasi JWT Bearer:
+`Authorization: Bearer <ACCESS_TOKEN>`
+
+#### `GET /api/v1/credentials`
+Mengambil daftar seluruh kredensial provider cloud milik organisasi pengguna (secret key di-mask secara aman).
+```bash
+curl -X GET http://localhost:8080/api/v1/credentials \
+  -H "Authorization: Bearer <ACCESS_TOKEN>"
+```
+**Respon Sukses (200 OK):**
+```json
+{
+  "success": true,
+  "message": "Daftar kredensial provider berhasil diambil",
+  "data": [
+    {
+      "id": "55555555-5555-5555-5555-555555555555",
+      "organization_id": "22222222-2222-2222-2222-222222222222",
+      "provider_id": "a1b2c3d4-0000-0000-0000-000000000002",
+      "name": "Production AWS Account",
+      "metadata": {
+        "region": "us-east-1"
+      },
+      "created_at": "2026-08-23T00:00:00Z",
+      "updated_at": "2026-08-23T00:00:00Z",
+      "provider": {
+        "id": "a1b2c3d4-0000-0000-0000-000000000002",
+        "name": "Amazon Web Services",
+        "slug": "aws",
+        "is_active": true
+      }
+    }
+  ]
+}
+```
+
+#### `POST /api/v1/credentials`
+Menyimpan kredensial provider baru dengan enkripsi otomatis AES-256-GCM pada seluruh field rahasia.
+```bash
+curl -X POST http://localhost:8080/api/v1/credentials \
+  -H "Authorization: Bearer <ACCESS_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "provider_id": "a1b2c3d4-0000-0000-0000-000000000002",
+    "name": "Production AWS Account",
+    "api_key": "AKIAIOSFODNN7EXAMPLE",
+    "api_secret": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+    "metadata": {
+      "region": "us-east-1"
+    }
+  }'
+```
+
+#### `GET /api/v1/credentials/{id}`
+Mengambil detail informasi dan metadata kredensial provider berdasarkan UUID.
+```bash
+curl -X GET http://localhost:8080/api/v1/credentials/55555555-5555-5555-5555-555555555555 \
+  -H "Authorization: Bearer <ACCESS_TOKEN>"
+```
+
+#### `PUT /api/v1/credentials/{id}`
+Memperbarui nama alias, region metadata, atau mengganti secret key kredensial.
+```bash
+curl -X PUT http://localhost:8080/api/v1/credentials/55555555-5555-5555-5555-555555555555 \
+  -H "Authorization: Bearer <ACCESS_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Updated AWS Account Name"
+  }'
+```
+
+#### `DELETE /api/v1/credentials/{id}`
+Menghapus rekaman kredensial provider dari database.
+```bash
+curl -X DELETE http://localhost:8080/api/v1/credentials/55555555-5555-5555-5555-555555555555 \
+  -H "Authorization: Bearer <ACCESS_TOKEN>"
+```
+
+#### `POST /api/v1/credentials/{id}/test`
+Menguji validitas dan konektivitas kredensial secara langsung ke API provider cloud terkait.
+```bash
+curl -X POST http://localhost:8080/api/v1/credentials/55555555-5555-5555-5555-555555555555/test \
+  -H "Authorization: Bearer <ACCESS_TOKEN>"
+```
+**Respon Sukses (200 OK):**
+```json
+{
+  "success": true,
+  "message": "Koneksi ke cloud provider berhasil diverifikasi",
+  "data": {
+    "provider": "aws",
+    "status": "connected",
+    "server_count": 3
+  }
+}
+```
+
+---
+
+## 5. Keamanan & Proteksi Kredensial Sensitif (Encrypted at Rest)
+
+Caelus Cloud menerapkan standar keamanan data tingkat perbankan dan enterprise untuk melindungi seluruh informasi sensitif pengguna:
+
+### 5.1. Enkripsi AES-256-GCM (Encrypted at Rest)
+* **Kunci API & Secret Key**: Seluruh field kredensial (seperti `api_key`, `api_secret`, dan `ssh_key`) tidak pernah disimpan dalam bentuk teks biasa (*plain text*) di dalam basis data PostgreSQL.
+* **Algoritma Militer**: Menggunakan kriptografi autentikasi simetris **AES-256-GCM** (*Galois/Counter Mode*) dengan *nonce* acak 12-byte per transaksi enkripsi untuk mencegah serangan *replay* dan *tampering*.
+* **Kunci Master Server**: Enkripsi menggunakan kunci simetris 32-byte (`ENCRYPTION_KEY`) yang dikonfigurasi melalui *environment variable* server backend.
+
+### 5.2. Alur Dekripsi Dinamis di Memori (RAM-Only)
+* Data rahasia hanya didekripsi di dalam memori kerja (*RAM*) secara sementara pada saat backend menjalankan operasi ke API provider eksternal (misal: saat *provisioning*, *reboot*, atau rekonsiliasi status VM).
+* Setelah pemanggilan API selesai, data hasil dekripsi segera dibersihkan dari alokasi memori.
+
+### 5.3. Perlindungan Terhadap Kebocoran Data (Data Masking)
+* Endpoint REST API publik maupun privat **tidak pernah mengembalikan plaintext API Key / Secret Key** pada respons JSON (`json:"-"`).
+* Basis data yang diekspor (*database dump*) tetap terlindungi secara aman karena penyerang tidak dapat membaca teks rahasia tanpa master `ENCRYPTION_KEY`.
+
+---
+
+## 6. Background Engine & Sinkronisasi Berkala
+
+1. **Heartbeat Liveness Watchdog**: Memantau detak jantung telemetri agent setiap 15 detik. Mengubah status server menjadi `stopped` jika tidak ada telemetri yang diterima.
+2. **Multi-Provider Sync Engine (`provSync.SyncEngine`)**: Melakukan rekonsiliasi otomatis setiap 60 detik antara status instance di cloud provider eksternal (AWS, Hetzner, DigitalOcean, Contabo) dengan basis data lokal Caelus. Memperbarui IP publik dan status daya secara otomatis jika terjadi perubahan dari konsol cloud pihak ketiga.
+3. **Backup Scheduler**: Mengevaluasi kebijakan snapshot dan backup server secara periodik.
+

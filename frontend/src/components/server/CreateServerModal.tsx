@@ -1,11 +1,14 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import { Dialog } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Provider, Server } from "@/types/server";
+import { Credential } from "@/types/credential";
 import { providerService } from "@/services/provider.service";
+import { credentialService } from "@/services/credential.service";
 import { useServerStore } from "@/stores/useServerStore";
 import {
   Server as ServerIcon,
@@ -19,6 +22,7 @@ import {
   HardDrive,
   Activity,
   Sparkles,
+  Key,
 } from "lucide-react";
 import { AppText } from "@/core/theme";
 
@@ -33,7 +37,9 @@ export const CreateServerModal: React.FC<CreateServerModalProps> = ({ isOpen, on
   const { createServer, fetchServers } = useServerStore();
   const [tab, setTab] = useState<OnboardingTab>("byos");
   const [providers, setProviders] = useState<Provider[]>([]);
+  const [credentials, setCredentials] = useState<Credential[]>([]);
   const [selectedProviderID, setSelectedProviderID] = useState<string>("");
+  const [selectedCredentialID, setSelectedCredentialID] = useState<string>("");
   const [name, setName] = useState("");
   const [region, setRegion] = useState("id-cgk");
   const [osType, setOsType] = useState("ubuntu-24.04");
@@ -52,10 +58,17 @@ export const CreateServerModal: React.FC<CreateServerModalProps> = ({ isOpen, on
       setCreatedServer(null);
       setError(null);
       setName("");
-      providerService.listProviders().then((data) => {
-        setProviders(data);
-        if (data.length > 0) {
-          const customProv = data.find((p) => p.slug === "custom") || data.find((p) => p.slug === "mock") || data[0];
+      setSelectedCredentialID("");
+      Promise.all([
+        providerService.listProviders().catch(() => []),
+        credentialService.listCredentials().catch(() => []),
+      ]).then(([provData, credData]) => {
+        const safeProvs = Array.isArray(provData) ? provData : [];
+        const safeCreds = Array.isArray(credData) ? credData : [];
+        setProviders(safeProvs);
+        setCredentials(safeCreds);
+        if (safeProvs.length > 0) {
+          const customProv = safeProvs.find((p) => p.slug === "custom") || safeProvs.find((p) => p.slug === "mock") || safeProvs[0];
           setSelectedProviderID(customProv.id);
         }
       }).catch(() => {});
@@ -67,6 +80,7 @@ export const CreateServerModal: React.FC<CreateServerModalProps> = ({ isOpen, on
     if (selectedTab === "byos") {
       const customProv = providers.find((p) => p.slug === "custom") || providers.find((p) => p.slug === "mock");
       if (customProv) setSelectedProviderID(customProv.id);
+      setSelectedCredentialID("");
       setRegion("id-cgk");
     } else {
       const mockProv = providers.find((p) => p.slug === "mock") || providers[0];
@@ -94,6 +108,7 @@ export const CreateServerModal: React.FC<CreateServerModalProps> = ({ isOpen, on
 
       const server = await createServer({
         provider_id: targetProviderID,
+        credential_id: tab === "cloud" && selectedCredentialID ? selectedCredentialID : undefined,
         name: name.trim(),
         region: tab === "byos" ? "custom" : region,
         os_type: tab === "byos" ? "auto-detect" : osType,
@@ -354,6 +369,51 @@ export const CreateServerModal: React.FC<CreateServerModalProps> = ({ isOpen, on
                       ))}
                   </div>
                 </div>
+
+                {/* Credential Selector for Multi-Provider */}
+                {(() => {
+                  const currentProv = providers.find((p) => p.id === selectedProviderID);
+                  if (!currentProv || currentProv.slug === "mock") return null;
+                  const matchingCreds = credentials.filter(
+                    (c) => c.provider_id === currentProv.id || c.provider?.slug === currentProv.slug
+                  );
+
+                  return (
+                    <div className="space-y-1.5 p-3 rounded-lg bg-[#161616] border border-[#282828]">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-medium text-zinc-300 flex items-center gap-1.5">
+                          <Key className="h-3.5 w-3.5 text-emerald-400" />
+                          Kredensial Akun ({currentProv.name})
+                        </span>
+                        <Link href="/infrastructure/providers" className="text-[11px] text-emerald-400 hover:underline">
+                          + Kelola Kredensial
+                        </Link>
+                      </div>
+                      {matchingCreds.length > 0 ? (
+                        <select
+                          value={selectedCredentialID}
+                          onChange={(e) => setSelectedCredentialID(e.target.value)}
+                          className="w-full rounded-lg border border-[#2e2e2e] bg-[#121212] px-3 py-2 text-xs text-[#ededed] focus:border-emerald-500 focus:outline-none"
+                        >
+                          <option value="">Pilih Kredensial Terdaftar</option>
+                          {matchingCreds.map((c) => (
+                            <option key={c.id} value={c.id}>
+                              {c.name} {c.metadata?.region ? `(${c.metadata.region})` : ""}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <p className="text-[11px] text-amber-400 bg-amber-500/10 p-2 rounded border border-amber-500/20">
+                          Belum ada kredensial terdaftar untuk provider ini. Buka menu{" "}
+                          <Link href="/infrastructure/providers" className="underline font-semibold">
+                            Cloud Providers
+                          </Link>{" "}
+                          untuk menambahkan API key.
+                        </p>
+                      )}
+                    </div>
+                  );
+                })()}
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Input

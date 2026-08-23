@@ -20,6 +20,7 @@ import (
 	"github.com/havilz/caelus-cloud/backend/internal/observability/loki"
 	"github.com/havilz/caelus-cloud/backend/internal/observability/prometheus"
 	provFactory "github.com/havilz/caelus-cloud/backend/internal/provider"
+	provSync "github.com/havilz/caelus-cloud/backend/internal/provider/sync"
 	"github.com/havilz/caelus-cloud/backend/internal/repository/postgres"
 	"github.com/havilz/caelus-cloud/backend/internal/sentinel"
 	storageFactory "github.com/havilz/caelus-cloud/backend/internal/storage"
@@ -79,7 +80,7 @@ func main() {
 	automationRepo := postgres.NewAutomationRepository(client.Pool)
 
 	jwtManager := jwt.NewJWTManager(&cfg.JWT, cfg.App.Name)
-	factory := provFactory.NewDriverFactory()
+	factory := provFactory.NewDriverFactoryWithKey([]byte(cfg.JWT.EncryptionKey))
 	wsHub := ws.NewHub()
 
 	// Inisialisasi Storage Factory & Adapters
@@ -156,6 +157,20 @@ func main() {
 	watchdog.Start()
 	defer watchdog.Stop()
 
+	// Background Multi-Provider Resource Status Sync Engine (Rekonsiliasi status setiap 60 detik)
+	syncEngine := provSync.NewSyncEngine(
+		serverRepo,
+		providerRepo,
+		credRepo,
+		factory,
+		func(ctx context.Context, event domain.SystemEvent) {
+			centralDispatcher.Publish(ctx, event)
+		},
+		60*time.Second,
+	)
+	syncEngine.Start(context.Background())
+	defer syncEngine.Stop()
+
 	securityRepo := postgres.NewSecurityRepository(client.Pool)
 	sentinelOrchestrator := sentinel.NewOrchestrator(securityRepo, func(ctx context.Context, event domain.SystemEvent) {
 		centralDispatcher.Publish(ctx, event)
@@ -171,6 +186,7 @@ func main() {
 			AuthHandler:       v1.NewAuthHandler(authUc),
 			ServerHandler:     v1.NewServerHandler(serverUc),
 			ProviderHandler:   v1.NewProviderHandler(credUc),
+			CredentialHandler: v1.NewCredentialHandler(credUc, factory),
 			TelemetryHandler:  v1.NewTelemetryHandler(monitoringUc),
 			AlertHandler:      v1.NewAlertHandler(monitoringUc),
 			StorageHandler:    v1.NewStorageHandler(storageUc),

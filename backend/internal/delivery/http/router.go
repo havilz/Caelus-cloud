@@ -21,6 +21,7 @@ type Handlers struct {
 	AuthHandler       *v1.AuthHandler
 	ServerHandler     *v1.ServerHandler
 	ProviderHandler   *v1.ProviderHandler
+	CredentialHandler *v1.CredentialHandler
 	TelemetryHandler  *v1.TelemetryHandler
 	AlertHandler      *v1.AlertHandler
 	StorageHandler    *v1.StorageHandler
@@ -217,6 +218,10 @@ func registerAPIRoutes(r *chi.Mux, rc RouterConfig) {
 					registerServerRoutes(protectedRouter, rc.Handlers.ServerHandler, rc.Handlers.TelemetryHandler)
 				}
 
+				if rc.Handlers.CredentialHandler != nil {
+					registerCredentialRoutes(protectedRouter, rc.Handlers.CredentialHandler)
+				}
+
 				if rc.Handlers.AlertHandler != nil {
 					registerAlertRoutes(protectedRouter, rc.Handlers.AlertHandler)
 				}
@@ -332,5 +337,17 @@ func registerAutomationRoutes(r chi.Router, autoH *v1.AutomationHandler) {
 		autoRouter.Post("/rules/{id}/test", autoH.TestRule)
 
 		autoRouter.Get("/logs", autoH.ListLogs)
+	})
+}
+
+// registerCredentialRoutes mendaftarkan rute endpoint manajemen kredensial multi-provider cloud.
+func registerCredentialRoutes(r chi.Router, ch *v1.CredentialHandler) {
+	r.Route("/credentials", func(credRouter chi.Router) {
+		credRouter.Get("/", ch.ListCredentials)
+		credRouter.Post("/", ch.CreateCredential)
+		credRouter.Get("/{id}", ch.GetCredential)
+		credRouter.Put("/{id}", ch.UpdateCredential)
+		credRouter.Delete("/{id}", ch.DeleteCredential)
+		credRouter.Post("/{id}/test", ch.TestCredential)
 	})
 }
