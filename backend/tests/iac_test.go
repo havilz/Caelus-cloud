@@ -263,7 +263,7 @@ func TestIaC_PlanEngine(t *testing.T) {
 func TestIaC_ApplyAndRollback(t *testing.T) {
 	ctx := context.Background()
 	repo := NewMockIaCRepo()
-	app := applier.NewApplier(repo)
+	app := applier.NewApplier(applier.Dependencies{IaCRepo: repo})
 
 	config := &domain.IaCConfiguration{
 		ID:             uuid.New(),

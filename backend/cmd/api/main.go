@@ -28,6 +28,7 @@ import (
 	"github.com/havilz/caelus-cloud/backend/internal/usecase/auth"
 	automationUsecase "github.com/havilz/caelus-cloud/backend/internal/usecase/automation"
 	backupUsecase "github.com/havilz/caelus-cloud/backend/internal/usecase/backup"
+	iacApplier "github.com/havilz/caelus-cloud/backend/internal/iac/applier"
 	iacUsecase "github.com/havilz/caelus-cloud/backend/internal/usecase/iac"
 	"github.com/havilz/caelus-cloud/backend/internal/usecase/monitoring"
 	orchestrationUsecase "github.com/havilz/caelus-cloud/backend/internal/usecase/orchestration"
@@ -182,7 +183,15 @@ func main() {
 	// Inisialisasi Repositori dan Usecase IaC & Orkestrasi Deployment
 	iacRepo := postgres.NewIaCRepository(client.Pool)
 	deploymentRepo := postgres.NewDeploymentRepository(client.Pool)
-	iacUc := iacUsecase.NewUseCase(iacRepo)
+	iacUc := iacUsecase.NewUseCaseWithDeps(iacApplier.Dependencies{
+		IaCRepo:        iacRepo,
+		ServerRepo:     serverRepo,
+		ProviderRepo:   providerRepo,
+		BucketRepo:     bucketRepo,
+		StorageFactory: storageFactoryInstance,
+		DeploymentRepo: deploymentRepo,
+		AutomationRepo: automationRepo,
+	})
 	deploymentUc := orchestrationUsecase.NewUseCase(deploymentRepo, wsHub)
 
 	routerConfig := deliveryHttp.RouterConfig{

@@ -19,11 +19,17 @@ type UseCase struct {
 }
 
 func NewUseCase(repo domain.IaCRepository) *UseCase {
+	return NewUseCaseWithDeps(applier.Dependencies{
+		IaCRepo: repo,
+	})
+}
+
+func NewUseCaseWithDeps(deps applier.Dependencies) *UseCase {
 	p := parser.NewParser()
 	pl := planner.NewEngine()
-	ap := applier.NewApplier(repo)
+	ap := applier.NewApplier(deps)
 	return &UseCase{
-		repo:    repo,
+		repo:    deps.IaCRepo,
 		parser:  p,
 		planner: pl,
 		applier: ap,

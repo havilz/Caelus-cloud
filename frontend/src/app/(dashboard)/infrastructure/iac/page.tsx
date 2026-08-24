@@ -224,14 +224,28 @@ export default function DeclarativeIaCPage() {
   };
 
   const handleGeneratePlan = async () => {
-    if (!selectedConfig) {
-      await handleSaveConfig();
-    }
-    if (!selectedConfig) return;
-
     try {
       setIsPlanning(true);
-      const plan = await iacService.generatePlan(selectedConfig.id);
+      let targetConfig = selectedConfig;
+      if (targetConfig) {
+        targetConfig = await iacService.updateConfig(targetConfig.id, {
+          name: configName,
+          description: configDesc,
+          raw_yaml: rawYAML,
+        });
+        setSelectedConfig(targetConfig);
+        setConfigs((prev) => prev.map((c) => (c.id === targetConfig!.id ? targetConfig! : c)));
+      } else {
+        targetConfig = await iacService.createConfig({
+          name: configName,
+          description: configDesc,
+          raw_yaml: rawYAML,
+        });
+        setSelectedConfig(targetConfig);
+        setConfigs((prev) => [targetConfig!, ...prev]);
+      }
+
+      const plan = await iacService.generatePlan(targetConfig.id);
       setCurrentPlan(plan);
       setActiveTab('diff');
     } catch (err: any) {
