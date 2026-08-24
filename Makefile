@@ -132,6 +132,28 @@ build-frontend:
 	@echo "==> Building frontend production bundle..."
 	@cd frontend && pnpm build
 
+# ------------------------------------------------------------------------------
+# Docker Images Build
+# ------------------------------------------------------------------------------
+docker-build: docker-build-api docker-build-worker docker-build-agent docker-build-ui
+	@echo "==> Seluruh Docker Images Caelus Cloud berhasil dibangun!"
+
+docker-build-api:
+	@echo "==> Building Docker Image: caelus-api:latest..."
+	@docker build -t caelus-api:latest -f deploy/docker/Dockerfile.api backend
+
+docker-build-worker:
+	@echo "==> Building Docker Image: caelus-worker:latest..."
+	@docker build -t caelus-worker:latest -f deploy/docker/Dockerfile.worker backend
+
+docker-build-agent:
+	@echo "==> Building Docker Image: caelus-agent:latest..."
+	@docker build -t caelus-agent:latest -f deploy/docker/Dockerfile.agent agent
+
+docker-build-ui:
+	@echo "==> Building Docker Image: caelus-frontend:latest..."
+	@docker build -t caelus-frontend:latest -f deploy/docker/Dockerfile.ui frontend
+
 clean:
 	@echo "==> Cleaning build artifacts..."
 	@rm -rf backend/bin agent/bin frontend/.next frontend/out

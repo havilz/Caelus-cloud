@@ -1,0 +1,35 @@
+# Dockerfile.ui — Next.js Standalone Docker Build
+# Strategi: Build dilakukan di HOST (laptop), Docker hanya mengemas hasil build
+# Tidak ada pnpm install di dalam Docker → zero network dependency → build sangat cepat
+
+# Stage 1: Runtime container — hanya menyalin output standalone dari host
+FROM node:22-alpine AS runner
+RUN apk upgrade --no-cache
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+
+# Buat user non-root untuk keamanan
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nextjs
+
+# Salin aset statis publik
+COPY public ./public
+
+# Salin output standalone Next.js yang sudah di-build di host
+COPY .next/standalone ./
+COPY .next/static ./.next/static
+
+# Set kepemilikan file ke user nextjs
+RUN chown -R nextjs:nodejs /app
+
+USER nextjs
+
+EXPOSE 3000
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
+
+# Gunakan server.js dari standalone output
+CMD ["node", "server.js"]

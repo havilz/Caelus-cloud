@@ -121,16 +121,19 @@ API_ENDPOINT="http://localhost:8080"
 
 while [[ "$#" -gt 0 ]]; do
     case $1 in
+        --server-id=*) SERVER_ID="${1#*=}" ;;
         --server-id) SERVER_ID="$2"; shift ;;
+        --secret=*) AGENT_SECRET="${1#*=}" ;;
         --secret) AGENT_SECRET="$2"; shift ;;
-        --endpoint) API_ENDPOINT="$2"; shift ;;
+        --api=*|--endpoint=*) API_ENDPOINT="${1#*=}" ;;
+        --api|--endpoint) API_ENDPOINT="$2"; shift ;;
         *) echo "Unknown parameter: $1"; exit 1 ;;
     esac
     shift
 done
 
 if [ -z "$SERVER_ID" ] || [ -z "$AGENT_SECRET" ]; then
-    echo "Usage: curl -sSL https://caelus.cloud/install.sh | bash -s -- --server-id <ID> --secret <SECRET> [--endpoint <URL>]"
+    echo "Usage: curl -sSL https://caelus.cloud/install.sh | bash -s -- --server-id <ID> --secret <SECRET> [--api <URL>]"
     exit 1
 fi
 
@@ -143,6 +146,10 @@ chmod +x "$INSTALL_DIR/caelus-agent"
 
 echo "-> Membuat konfigurasi agent..."
 cat <<EOF > "$INSTALL_DIR/agent.env"
+SERVER_ID=$SERVER_ID
+AGENT_SECRET=$AGENT_SECRET
+API_ENDPOINT=$API_ENDPOINT
+COLLECTION_INTERVAL_SEC=5
 CAELUS_SERVER_ID=$SERVER_ID
 CAELUS_AGENT_SECRET=$AGENT_SECRET
 CAELUS_API_ENDPOINT=$API_ENDPOINT

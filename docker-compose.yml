@@ -1,4 +1,3 @@
-version: '3.8'
 
 services:
   # ----------------------------------------------------------------------------
@@ -61,7 +60,7 @@ services:
     volumes:
       - minio_data:/data
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      test: ["CMD", "/usr/bin/mc", "ready", "local"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -95,6 +94,7 @@ services:
     image: grafana/loki:2.9.4
     container_name: caelus-loki
     restart: unless-stopped
+    user: "0"  # jalankan sebagai root agar bisa menulis ke volume
     command: -config.file=/etc/loki/local-config.yaml
     ports:
       - "${LOKI_PORT:-3100}:3100"
@@ -105,9 +105,33 @@ services:
       - caelus-network
 
   # ----------------------------------------------------------------------------
+  # Caelus Database Migration Runner (berjalan sekali, lalu berhenti)
+  # ----------------------------------------------------------------------------
+  migrate:
+    image: caelus-migrate:latest
+    build:
+      context: ./backend
+      dockerfile: ../deploy/docker/Dockerfile.migrate
+    container_name: caelus-migrate
+    restart: "no"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=${DB_USER:-caelus_user}
+      - DB_PASSWORD=${DB_PASSWORD:-caelus_password}
+      - DB_NAME=${DB_NAME:-caelus_cloud_db}
+      - DB_SSLMODE=disable
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - caelus-network
+
+  # ----------------------------------------------------------------------------
   # Caelus Backend API Service
   # ----------------------------------------------------------------------------
   api:
+    image: caelus-api:latest
     build:
       context: ./backend
       dockerfile: ../deploy/docker/Dockerfile.api
@@ -127,11 +151,22 @@ services:
       - REDIS_PORT=6379
       - JWT_SECRET=${JWT_SECRET}
       - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+      - STORAGE_ENDPOINT=http://minio:9000
+      - STORAGE_ACCESS_KEY=${STORAGE_ACCESS_KEY:-minioadmin}
+      - STORAGE_SECRET_KEY=${STORAGE_SECRET_KEY:-minioadmin}
+      - PROMETHEUS_URL=http://prometheus:9090
+      - LOKI_URL=http://loki:3100
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
+      minio:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    volumes:
+      - ./agent/bin:/app/agent/bin:ro
     networks:
       - caelus-network
 
@@ -139,6 +174,7 @@ services:
   # Caelus Background Worker Service
   # ----------------------------------------------------------------------------
   worker:
+    image: caelus-worker:latest
     build:
       context: ./backend
       dockerfile: ../deploy/docker/Dockerfile.worker
@@ -154,11 +190,20 @@ services:
       - DB_SSLMODE=disable
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - STORAGE_ENDPOINT=http://minio:9000
+      - STORAGE_ACCESS_KEY=${STORAGE_ACCESS_KEY:-minioadmin}
+      - STORAGE_SECRET_KEY=${STORAGE_SECRET_KEY:-minioadmin}
+      - PROMETHEUS_URL=http://prometheus:9090
+      - LOKI_URL=http://loki:3100
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
+      minio:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     networks:
       - caelus-network
 
@@ -166,6 +211,7 @@ services:
   # Caelus Frontend UI Service
   # ----------------------------------------------------------------------------
   frontend:
+    image: caelus-frontend:latest
     build:
       context: ./frontend
       dockerfile: ../deploy/docker/Dockerfile.ui

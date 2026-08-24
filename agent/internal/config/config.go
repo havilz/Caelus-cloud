@@ -4,6 +4,7 @@ import (
 	"errors"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/google/uuid"
 )
@@ -27,7 +28,7 @@ type Config struct {
 
 // LoadConfig membaca variabel lingkungan dan memvalidasi konfigurasi agent.
 func LoadConfig() (*Config, error) {
-	serverIDStr := os.Getenv("SERVER_ID")
+	serverIDStr := getFirstEnv("SERVER_ID", "CAELUS_SERVER_ID")
 	if serverIDStr == "" {
 		return nil, ErrMissingServerID
 	}
@@ -37,20 +38,27 @@ func LoadConfig() (*Config, error) {
 		return nil, ErrInvalidServerID
 	}
 
-	agentSecret := os.Getenv("AGENT_SECRET")
+	agentSecret := getFirstEnv("AGENT_SECRET", "CAELUS_AGENT_SECRET")
 	if agentSecret == "" {
 		return nil, ErrMissingAgentSecret
 	}
 
-	apiEndpoint := getEnvOrDefault("API_ENDPOINT", "http://localhost:8080")
-	intervalSec := getEnvAsIntOrDefault("COLLECTION_INTERVAL_SEC", 15)
-	if intervalSec < 1 {
-		intervalSec = 15
+	apiEndpoint := getFirstEnvWithFallback("http://localhost:8080", "API_ENDPOINT", "CAELUS_API_ENDPOINT")
+	
+	intervalSec := 15
+	if intervalVal := getFirstEnv("COLLECTION_INTERVAL_SEC", "CAELUS_INTERVAL"); intervalVal != "" {
+		if sec, err := strconv.Atoi(intervalVal); err == nil && sec > 0 {
+			intervalSec = sec
+		} else if strings.HasSuffix(intervalVal, "s") {
+			if sec, err := strconv.Atoi(strings.TrimSuffix(intervalVal, "s")); err == nil && sec > 0 {
+				intervalSec = sec
+			}
+		}
 	}
 
-	dockerSocketPath := getEnvOrDefault("DOCKER_SOCKET_PATH", "/var/run/docker.sock")
+	dockerSocketPath := getFirstEnvWithFallback("/var/run/docker.sock", "DOCKER_SOCKET_PATH", "CAELUS_DOCKER_SOCKET_PATH")
 	tlsSkipVerify := getEnvAsBoolOrDefault("TLS_SKIP_VERIFY", false)
-	logLevel := getEnvOrDefault("LOG_LEVEL", "info")
+	logLevel := getFirstEnvWithFallback("info", "LOG_LEVEL", "CAELUS_LOG_LEVEL")
 
 	return &Config{
 		ServerID:               serverUUID,
@@ -61,6 +69,24 @@ func LoadConfig() (*Config, error) {
 		TLSSkipVerify:          tlsSkipVerify,
 		LogLevel:               logLevel,
 	}, nil
+}
+
+// getFirstEnv mengembalikan nilai dari key pertama yang tidak kosong.
+func getFirstEnv(keys ...string) string {
+	for _, key := range keys {
+		if val := os.Getenv(key); val != "" {
+			return val
+		}
+	}
+	return ""
+}
+
+// getFirstEnvWithFallback mengembalikan nilai dari key pertama yang tidak kosong atau fallback jika semua kosong.
+func getFirstEnvWithFallback(fallback string, keys ...string) string {
+	if val := getFirstEnv(keys...); val != "" {
+		return val
+	}
+	return fallback
 }
 
 // getEnvOrDefault mengambil nilai environment variable atau mengembalikan fallback default.
