@@ -341,7 +341,7 @@ export const CreateServerModal: React.FC<CreateServerModalProps> = ({ isOpen, on
                   <span className={AppText.label}>Penyedia Cloud (Provider Driver)</span>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {providers
-                      .filter((p) => p.slug !== "custom")
+                      .filter((p) => p.slug !== "custom" && p.slug !== "cloudflare")
                       .map((p) => (
                         <button
                           type="button"

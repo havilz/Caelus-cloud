@@ -3,6 +3,7 @@ package orchestration
 import (
 	"context"
 	"fmt"
+	"os/exec"
 	"time"
 
 	"github.com/google/uuid"
@@ -52,6 +53,7 @@ func (u *UseCase) CreateDeployment(ctx context.Context, orgID uuid.UUID, req dom
 		PortBindings:         req.PortBindings,
 		VolumeBindings:       req.VolumeBindings,
 		RestartPolicy:        restartPolicy,
+		NetworkName:          req.NetworkName,
 		Status:               domain.DeploymentStatusQueued,
 	}
 
@@ -87,8 +89,38 @@ func (u *UseCase) StopDeployment(ctx context.Context, id uuid.UUID) error {
 	if err != nil {
 		return err
 	}
+
+	// Hentikan container fisik di host jika ada
+	_ = exec.CommandContext(ctx, "docker", "stop", dep.ContainerName).Run()
+
 	now := time.Now().UTC()
 	return u.repo.UpdateDeploymentStatus(ctx, dep.ID, domain.DeploymentStatusStopped, "Manually stopped by operator", &now)
+}
+
+func (u *UseCase) RedeployDeployment(ctx context.Context, id uuid.UUID) (*domain.Deployment, error) {
+	dep, err := u.repo.GetDeploymentByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	dep.Status = domain.DeploymentStatusQueued
+	_ = u.repo.UpdateDeploymentStatus(ctx, dep.ID, domain.DeploymentStatusQueued, "", nil)
+
+	if err := u.pipeline.Execute(ctx, dep); err != nil {
+		return nil, fmt.Errorf("failed triggering redeployment: %w", err)
+	}
+
+	return dep, nil
+}
+
+func (u *UseCase) DeleteDeployment(ctx context.Context, id uuid.UUID) error {
+	dep, err := u.repo.GetDeploymentByID(ctx, id)
+	if err == nil && dep != nil {
+		// Hapus container fisik dari Docker daemon
+		_ = exec.CommandContext(ctx, "docker", "rm", "-f", dep.ContainerName).Run()
+	}
+
+	return u.repo.DeleteDeployment(ctx, id)
 }
 
 func (u *UseCase) RollbackDeployment(ctx context.Context, id uuid.UUID) (*domain.Deployment, error) {

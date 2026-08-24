@@ -188,6 +188,24 @@ func (h *DeploymentHandler) StopDeployment(w http.ResponseWriter, r *http.Reques
 	response.Success(w, http.StatusOK, "Deployment stopped successfully", nil)
 }
 
+// RedeployDeployment memicu ulang eksekusi pipeline deployment yang sudah ada.
+func (h *DeploymentHandler) RedeployDeployment(w http.ResponseWriter, r *http.Request) {
+	idStr := chi.URLParam(r, "id")
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		response.Error(w, http.StatusBadRequest, "Invalid ID format", err.Error())
+		return
+	}
+
+	dep, err := h.depUsecase.RedeployDeployment(r.Context(), id)
+	if err != nil {
+		response.Error(w, http.StatusInternalServerError, "Failed to redeploy container", err.Error())
+		return
+	}
+
+	response.Success(w, http.StatusOK, "Container redeployed successfully", dep)
+}
+
 // RollbackDeployment memicu pembuatan instance deployment baru berdasarkan konfigurasi sebelumnya.
 func (h *DeploymentHandler) RollbackDeployment(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
@@ -204,4 +222,21 @@ func (h *DeploymentHandler) RollbackDeployment(w http.ResponseWriter, r *http.Re
 	}
 
 	response.Success(w, http.StatusOK, "Rollback deployment triggered successfully", newDep)
+}
+
+// DeleteDeployment menghapus deployment dan kontainer fisik dari host.
+func (h *DeploymentHandler) DeleteDeployment(w http.ResponseWriter, r *http.Request) {
+	idStr := chi.URLParam(r, "id")
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		response.Error(w, http.StatusBadRequest, "Invalid ID format", err.Error())
+		return
+	}
+
+	if err := h.depUsecase.DeleteDeployment(r.Context(), id); err != nil {
+		response.Error(w, http.StatusInternalServerError, "Failed to delete deployment", err.Error())
+		return
+	}
+
+	response.Success(w, http.StatusOK, "Deployment and container deleted successfully", nil)
 }

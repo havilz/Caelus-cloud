@@ -31,6 +31,10 @@ func (f *storageFactory) GetAdapter(providerType domain.StorageProviderType) (do
 	normalized := domain.StorageProviderType(strings.ToLower(strings.TrimSpace(string(providerType))))
 	adapter, exists := f.adapters[normalized]
 	if !exists {
+		// Fallback ke minio jika ada
+		if minioAdapter, hasMinio := f.adapters[domain.StorageProviderMinIO]; hasMinio {
+			return minioAdapter, nil
+		}
 		return nil, fmt.Errorf("%w: storage adapter for provider %s not registered", domain.ErrNotFound, providerType)
 	}
 

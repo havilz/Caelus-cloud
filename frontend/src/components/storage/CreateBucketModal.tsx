@@ -24,8 +24,21 @@ export const CreateBucketModal: React.FC<CreateBucketModalProps> = ({
     is_public: false,
     versioning: false,
   });
+  const [targetServerId, setTargetServerId] = useState<string>('');
+  const [servers, setServers] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (isOpen) {
+      import('@/services/server.service')
+        .then((m) => m.serverService.listServers())
+        .then((res) => {
+          if (res && res.data) setServers(res.data);
+        })
+        .catch(console.error);
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -90,6 +103,25 @@ export const CreateBucketModal: React.FC<CreateBucketModalProps> = ({
               </div>
             )}
 
+            {/* Target Storage Host / Node */}
+            <div>
+              <label className={`${AppText.label} mb-1.5 block`}>
+                Target Storage Host / Node
+              </label>
+              <select
+                value={targetServerId}
+                onChange={(e) => setTargetServerId(e.target.value)}
+                className="w-full px-3.5 py-2 rounded-lg bg-[#141414] border border-[#2e2e2e] text-[#ededed] text-xs font-mono focus:outline-none focus:border-emerald-500 transition-colors"
+              >
+                <option value="">Local Host (Current Machine / MinIO Cluster)</option>
+                {servers.map((s: any) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name} ({s.ip_address || s.ipAddress || 'Agent Node'} - {s.status})
+                  </option>
+                ))}
+              </select>
+            </div>
+
             {/* Bucket Name */}
             <div>
               <label className={`${AppText.label} mb-1.5 block`}>
@@ -147,6 +179,19 @@ export const CreateBucketModal: React.FC<CreateBucketModalProps> = ({
               </div>
             </div>
 
+            {/* Cloud Provider Account Information (If AWS / R2 chosen) */}
+            {formData.provider_type !== 'minio' && (
+              <div className="p-3 rounded-lg bg-cyan-950/20 border border-cyan-800/30 text-cyan-300 text-xs">
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold">Linked Cloud Provider Credentials</span>
+                  <span className="text-[10px] px-2 py-0.5 rounded bg-cyan-900/40 text-cyan-200">Auto-Managed</span>
+                </div>
+                <p className="text-[11px] text-cyan-400/80 mt-1">
+                  Using API credentials registered in Cloud Providers module for {formData.provider_type === 's3' ? 'AWS S3' : 'Cloudflare R2'}.
+                </p>
+              </div>
+            )}
+
             {/* Region */}
             <div>
               <label className={`${AppText.label} mb-1.5 block`}>
@@ -160,7 +205,6 @@ export const CreateBucketModal: React.FC<CreateBucketModalProps> = ({
                 <option value="us-east-1">US East (N. Virginia)</option>
                 <option value="ap-southeast-1">Asia Pacific (Singapore)</option>
                 <option value="eu-central-1">Europe (Frankfurt)</option>
-                <option value="auto">Automatic (Closest Edge)</option>
               </select>
             </div>
 

@@ -30,8 +30,17 @@ export const deploymentService = {
     await apiClient.post(`/deployments/${id}/stop`);
   },
 
+  async redeployDeployment(id: string): Promise<Deployment> {
+    const response = await apiClient.post<APIResponse<Deployment>>(`/deployments/${id}/redeploy`);
+    return response.data.data;
+  },
+
   async rollbackDeployment(id: string): Promise<Deployment> {
     const response = await apiClient.post<APIResponse<Deployment>>(`/deployments/${id}/rollback`);
     return response.data.data;
+  },
+
+  async deleteDeployment(id: string): Promise<void> {
+    await apiClient.delete(`/deployments/${id}`);
   },
 };

@@ -66,6 +66,12 @@ func (m *MockDeploymentRepo) UpdateDeploymentStatus(ctx context.Context, id uuid
 	return nil
 }
 
+func (m *MockDeploymentRepo) DeleteDeployment(ctx context.Context, id uuid.UUID) error {
+	delete(m.deployments, id)
+	delete(m.logs, id)
+	return nil
+}
+
 func (m *MockDeploymentRepo) AppendLog(ctx context.Context, log *domain.DeploymentLog) error {
 	m.logs[log.DeploymentID] = append(m.logs[log.DeploymentID], *log)
 	return nil
@@ -83,7 +89,7 @@ func TestDeployment_PipelineExecution(t *testing.T) {
 	orgID := uuid.New()
 	req := domain.DeploymentRequest{
 		AppName:       "backend-api",
-		ImageTag:      "nginx:alpine",
+		ImageTag:      "mock:latest",
 		ContainerName: "caelus-nginx",
 		PortBindings: []domain.PortBinding{
 			{HostPort: 80, ContainerPort: 80, Protocol: "tcp"},
@@ -100,16 +106,22 @@ func TestDeployment_PipelineExecution(t *testing.T) {
 		t.Fatal("deployment ID is empty")
 	}
 
-	// Wait for pipeline execution to complete (pipeline takes ~800ms)
-	time.Sleep(1000 * time.Millisecond)
+	// Wait for pipeline execution to complete asynchronously
+	var updated *domain.Deployment
+	for i := 0; i < 40; i++ {
+		time.Sleep(250 * time.Millisecond)
+		updated, _ = uc.GetDeployment(ctx, dep.ID)
+		if updated != nil && (updated.Status == domain.DeploymentStatusRunning || updated.Status == domain.DeploymentStatusFailed) {
+			break
+		}
+	}
 
-	updated, err := uc.GetDeployment(ctx, dep.ID)
-	if err != nil {
-		t.Fatalf("failed retrieving deployment: %v", err)
+	if updated == nil {
+		t.Fatal("failed retrieving deployment")
 	}
 
 	if updated.Status != domain.DeploymentStatusRunning {
-		t.Errorf("expected deployment to be Running, got %s", updated.Status)
+		t.Errorf("expected deployment to be Running, got %s (error: %s)", updated.Status, updated.ErrorMessage)
 	}
 
 	logs, err := uc.GetLogs(ctx, dep.ID, 100)

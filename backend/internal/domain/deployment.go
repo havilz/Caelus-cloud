@@ -47,6 +47,7 @@ type Deployment struct {
 	PortBindings         []PortBinding     `json:"port_bindings,omitempty"`
 	VolumeBindings       []VolumeBinding   `json:"volume_bindings,omitempty"`
 	RestartPolicy        string            `json:"restart_policy"`
+	NetworkName          string            `json:"network_name,omitempty"`
 	Status               DeploymentStatus  `json:"status"`
 	ErrorMessage         string            `json:"error_message,omitempty"`
 	CreatedAt            time.Time         `json:"created_at"`
@@ -69,6 +70,7 @@ type DeploymentRequest struct {
 	AppName              string            `json:"app_name"`
 	ImageTag             string            `json:"image_tag"`
 	ContainerName        string            `json:"container_name,omitempty"`
+	NetworkName          string            `json:"network_name,omitempty"`
 	EnvironmentVariables map[string]string `json:"environment_variables,omitempty"`
 	PortBindings         []PortBinding     `json:"port_bindings,omitempty"`
 	VolumeBindings       []VolumeBinding   `json:"volume_bindings,omitempty"`
@@ -82,6 +84,7 @@ type DeploymentRepository interface {
 	ListDeploymentsByOrg(ctx context.Context, orgID uuid.UUID) ([]Deployment, error)
 	ListDeploymentsByServer(ctx context.Context, serverID uuid.UUID) ([]Deployment, error)
 	UpdateDeploymentStatus(ctx context.Context, id uuid.UUID, status DeploymentStatus, errorMsg string, finishedAt *time.Time) error
+	DeleteDeployment(ctx context.Context, id uuid.UUID) error
 	AppendLog(ctx context.Context, log *DeploymentLog) error
 	GetLogsByDeployment(ctx context.Context, deploymentID uuid.UUID, limit int) ([]DeploymentLog, error)
 }

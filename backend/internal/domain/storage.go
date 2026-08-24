@@ -12,10 +12,13 @@ import (
 type StorageProviderType string
 
 const (
-	StorageProviderMinIO StorageProviderType = "minio"
-	StorageProviderS3    StorageProviderType = "s3"
-	StorageProviderR2    StorageProviderType = "r2"
-	StorageProviderMock  StorageProviderType = "mock"
+	StorageProviderMinIO        StorageProviderType = "minio"
+	StorageProviderS3           StorageProviderType = "s3"
+	StorageProviderAWS          StorageProviderType = "aws"
+	StorageProviderR2           StorageProviderType = "r2"
+	StorageProviderDigitalOcean StorageProviderType = "digitalocean"
+	StorageProviderGCP          StorageProviderType = "gcp"
+	StorageProviderMock         StorageProviderType = "mock"
 )
 
 // Bucket merepresentasikan entitas bucket penyimpanan objek dalam multi-tenant Caelus Cloud.

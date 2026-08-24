@@ -31,11 +31,13 @@ import (
 	iacApplier "github.com/havilz/caelus-cloud/backend/internal/iac/applier"
 	iacUsecase "github.com/havilz/caelus-cloud/backend/internal/usecase/iac"
 	"github.com/havilz/caelus-cloud/backend/internal/usecase/monitoring"
+	networkUsecase "github.com/havilz/caelus-cloud/backend/internal/usecase/network"
 	orchestrationUsecase "github.com/havilz/caelus-cloud/backend/internal/usecase/orchestration"
 	provUsecase "github.com/havilz/caelus-cloud/backend/internal/usecase/provider"
 	securityUsecase "github.com/havilz/caelus-cloud/backend/internal/usecase/security"
 	"github.com/havilz/caelus-cloud/backend/internal/usecase/server"
 	storageUsecase "github.com/havilz/caelus-cloud/backend/internal/usecase/storage"
+	volumeUsecase "github.com/havilz/caelus-cloud/backend/internal/usecase/volume"
 	"github.com/havilz/caelus-cloud/backend/pkg/config"
 	"github.com/havilz/caelus-cloud/backend/pkg/jwt"
 	"github.com/havilz/caelus-cloud/backend/pkg/logger"
@@ -108,6 +110,9 @@ func main() {
 		Region:          "us-east-1",
 	}); err == nil {
 		storageFactoryInstance.RegisterAdapter(domain.StorageProviderMinIO, minioAdapter)
+		storageFactoryInstance.RegisterAdapter(domain.StorageProviderS3, minioAdapter)
+		storageFactoryInstance.RegisterAdapter(domain.StorageProviderAWS, minioAdapter)
+		storageFactoryInstance.RegisterAdapter(domain.StorageProviderR2, minioAdapter)
 	}
 
 	authUc := auth.NewAuthUsecase(userRepo, orgRepo, jwtManager)
@@ -119,7 +124,7 @@ func main() {
 	lokiAdapter := loki.NewClient(os.Getenv("LOKI_URL"))
 	monitoringUc := monitoring.NewMonitoringUsecase(metricRepo, alertRepo, serverRepo, alertEvaluator, wsHub, promAdapter, lokiAdapter)
 
-	storageUc := storageUsecase.NewStorageUsecase(bucketRepo, storageFactoryInstance)
+	storageUc := storageUsecase.NewStorageUsecase(bucketRepo, storageFactoryInstance, credRepo, []byte(cfg.JWT.EncryptionKey))
 	backupUc := backupUsecase.NewBackupUsecase(backupRepo, serverRepo, bucketRepo, storageFactoryInstance)
 
 	// Inisialisasi Automation & Notification Dispatcher
@@ -194,6 +199,12 @@ func main() {
 	})
 	deploymentUc := orchestrationUsecase.NewUseCase(deploymentRepo, wsHub)
 
+	networkRepo := postgres.NewNetworkRepository(client.Pool)
+	networkUc := networkUsecase.NewUseCase(networkRepo)
+
+	volumeRepo := postgres.NewVolumeRepository(client.Pool)
+	volumeUc := volumeUsecase.NewUseCase(volumeRepo)
+
 	routerConfig := deliveryHttp.RouterConfig{
 		Config:     cfg,
 		JWTManager: jwtManager,
@@ -212,6 +223,8 @@ func main() {
 			SecurityHandler:   v1.NewSecurityHandler(securityUc),
 			IaCHandler:        v1.NewIaCHandler(iacUc),
 			DeploymentHandler: v1.NewDeploymentHandler(deploymentUc),
+			NetworkHandler:    v1.NewNetworkHandler(networkUc),
+			VolumeHandler:     v1.NewVolumeHandler(volumeUc),
 			WSHandler:         ws.NewHandler(wsHub, jwtManager),
 		},
 	}

@@ -128,12 +128,40 @@ func (a *Adapter) ListBuckets(ctx context.Context) ([]domain.Bucket, error) {
 	return buckets, nil
 }
 
-// DeleteBucket menghapus bucket berdasarkan nama (bucket harus kosong terlebih dahulu).
+// DeleteBucket menghapus bucket berdasarkan nama (otomatis membersihkan objek yang tersisa jika ada).
 func (a *Adapter) DeleteBucket(ctx context.Context, bucketName string) error {
+	// 1. Bersihkan seluruh objek yang ada di dalam bucket secara batch
+	paginator := s3.NewListObjectsV2Paginator(a.client, &s3.ListObjectsV2Input{
+		Bucket: aws.String(bucketName),
+	})
+	for paginator.HasMorePages() {
+		page, err := paginator.NextPage(ctx)
+		if err != nil {
+			break
+		}
+		if len(page.Contents) > 0 {
+			var ids []s3types.ObjectIdentifier
+			for _, obj := range page.Contents {
+				ids = append(ids, s3types.ObjectIdentifier{Key: obj.Key})
+			}
+			_, _ = a.client.DeleteObjects(ctx, &s3.DeleteObjectsInput{
+				Bucket: aws.String(bucketName),
+				Delete: &s3types.Delete{Objects: ids, Quiet: aws.Bool(true)},
+			})
+		}
+	}
+
+	// 2. Eksekusi penghapusan bucket fisik
 	_, err := a.client.DeleteBucket(ctx, &s3.DeleteBucketInput{
 		Bucket: aws.String(bucketName),
 	})
 	if err != nil {
+		var apiErr smithy.APIError
+		if errors.As(err, &apiErr) {
+			if apiErr.ErrorCode() == "NoSuchBucket" || apiErr.ErrorCode() == "NotFound" || strings.Contains(apiErr.ErrorMessage(), "404") {
+				return nil
+			}
+		}
 		return a.mapError(err, fmt.Sprintf("failed to delete bucket %s", bucketName))
 	}
 

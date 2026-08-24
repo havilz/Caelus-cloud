@@ -1,14 +1,7 @@
-# Kecualikan semua kecuali folder yang dibutuhkan Docker
-node_modules
 .git
 .env*.local
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
-src
 *.md
-*.ts
-*.tsx
-*.json
-!package.json

@@ -33,6 +33,14 @@ interface ProviderPreset {
 
 const PROVIDER_PRESETS: ProviderPreset[] = [
   {
+    slug: "cloudflare",
+    name: "Cloudflare",
+    desc: "R2 Object Storage (Zero Egress), Cloudflare Tunnel & Dynamic DNS Management.",
+    badge: "R2 & DNS",
+    badgeStyle: "text-amber-400 border-amber-500/30 bg-amber-950/20",
+    iconBoxStyle: AppTheme.controls.iconBoxAmber,
+  },
+  {
     slug: "aws",
     name: "Amazon Web Services",
     desc: "Deploy dan orkestrasi instance AWS EC2 di berbagai region global.",
@@ -92,6 +100,7 @@ export default function CloudProvidersPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProviderSlug, setSelectedProviderSlug] = useState<string>("aws");
   const [credName, setCredName] = useState("");
+  const [accountId, setAccountId] = useState("");
   const [apiKey, setApiKey] = useState("");
   const [apiSecret, setApiSecret] = useState("");
   const [region, setRegion] = useState("us-east-1");
@@ -126,11 +135,13 @@ export default function CloudProvidersPage() {
   const handleOpenAddModal = (presetSlug?: string) => {
     setFormError(null);
     setCredName("");
+    setAccountId("");
     setApiKey("");
     setApiSecret("");
     if (presetSlug) {
       setSelectedProviderSlug(presetSlug);
-      if (presetSlug === "aws") setRegion("us-east-1");
+      if (presetSlug === "cloudflare") setRegion("auto");
+      else if (presetSlug === "aws") setRegion("us-east-1");
       else if (presetSlug === "hetzner") setRegion("fsn1");
       else if (presetSlug === "digitalocean") setRegion("sgp1");
       else if (presetSlug === "contabo") setRegion("EU");
@@ -157,14 +168,32 @@ export default function CloudProvidersPage() {
     setIsSubmitting(true);
     setFormError(null);
 
+    const cleanInput = (val: string) => {
+      let res = val.trim();
+      if (res.includes(":")) {
+        res = res.split(":").pop()?.trim() || res;
+      }
+      res = res.replace(/^https?:\/\//i, "");
+      if (res.includes(".")) {
+        res = res.split(".")[0].trim();
+      }
+      return res.trim();
+    };
+
+    const cleanAccId = selectedProviderSlug === "cloudflare" ? cleanInput(accountId) : accountId.trim();
+    const cleanKey = apiKey.trim();
+    const cleanSecret = apiSecret.trim();
+
     try {
       await credentialService.createCredential({
         provider_id: targetProvider.id,
         name: credName.trim(),
-        api_key: apiKey.trim(),
-        api_secret: apiSecret.trim(),
+        api_key: cleanKey,
+        api_secret: cleanSecret,
         metadata: {
           region: region.trim(),
+          account_id: cleanAccId || undefined,
+          endpoint: cleanAccId ? `https://${cleanAccId}.r2.cloudflarestorage.com` : undefined,
           added_via: "web_dashboard",
         },
       });
@@ -172,7 +201,8 @@ export default function CloudProvidersPage() {
       setIsModalOpen(false);
       await loadData();
     } catch (err: any) {
-      setFormError(err.response?.data?.message || err.message || "Gagal menyimpan kredensial");
+      const errMsg = err.response?.data?.errors || err.response?.data?.message || err.message || "Gagal menyimpan kredensial";
+      setFormError(typeof errMsg === 'string' ? errMsg : JSON.stringify(errMsg));
     } finally {
       setIsSubmitting(false);
     }
@@ -557,6 +587,57 @@ export default function CloudProvidersPage() {
                 className={AppTheme.controls.input}
               />
             </div>
+
+            {selectedProviderSlug === "cloudflare" && (
+              <>
+                <div className="space-y-1.5">
+                  <label className={AppTheme.text.label}>Cloudflare Account ID</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. c0356789abcdef0123456789abcdef01"
+                    value={accountId}
+                    onChange={(e) => setAccountId(e.target.value.trim())}
+                    required
+                    className={AppTheme.controls.inputMono}
+                  />
+                  <p className="text-[11px] text-[#707070]">
+                    Ditemukan di overview R2 / URL S3: https://&lt;ACCOUNT_ID&gt;.r2.cloudflarestorage.com
+                  </p>
+                </div>
+                <div className="space-y-1.5">
+                  <label className={AppTheme.text.label}>Cloudflare R2 Access Key ID</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 0123456789abcdef0123456789abcdef"
+                    value={apiKey}
+                    onChange={(e) => setApiKey(e.target.value.trim())}
+                    required
+                    className={AppTheme.controls.inputMono}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className={AppTheme.text.label}>Cloudflare Secret Access Key</label>
+                  <input
+                    type="password"
+                    placeholder="e.g. 0123456789abcdef0123456789abcdef01234567"
+                    value={apiSecret}
+                    onChange={(e) => setApiSecret(e.target.value.trim())}
+                    required
+                    className={AppTheme.controls.inputMono}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className={AppTheme.text.label}>Default Region / Scope</label>
+                  <input
+                    type="text"
+                    placeholder="auto (Global Anycast Edge)"
+                    value={region}
+                    onChange={(e) => setRegion(e.target.value)}
+                    className={AppTheme.controls.inputMono}
+                  />
+                </div>
+              </>
+            )}
 
             {selectedProviderSlug === "aws" && (
               <>

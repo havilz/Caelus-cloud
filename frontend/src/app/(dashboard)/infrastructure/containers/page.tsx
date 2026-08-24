@@ -19,10 +19,12 @@ import {
   Layers,
   ArrowRight,
   Filter,
+  ExternalLink,
 } from 'lucide-react';
 import { AppTheme } from '@/core/theme';
 import { Deployment, DeploymentLog, DeploymentRequest } from '@/types/deployment';
 import { deploymentService } from '@/services/deployment.service';
+import { networkService, VirtualNetwork } from '@/services/network.service';
 
 const QUICK_IMAGES = [
   { name: 'Nginx Web Server', tag: 'nginx:alpine', port: 80 },
@@ -34,6 +36,8 @@ const QUICK_IMAGES = [
 export default function ContainersOrchestrationPage() {
   const [deployments, setDeployments] = useState<Deployment[]>([]);
   const [selectedDeployment, setSelectedDeployment] = useState<Deployment | null>(null);
+  const [availableNetworks, setAvailableNetworks] = useState<VirtualNetwork[]>([]);
+  const [servers, setServers] = useState<any[]>([]);
   const [logs, setLogs] = useState<DeploymentLog[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
@@ -43,9 +47,11 @@ export default function ContainersOrchestrationPage() {
   const [copied, setCopied] = useState<boolean>(false);
 
   // Deploy Form States
+  const [targetServerId, setTargetServerId] = useState<string>('');
   const [appName, setAppName] = useState<string>('');
   const [imageTag, setImageTag] = useState<string>('nginx:alpine');
   const [containerName, setContainerName] = useState<string>('');
+  const [selectedNetwork, setSelectedNetwork] = useState<string>('');
   const [hostPort, setHostPort] = useState<number>(8080);
   const [containerPort, setContainerPort] = useState<number>(80);
   const [envKey, setEnvKey] = useState<string>('');
@@ -73,6 +79,12 @@ export default function ContainersOrchestrationPage() {
 
   useEffect(() => {
     fetchDeployments();
+    networkService.listNetworks().then(setAvailableNetworks).catch(console.error);
+    import('@/services/server.service').then((m) =>
+      m.serverService.listServers().then((res) => {
+        if (res && res.data) setServers(res.data);
+      }).catch(console.error)
+    );
   }, [fetchDeployments]);
 
   // Load and stream logs for selected deployment
@@ -86,8 +98,10 @@ export default function ContainersOrchestrationPage() {
       .catch(console.error);
 
     // Setup SSE streaming if deployment is active/running
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-    const sseUrl = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/api/v1/deployments/${selectedDeployment.id}/logs/stream`;
+    const apiBase =
+      process.env.NEXT_PUBLIC_API_URL ||
+      (typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.hostname}:8080` : '');
+    const sseUrl = `${apiBase}/api/v1/deployments/${selectedDeployment.id}/logs/stream`;
 
     let eventSource: EventSource | null = null;
     try {
@@ -158,6 +172,7 @@ export default function ContainersOrchestrationPage() {
     try {
       setIsSubmitting(true);
       const req: DeploymentRequest = {
+        server_id: targetServerId ? targetServerId : undefined,
         app_name: appName.trim(),
         image_tag: imageTag.trim(),
         container_name: containerName.trim() || undefined,
@@ -170,6 +185,7 @@ export default function ContainersOrchestrationPage() {
         ],
         environment_variables: envVars,
         restart_policy: restartPolicy,
+        network_name: selectedNetwork || undefined,
       };
 
       const created = await deploymentService.createDeployment(req);
@@ -189,7 +205,7 @@ export default function ContainersOrchestrationPage() {
   };
 
   const handleStopDeployment = async (id: string) => {
-    if (!confirm('Are you sure you want to stop this container deployment?')) return;
+    if (!confirm('Are you sure you want to stop this container?')) return;
     try {
       await deploymentService.stopDeployment(id);
       fetchDeployments();
@@ -198,11 +214,37 @@ export default function ContainersOrchestrationPage() {
     }
   };
 
+  const handleRedeploy = async (id: string) => {
+    if (!confirm('Are you sure you want to redeploy this container?')) return;
+    try {
+      const redeployed = await deploymentService.redeployDeployment(id);
+      fetchDeployments();
+      setSelectedDeployment(redeployed);
+    } catch (err: any) {
+      alert(`Redeploy failed: ${err?.response?.data?.message || err.message}`);
+    }
+  };
+
+  const handleDeleteDeployment = async (id: string) => {
+    if (!confirm('Are you sure you want to permanently delete this container and remove its container instance?')) return;
+    try {
+      await deploymentService.deleteDeployment(id);
+      setDeployments((prev) => prev.filter((d) => d.id !== id));
+      if (selectedDeployment?.id === id) {
+        setSelectedDeployment(null);
+        setLogs([]);
+      }
+      fetchDeployments();
+    } catch (err: any) {
+      alert(`Delete failed: ${err?.response?.data?.message || err.message}`);
+    }
+  };
+
   const handleRollback = async (id: string) => {
-    if (!confirm('Are you sure you want to rollback and redeploy this container?')) return;
+    if (!confirm('Are you sure you want to rollback this container?')) return;
     try {
       const rolled = await deploymentService.rollbackDeployment(id);
-      setDeployments((prev) => [rolled, ...prev]);
+      fetchDeployments();
       setSelectedDeployment(rolled);
     } catch (err: any) {
       alert(`Rollback failed: ${err?.response?.data?.message || err.message}`);
@@ -314,30 +356,50 @@ export default function ContainersOrchestrationPage() {
                     {getStatusBadge(d.status)}
                   </div>
 
-                  <p className="text-[11px] font-mono text-[#a1a1a1] mt-1.5 truncate">{d.image_tag}</p>
+                  <div className="flex items-center justify-between mt-1.5">
+                    <p className="text-[11px] font-mono text-[#a1a1a1] truncate">{d.image_tag}</p>
+                    {d.network_name && (
+                      <span className="px-1.5 py-0.5 text-[9px] font-mono bg-cyan-950/60 text-cyan-400 border border-cyan-500/30 rounded">
+                        VPC: {d.network_name}
+                      </span>
+                    )}
+                  </div>
 
                   <div className="mt-2 pt-2 border-t border-[#222222] flex items-center justify-between text-[10px] text-[#707070]">
                     <span>Port: {d.port_bindings?.[0]?.host_port || 80}:{d.port_bindings?.[0]?.container_port || 80}</span>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
                       {d.status === 'running' && (
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             handleStopDeployment(d.id);
                           }}
-                          className="text-red-400 hover:text-red-300"
+                          className="px-2 py-0.5 text-[10px] font-medium text-amber-400 hover:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 rounded transition-colors"
                         >
                           Stop
+                        </button>
+                      )}
+                      {(d.status === 'stopped' || d.status === 'failed') && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRedeploy(d.id);
+                          }}
+                          className="px-2 py-0.5 text-[10px] font-medium text-emerald-400 hover:text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 rounded transition-colors"
+                        >
+                          Redeploy
                         </button>
                       )}
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleRollback(d.id);
+                          handleDeleteDeployment(d.id);
                         }}
-                        className="text-purple-400 hover:text-purple-300"
+                        className="px-2 py-0.5 text-[10px] font-medium text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 rounded transition-colors flex items-center gap-1"
+                        title="Delete container"
                       >
-                        Redeploy
+                        <Trash2 className="h-2.5 w-2.5" />
+                        Delete
                       </button>
                     </div>
                   </div>
@@ -356,58 +418,103 @@ export default function ContainersOrchestrationPage() {
         {/* Right Column: Web-based Streaming Terminal (7 cols) */}
         <div className="lg:col-span-7 space-y-4">
           <div className="bg-[#0f1218] border border-[#22272e] rounded-xl overflow-hidden shadow-lg flex flex-col h-[650px]">
-            {/* Terminal Header */}
-            <div className="px-4 py-2.5 bg-[#161b22] border-b border-[#22272e] flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Terminal className="h-4 w-4 text-emerald-400" />
-                <span className="text-xs font-mono font-semibold text-[#ededed]">
-                  {selectedDeployment ? `${selectedDeployment.app_name} (Logs)` : 'Live Terminal Stream'}
-                </span>
-                {isStreaming && (
-                  <span className="flex items-center gap-1 text-[10px] text-emerald-400 font-mono">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping"></span> Live SSE
-                  </span>
-                )}
+            {/* Terminal Header & Toolbar (Sleek 2-Tier Layout) */}
+            <div className="bg-[#13171f] border-b border-[#22272e] flex flex-col">
+              {/* Top Tier: Container Identity & Host Endpoint Link */}
+              <div className="px-4 py-2.5 flex items-center justify-between border-b border-[#1c2128]">
+                <div className="flex items-center gap-2.5">
+                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800/80 border border-slate-700/60">
+                    <Terminal className="h-3.5 w-3.5 text-emerald-400" />
+                    <span className="text-xs font-mono font-semibold text-slate-200">
+                      {selectedDeployment ? selectedDeployment.app_name : 'Terminal Logs'}
+                    </span>
+                  </div>
+                  {selectedDeployment && (
+                    <span className="text-[11px] font-mono text-slate-500 hidden sm:inline truncate max-w-[200px]">
+                      {selectedDeployment.image_tag}
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2.5">
+                  {selectedDeployment && selectedDeployment.port_bindings?.[0]?.host_port && (
+                    <a
+                      href={`http://localhost:${selectedDeployment.port_bindings[0].host_port}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-2.5 py-1 text-[11px] font-medium bg-purple-500/15 hover:bg-purple-500/25 text-purple-300 border border-purple-500/40 rounded-lg flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
+                      title="Open Application in New Tab"
+                    >
+                      <span className="font-mono">localhost:{selectedDeployment.port_bindings[0].host_port}</span>
+                      <ExternalLink className="h-3 w-3 text-purple-400" />
+                    </a>
+                  )}
+                  {isStreaming && (
+                    <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-950/60 border border-emerald-500/30 text-[10px] font-mono text-emerald-400">
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                      <span>Live SSE</span>
+                    </span>
+                  )}
+                </div>
               </div>
 
-              {/* Terminal Action Controls */}
-              <div className="flex items-center gap-2">
-                {/* Filter Selector */}
-                <select
-                  value={streamFilter}
-                  onChange={(e: any) => setStreamFilter(e.target.value)}
-                  className="bg-[#0f1218] border border-[#2e343d] rounded px-2 py-0.5 text-[10px] text-[#a1a1a1] focus:outline-none"
-                >
-                  <option value="all">All Streams</option>
-                  <option value="stdout">stdout</option>
-                  <option value="stderr">stderr</option>
-                  <option value="system">system</option>
-                </select>
+              {/* Bottom Tier: Stream Filter Pills & Log Viewer Actions */}
+              <div className="px-4 py-1.5 bg-[#0d1017] flex items-center justify-between text-xs">
+                {/* Stream Filter Pills */}
+                <div className="flex items-center gap-1">
+                  {(['all', 'stdout', 'stderr', 'system'] as const).map((stream) => (
+                    <button
+                      key={stream}
+                      type="button"
+                      onClick={() => setStreamFilter(stream)}
+                      className={`px-2 py-0.5 rounded text-[10px] font-mono uppercase tracking-wider transition-colors cursor-pointer ${
+                        streamFilter === stream
+                          ? 'bg-slate-800 text-emerald-400 font-semibold border border-slate-700 shadow-xs'
+                          : 'text-slate-500 hover:text-slate-300 hover:bg-slate-850'
+                      }`}
+                    >
+                      {stream}
+                    </button>
+                  ))}
+                </div>
 
-                <button
-                  onClick={() => setAutoScroll(!autoScroll)}
-                  className={`px-2 py-0.5 text-[10px] rounded border transition-colors ${
-                    autoScroll ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40' : 'text-[#707070] border-[#2e343d]'
-                  }`}
-                >
-                  Auto-Scroll
-                </button>
+                {/* Toolbar Action Group */}
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] font-mono text-slate-500 mr-1.5">
+                    {filteredLogs.length} lines
+                  </span>
 
-                <button
-                  onClick={handleCopyLogs}
-                  className="p-1 text-[#707070] hover:text-[#ededed] transition-colors"
-                  title="Copy logs to clipboard"
-                >
-                  {copied ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => setAutoScroll(!autoScroll)}
+                    className={`px-2 py-0.5 text-[10px] font-medium rounded border transition-colors cursor-pointer ${
+                      autoScroll
+                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                        : 'text-slate-500 border-slate-800 hover:text-slate-300'
+                    }`}
+                    title="Auto-scroll terminal output"
+                  >
+                    Auto-Scroll
+                  </button>
 
-                <button
-                  onClick={() => setLogs([])}
-                  className="p-1 text-[#707070] hover:text-red-400 transition-colors"
-                  title="Clear console"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
+                  <button
+                    type="button"
+                    onClick={handleCopyLogs}
+                    className="p-1 text-slate-500 hover:text-slate-200 border border-slate-800 hover:bg-slate-800/60 rounded transition-colors cursor-pointer"
+                    title="Copy logs to clipboard"
+                  >
+                    {copied ? <Check className="h-3 w-3 text-emerald-400" /> : <Copy className="h-3 w-3" />}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setLogs([])}
+                    className="px-2 py-0.5 text-[10px] font-medium text-slate-500 hover:text-slate-200 border border-slate-800 hover:bg-slate-800/60 rounded transition-colors cursor-pointer"
+                    title="Clear view"
+                  >
+                    Clear View
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -463,6 +570,23 @@ export default function ContainersOrchestrationPage() {
             </div>
 
             <form onSubmit={handleDeploy} className="space-y-4">
+              {/* Target Server / Host Node */}
+              <div>
+                <label className="text-[11px] font-medium text-[#a1a1a1]">Target Server / Host Node</label>
+                <select
+                  value={targetServerId}
+                  onChange={(e) => setTargetServerId(e.target.value)}
+                  className="w-full bg-[#121212] border border-[#2e2e2e] rounded-lg px-3 py-1.5 text-xs text-[#ededed] focus:outline-none focus:border-purple-500 font-mono mt-1"
+                >
+                  <option value="">Local Host (Current Machine)</option>
+                  {servers.map((s: any) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name} ({s.ip_address || s.ipAddress || "Agent Node"} - {s.status})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               {/* Quick Image Selector */}
               <div className="space-y-1.5">
                 <label className="text-[11px] font-medium text-[#a1a1a1]">Quick Image Presets</label>
@@ -531,6 +655,23 @@ export default function ContainersOrchestrationPage() {
                     className="w-full bg-[#121212] border border-[#2e2e2e] rounded-lg px-3 py-1.5 text-xs text-[#ededed] font-mono focus:outline-none focus:border-purple-500"
                   />
                 </div>
+              </div>
+
+              {/* VPC Network Selector */}
+              <div>
+                <label className="text-[11px] font-medium text-[#a1a1a1]">VPC Network / Isolation</label>
+                <select
+                  value={selectedNetwork}
+                  onChange={(e) => setSelectedNetwork(e.target.value)}
+                  className="w-full bg-[#121212] border border-[#2e2e2e] rounded-lg px-3 py-1.5 text-xs text-[#ededed] focus:outline-none focus:border-purple-500"
+                >
+                  <option value="">Default Host Bridge (caelus-network)</option>
+                  {availableNetworks.map((net) => (
+                    <option key={net.id} value={net.name}>
+                      {net.name} ({net.cidr} - {net.region})
+                    </option>
+                  ))}
+                </select>
               </div>
 
               {/* Environment Variables */}

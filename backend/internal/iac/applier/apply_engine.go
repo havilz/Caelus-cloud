@@ -201,19 +201,26 @@ func (a *Applier) executeChange(ctx context.Context, orgID uuid.UUID, change dom
 						initStatus = domain.ServerStatusRunning
 					}
 
+					extID := fmt.Sprintf("byos-%s", uuid.New().String()[:8])
+					ipAddr := "0.0.0.0"
+					hostname := spec.Name
+
 					srv := &domain.Server{
-						ID:             uuid.New(),
-						OrganizationID: orgID,
-						ProviderID:     providerID,
-						Name:           spec.Name,
-						Status:         initStatus,
-						OSType:         osType,
-						CPUCores:       2,
-						MemoryMB:       2048,
-						DiskGB:         40,
-						Region:         region,
-						CreatedAt:      now,
-						UpdatedAt:      now,
+						ID:               uuid.New(),
+						OrganizationID:   orgID,
+						ProviderID:       providerID,
+						ExternalServerID: &extID,
+						Name:             spec.Name,
+						Hostname:         &hostname,
+						IPAddress:        &ipAddr,
+						Status:           initStatus,
+						OSType:           osType,
+						CPUCores:         2,
+						MemoryMB:         2048,
+						DiskGB:           40,
+						Region:           region,
+						CreatedAt:        now,
+						UpdatedAt:        now,
 					}
 
 					if err := a.deps.ServerRepo.Create(ctx, srv); err != nil {

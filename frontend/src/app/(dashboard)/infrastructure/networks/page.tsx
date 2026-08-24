@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Network,
   Plus,
@@ -18,48 +18,32 @@ import {
   Layers,
   Lock,
   ExternalLink,
+  Loader2,
 } from "lucide-react";
 import { Dialog } from "@/components/ui/dialog";
 import { AppTheme } from "@/core/theme";
-
-interface VirtualNetwork {
-  id: string;
-  name: string;
-  type: "vpc" | "bridge" | "overlay";
-  cidr: string;
-  gateway: string;
-  region: string;
-  attachedServers: number;
-  status: "active" | "provisioning" | "idle";
-  createdAt: string;
-}
-
-interface FirewallRule {
-  id: string;
-  name: string;
-  direction: "inbound" | "outbound";
-  protocol: "tcp" | "udp" | "icmp" | "all";
-  portRange: string;
-  source: string;
-  action: "allow" | "deny";
-  targetNetworkId: string;
-}
+import { networkService, VirtualNetwork, FirewallRule } from "@/services/network.service";
 
 export default function NetworksManagementPage() {
   const [networks, setNetworks] = useState<VirtualNetwork[]>([]);
   const [firewallRules, setFirewallRules] = useState<FirewallRule[]>([]);
+  const [servers, setServers] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<"networks" | "firewall">("networks");
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
   const [isRuleModalOpen, setIsRuleModalOpen] = useState<boolean>(false);
 
   // New Network Form State
+  const [newNetServerId, setNewNetServerId] = useState<string>("");
   const [newNetName, setNewNetName] = useState<string>("");
   const [newNetType, setNewNetType] = useState<"vpc" | "bridge" | "overlay">("vpc");
   const [newNetCidr, setNewNetCidr] = useState<string>("10.20.0.0/16");
   const [newNetRegion, setNewNetRegion] = useState<string>("ap-southeast-1");
 
   // New Rule Form State
+  const [newRuleServerId, setNewRuleServerId] = useState<string>("");
   const [newRuleName, setNewRuleName] = useState<string>("");
   const [newRuleDirection, setNewRuleDirection] = useState<"inbound" | "outbound">("inbound");
   const [newRuleProtocol, setNewRuleProtocol] = useState<"tcp" | "udp" | "icmp" | "all">("tcp");
@@ -67,64 +51,110 @@ export default function NetworksManagementPage() {
   const [newRuleSource, setNewRuleSource] = useState<string>("0.0.0.0/0");
   const [newRuleAction, setNewRuleAction] = useState<"allow" | "deny">("allow");
 
-  const handleCreateNetwork = (e: React.FormEvent) => {
+  const fetchData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const [nets, rules, serversRes] = await Promise.all([
+        networkService.listNetworks(),
+        networkService.listFirewallRules(),
+        import("@/services/server.service").then((m) => m.serverService.listServers().catch(() => ({ data: [] }))),
+      ]);
+      setNetworks(nets);
+      setFirewallRules(rules);
+      if (serversRes && serversRes.data) {
+        setServers(serversRes.data);
+      }
+    } catch (err) {
+      console.error("Failed to load networks & firewall rules:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const handleCreateNetwork = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newNetName.trim()) return;
 
-    const newNet: VirtualNetwork = {
-      id: `net-${Date.now()}`,
-      name: newNetName.trim().toLowerCase().replace(/\s+/g, "-"),
-      type: newNetType,
-      cidr: newNetCidr,
-      gateway: newNetCidr.replace(".0.0/16", ".0.1").replace(".0/24", ".1"),
-      region: newNetRegion,
-      attachedServers: 0,
-      status: "active",
-      createdAt: new Date().toISOString().split("T")[0],
-    };
+    try {
+      setIsSubmitting(true);
+      const created = await networkService.createNetwork({
+        name: newNetName.trim().toLowerCase().replace(/\s+/g, "-"),
+        type: newNetType,
+        cidr: newNetCidr,
+        region: newNetRegion,
+      });
 
-    setNetworks([newNet, ...networks]);
-    setNewNetName("");
-    setIsCreateModalOpen(false);
+      setNetworks((prev) => [created, ...prev]);
+      setNewNetName("");
+      setIsCreateModalOpen(false);
+    } catch (err: any) {
+      alert(`Gagal membuat network: ${err?.response?.data?.message || err.message}`);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleCreateRule = (e: React.FormEvent) => {
+  const handleCreateRule = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newRuleName.trim()) return;
 
-    const newRule: FirewallRule = {
-      id: `fw-${Date.now()}`,
-      name: newRuleName.trim(),
-      direction: newRuleDirection,
-      protocol: newRuleProtocol,
-      portRange: newRulePorts.trim(),
-      source: newRuleSource.trim(),
-      action: newRuleAction,
-      targetNetworkId: networks[0]?.id || "net-vpc-default",
-    };
+    try {
+      setIsSubmitting(true);
+      const created = await networkService.createFirewallRule({
+        name: newRuleName.trim(),
+        direction: newRuleDirection,
+        protocol: newRuleProtocol,
+        port_range: newRulePorts.trim(),
+        source: newRuleSource.trim(),
+        action: newRuleAction,
+        network_id: networks[0]?.id,
+      });
 
-    setFirewallRules([newRule, ...firewallRules]);
-    setNewRuleName("");
-    setIsRuleModalOpen(false);
+      setFirewallRules((prev) => [created, ...prev]);
+      setNewRuleName("");
+      setIsRuleModalOpen(false);
+    } catch (err: any) {
+      alert(`Gagal membuat firewall rule: ${err?.response?.data?.message || err.message}`);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleDeleteNetwork = (id: string) => {
-    setNetworks(networks.filter((n) => n.id !== id));
+  const handleDeleteNetwork = async (id: string) => {
+    if (!confirm("Are you sure you want to permanently delete this network?")) return;
+    try {
+      await networkService.deleteNetwork(id);
+      setNetworks((prev) => prev.filter((n) => n.id !== id));
+    } catch (err: any) {
+      alert(`Gagal menghapus network: ${err?.response?.data?.message || err.message}`);
+    }
   };
 
-  const handleDeleteRule = (id: string) => {
-    setFirewallRules(firewallRules.filter((r) => r.id !== id));
+  const handleDeleteRule = async (id: string) => {
+    if (!confirm("Are you sure you want to permanently delete this firewall rule?")) return;
+    try {
+      await networkService.deleteFirewallRule(id);
+      setFirewallRules((prev) => prev.filter((r) => r.id !== id));
+    } catch (err: any) {
+      alert(`Gagal menghapus firewall rule: ${err?.response?.data?.message || err.message}`);
+    }
   };
 
-  const filteredNetworks = networks.filter((n) =>
-    n.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    n.cidr.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredNetworks = networks.filter(
+    (n) =>
+      n.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      n.cidr.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const filteredRules = firewallRules.filter((r) =>
-    r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    r.portRange.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    r.source.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredRules = firewallRules.filter(
+    (r) =>
+      r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (r.port_range || r.portRange || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      r.source.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -184,7 +214,7 @@ export default function NetworksManagementPage() {
             </div>
           </div>
           <p className="text-2xl font-bold text-slate-100 mt-2">
-            {networks.reduce((acc, n) => acc + n.attachedServers, 0)}
+            {networks.reduce((acc, n) => acc + (n.attached_servers ?? n.attachedServers ?? 0), 0)}
           </p>
           <span className="text-xs text-slate-400 mt-1 block">Connected instances</span>
         </div>
@@ -318,13 +348,15 @@ export default function NetworksManagementPage() {
                     </div>
                     <div className="flex justify-between py-1">
                       <span className="text-slate-500">Connected Nodes</span>
-                      <span className="text-emerald-400 font-medium">{net.attachedServers} instances</span>
+                      <span className="text-emerald-400 font-medium">{net.attached_servers ?? net.attachedServers ?? 0} instances</span>
                     </div>
                   </div>
                 </div>
 
                 <div className="mt-5 pt-3 border-t border-slate-800/60 flex items-center justify-between">
-                  <span className="text-[11px] text-slate-500">Created {net.createdAt}</span>
+                  <span className="text-[11px] text-slate-500">
+                    Created {net.created_at ? new Date(net.created_at).toLocaleDateString() : (net.createdAt || "-")}
+                  </span>
                   <button
                     onClick={() => handleDeleteNetwork(net.id)}
                     className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
@@ -398,7 +430,7 @@ export default function NetworksManagementPage() {
                         </span>
                       </td>
                       <td className="px-4 py-3.5 font-mono uppercase text-slate-300">{rule.protocol}</td>
-                      <td className="px-4 py-3.5 font-mono text-emerald-400 font-semibold">{rule.portRange}</td>
+                      <td className="px-4 py-3.5 font-mono text-emerald-400 font-semibold">{rule.port_range ?? rule.portRange ?? "-"}</td>
                       <td className="px-4 py-3.5 font-mono text-slate-400">{rule.source}</td>
                       <td className="px-4 py-3.5">
                         <span
@@ -436,6 +468,22 @@ export default function NetworksManagementPage() {
         description="Konfigurasikan ruang alamat IP terisolasi untuk server dan kontainer Anda."
       >
         <form onSubmit={handleCreateNetwork} className="space-y-4 mt-2">
+          <div>
+            <label className="block text-xs font-medium text-slate-300 mb-1">Target Host / Server Scope</label>
+            <select
+              value={newNetServerId}
+              onChange={(e) => setNewNetServerId(e.target.value)}
+              className="w-full px-3 py-2 text-xs rounded-lg bg-slate-950 border border-slate-800 text-slate-200 focus:outline-none focus:border-emerald-500/50 font-mono"
+            >
+              <option value="">Global / Mesh (All Connected Nodes)</option>
+              {servers.map((s: any) => (
+                <option key={s.id} value={s.id}>
+                  {s.name} ({s.ip_address || s.ipAddress || "Agent Node"} - {s.status})
+                </option>
+              ))}
+            </select>
+          </div>
+
           <div>
             <label className="block text-xs font-medium text-slate-300 mb-1">Network Name</label>
             <input
@@ -509,6 +557,22 @@ export default function NetworksManagementPage() {
         description="Atur kebijakan izin atau blokir paket jaringan berdasarkan port dan alamat IP."
       >
         <form onSubmit={handleCreateRule} className="space-y-4 mt-2">
+          <div>
+            <label className="block text-xs font-medium text-slate-300 mb-1">Target Server Scope</label>
+            <select
+              value={newRuleServerId}
+              onChange={(e) => setNewRuleServerId(e.target.value)}
+              className="w-full px-3 py-2 text-xs rounded-lg bg-slate-950 border border-slate-800 text-slate-200 focus:outline-none focus:border-emerald-500/50 font-mono"
+            >
+              <option value="">Global (All Servers in VPC)</option>
+              {servers.map((s: any) => (
+                <option key={s.id} value={s.id}>
+                  {s.name} ({s.ip_address || s.ipAddress || "Agent Node"})
+                </option>
+              ))}
+            </select>
+          </div>
+
           <div>
             <label className="block text-xs font-medium text-slate-300 mb-1">Rule Name</label>
             <input

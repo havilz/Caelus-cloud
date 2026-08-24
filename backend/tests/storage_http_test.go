@@ -56,7 +56,7 @@ func TestStorageAndBackupHTTP_Endpoints(t *testing.T) {
 	mockAdapter := mock.NewMockStorageAdapter()
 	factory.RegisterAdapter(domain.StorageProviderMinIO, mockAdapter)
 
-	storageUc := storageUcPkg.NewStorageUsecase(bucketRepo, factory)
+	storageUc := storageUcPkg.NewStorageUsecase(bucketRepo, factory, nil, nil)
 	backupUc := backupUcPkg.NewBackupUsecase(backupRepo, serverRepo, bucketRepo, factory)
 
 	routerConfig := deliveryHttp.RouterConfig{

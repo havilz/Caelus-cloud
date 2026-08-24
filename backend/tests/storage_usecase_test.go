@@ -121,7 +121,7 @@ func TestStorageUsecase_BucketLifecycleAndObjects(t *testing.T) {
 	mockAdapter := mock.NewMockStorageAdapter()
 	factory.RegisterAdapter(domain.StorageProviderMinIO, mockAdapter)
 
-	uc := storageUcPkg.NewStorageUsecase(bucketRepo, factory)
+	uc := storageUcPkg.NewStorageUsecase(bucketRepo, factory, nil, nil)
 	orgID := uuid.New()
 	bucketName := "project-assets"
 

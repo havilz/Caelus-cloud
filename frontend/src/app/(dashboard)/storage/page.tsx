@@ -57,9 +57,13 @@ export default function StorageDashboardPage() {
       setDeletingBucket(bucketName);
       await storageService.deleteBucket(bucketName);
       await fetchBuckets();
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Failed to delete bucket';
-      alert(msg);
+    } catch (err: any) {
+      const serverMsg = err?.response?.data?.message || err?.response?.data?.errors || err?.message || '';
+      if (serverMsg.includes('NotEmpty') || serverMsg.includes('not empty') || err?.response?.status === 400) {
+        alert(` Bucket "${bucketName}" tidak dapat dihapus karena masih berisi file/objek di dalamnya.\n\nDemi keamanan data Anda, silakan masuk ke dalam bucket dan hapus semua file terlebih dahulu sebelum menghapus wadah bucket.`);
+      } else {
+        alert(serverMsg || 'Gagal menghapus bucket');
+      }
     } finally {
       setDeletingBucket(null);
     }

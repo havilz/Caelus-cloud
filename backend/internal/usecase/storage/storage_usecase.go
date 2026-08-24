@@ -2,12 +2,16 @@ package storage
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/havilz/caelus-cloud/backend/internal/domain"
+	"github.com/havilz/caelus-cloud/backend/internal/storage/s3"
+	"github.com/havilz/caelus-cloud/backend/pkg/encryptor"
 )
 
 // StorageUsecase mendefinisikan seluruh kontrak logika bisnis operasional Object Storage.
@@ -44,16 +48,118 @@ type StorageUsecase interface {
 }
 
 type storageUsecase struct {
-	bucketRepo domain.BucketRepository
-	factory    domain.StorageFactory
+	bucketRepo    domain.BucketRepository
+	factory       domain.StorageFactory
+	credRepo      domain.CredentialRepository
+	encryptionKey []byte
 }
 
-// NewStorageUsecase membuat instance baru StorageUsecase.
-func NewStorageUsecase(bucketRepo domain.BucketRepository, factory domain.StorageFactory) StorageUsecase {
-	return &storageUsecase{
-		bucketRepo: bucketRepo,
-		factory:    factory,
+func cleanInputToken(input string) string {
+	input = strings.TrimSpace(input)
+	if idx := strings.Index(input, ":"); idx != -1 {
+		input = strings.TrimSpace(input[idx+1:])
 	}
+	input = strings.TrimPrefix(input, "https://")
+	input = strings.TrimPrefix(input, "http://")
+	if idx := strings.Index(input, "."); idx != -1 {
+		input = input[:idx]
+	}
+	var b strings.Builder
+	for _, r := range input {
+		if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') || r == '-' || r == '_' {
+			b.WriteRune(r)
+		}
+	}
+	return strings.TrimSpace(b.String())
+}
+
+// NewStorageUsecase membuat instance baru StorageUsecase dengan dukungan multi-cloud credential dinamis.
+func NewStorageUsecase(bucketRepo domain.BucketRepository, factory domain.StorageFactory, credRepo domain.CredentialRepository, encryptionKey []byte) StorageUsecase {
+	return &storageUsecase{
+		bucketRepo:    bucketRepo,
+		factory:       factory,
+		credRepo:      credRepo,
+		encryptionKey: encryptionKey,
+	}
+}
+
+// getAdapter menyelesaikan adapter storage secara dinamis berdasarkan kredensial cloud aktif jika tersedia.
+func (u *storageUsecase) getAdapter(ctx context.Context, orgID uuid.UUID, providerType domain.StorageProviderType) (domain.ObjectStorageAdapter, error) {
+	if u.credRepo != nil && providerType != domain.StorageProviderMinIO && providerType != domain.StorageProviderMock {
+		creds, err := u.credRepo.ListByOrg(ctx, orgID)
+		if err == nil && len(creds) > 0 {
+			targetSlug := string(providerType)
+			if providerType == domain.StorageProviderR2 {
+				targetSlug = "cloudflare"
+			} else if providerType == domain.StorageProviderS3 {
+				targetSlug = "aws"
+			}
+
+			for _, c := range creds {
+				if c.Provider != nil && strings.EqualFold(c.Provider.Slug, targetSlug) {
+					var accessKey, secretKey string
+					if c.EncryptedAPIKey != nil {
+						if dec, err := encryptor.Decrypt(*c.EncryptedAPIKey, u.encryptionKey); err == nil {
+							accessKey = dec
+						}
+					}
+					if c.EncryptedAPISecret != nil {
+						if dec, err := encryptor.Decrypt(*c.EncryptedAPISecret, u.encryptionKey); err == nil {
+							secretKey = dec
+						}
+					}
+
+					endpoint := ""
+					region := "us-east-1"
+					if c.Metadata != nil {
+						if r, ok := c.Metadata["region"].(string); ok && r != "" {
+							region = r
+						}
+					}
+
+					switch providerType {
+					case domain.StorageProviderR2:
+						region = "auto"
+						accountID := ""
+						if c.Metadata != nil {
+							if acc, ok := c.Metadata["account_id"].(string); ok && acc != "" {
+								accountID = cleanInputToken(acc)
+							}
+						}
+						if accountID == "" {
+							accountID = cleanInputToken(accessKey)
+						}
+						if accountID != "" {
+							endpoint = fmt.Sprintf("https://%s.r2.cloudflarestorage.com", accountID)
+						}
+					case domain.StorageProviderDigitalOcean:
+						if region == "auto" || region == "" {
+							region = "sgp1"
+						}
+						endpoint = fmt.Sprintf("https://%s.digitaloceanspaces.com", region)
+					case domain.StorageProviderGCP:
+						endpoint = "https://storage.googleapis.com"
+					}
+
+					if accessKey != "" && secretKey != "" {
+						adapter, err := s3.NewAdapter(s3.Config{
+							Endpoint:        endpoint,
+							AccessKeyID:     accessKey,
+							SecretAccessKey: secretKey,
+							Region:          region,
+							ProviderType:    providerType,
+							UsePathStyle:    providerType == domain.StorageProviderR2 || providerType == domain.StorageProviderGCP,
+						})
+						if err == nil {
+							return adapter, nil
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return u.factory.GetAdapter(providerType)
 }
 
 // CreateBucket membuat bucket baru pada penyedia storage dan mencatat metadatanya ke database.
@@ -69,8 +175,8 @@ func (u *storageUsecase) CreateBucket(ctx context.Context, orgID uuid.UUID, name
 		region = "us-east-1"
 	}
 
-	// 1. Ambil adapter storage sesuai provider
-	adapter, err := u.factory.GetAdapter(providerType)
+	// 1. Ambil adapter storage dinamis sesuai provider dan kredensial terdaftar
+	adapter, err := u.getAdapter(ctx, orgID, providerType)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get storage adapter for provider %s: %w", providerType, err)
 	}
@@ -123,19 +229,24 @@ func (u *storageUsecase) GetBucket(ctx context.Context, orgID uuid.UUID, name st
 
 // DeleteBucket menghapus bucket dari database dan dari penyedia storage.
 func (u *storageUsecase) DeleteBucket(ctx context.Context, orgID uuid.UUID, name string) error {
-	bucket, err := u.GetBucket(ctx, orgID, name)
+	bucket, err := u.bucketRepo.GetByName(ctx, name)
 	if err != nil {
+		if errors.Is(err, domain.ErrNotFound) {
+			return nil
+		}
 		return err
 	}
 
-	adapter, err := u.factory.GetAdapter(bucket.ProviderType)
-	if err != nil {
-		return fmt.Errorf("failed to get storage adapter: %w", err)
-	}
-
-	// 1. Hapus dari penyedia storage (akan error jika bucket masih berisi objek)
-	if err := adapter.DeleteBucket(ctx, name); err != nil {
-		return err
+	adapter, err := u.getAdapter(ctx, orgID, bucket.ProviderType)
+	if err == nil && adapter != nil {
+		// 1. Hapus dari penyedia storage (otomatis membersihkan objek)
+		if delErr := adapter.DeleteBucket(ctx, name); delErr != nil {
+			// Jika error adalah BucketNotEmpty, hentikan proses dan beri tahu user
+			if strings.Contains(delErr.Error(), "BucketNotEmpty") || strings.Contains(delErr.Error(), "409") {
+				return delErr
+			}
+			// Abaikan error lain (misal NoSuchBucket, invalid endpoint, auth expired) dan tetap izinkan pembersihan record database
+		}
 	}
 
 	// 2. Hapus dari basis data PostgreSQL
@@ -149,7 +260,7 @@ func (u *storageUsecase) ListObjects(ctx context.Context, orgID uuid.UUID, bucke
 		return nil, nil, err
 	}
 
-	adapter, err := u.factory.GetAdapter(bucket.ProviderType)
+	adapter, err := u.getAdapter(ctx, orgID, bucket.ProviderType)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to get storage adapter: %w", err)
 	}
@@ -164,7 +275,7 @@ func (u *storageUsecase) UploadObject(ctx context.Context, orgID uuid.UUID, buck
 		return nil, err
 	}
 
-	adapter, err := u.factory.GetAdapter(bucket.ProviderType)
+	adapter, err := u.getAdapter(ctx, orgID, bucket.ProviderType)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get storage adapter: %w", err)
 	}
@@ -188,7 +299,7 @@ func (u *storageUsecase) DownloadObject(ctx context.Context, orgID uuid.UUID, bu
 		return nil, err
 	}
 
-	adapter, err := u.factory.GetAdapter(bucket.ProviderType)
+	adapter, err := u.getAdapter(ctx, orgID, bucket.ProviderType)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get storage adapter: %w", err)
 	}
@@ -203,7 +314,7 @@ func (u *storageUsecase) DeleteObject(ctx context.Context, orgID uuid.UUID, buck
 		return err
 	}
 
-	adapter, err := u.factory.GetAdapter(bucket.ProviderType)
+	adapter, err := u.getAdapter(ctx, orgID, bucket.ProviderType)
 	if err != nil {
 		return fmt.Errorf("failed to get storage adapter: %w", err)
 	}
@@ -218,7 +329,7 @@ func (u *storageUsecase) DeleteObjects(ctx context.Context, orgID uuid.UUID, buc
 		return err
 	}
 
-	adapter, err := u.factory.GetAdapter(bucket.ProviderType)
+	adapter, err := u.getAdapter(ctx, orgID, bucket.ProviderType)
 	if err != nil {
 		return fmt.Errorf("failed to get storage adapter: %w", err)
 	}
@@ -233,7 +344,7 @@ func (u *storageUsecase) GenerateSignedURL(ctx context.Context, orgID uuid.UUID,
 		return "", err
 	}
 
-	adapter, err := u.factory.GetAdapter(bucket.ProviderType)
+	adapter, err := u.getAdapter(ctx, orgID, bucket.ProviderType)
 	if err != nil {
 		return "", fmt.Errorf("failed to get storage adapter: %w", err)
 	}

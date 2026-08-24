@@ -30,6 +30,8 @@ type Handlers struct {
 	SecurityHandler   *v1.SecurityHandler
 	IaCHandler        *v1.IaCHandler
 	DeploymentHandler *v1.DeploymentHandler
+	NetworkHandler    *v1.NetworkHandler
+	VolumeHandler     *v1.VolumeHandler
 	WSHandler         *ws.Handler
 }
 
@@ -247,8 +249,26 @@ func registerAPIRoutes(r *chi.Mux, rc RouterConfig) {
 				if rc.Handlers.DeploymentHandler != nil {
 					registerDeploymentRoutes(protectedRouter, rc.Handlers.DeploymentHandler)
 				}
+
+				if rc.Handlers.NetworkHandler != nil {
+					registerNetworkRoutes(protectedRouter, rc.Handlers.NetworkHandler)
+				}
+
+				if rc.Handlers.VolumeHandler != nil {
+					registerVolumeRoutes(protectedRouter, rc.Handlers.VolumeHandler)
+				}
 			})
 		}
+	})
+}
+
+// registerVolumeRoutes mendaftarkan rute endpoint Cloud Block Volumes.
+func registerVolumeRoutes(r chi.Router, volH *v1.VolumeHandler) {
+	r.Route("/volumes", func(volRouter chi.Router) {
+		volRouter.Get("/stats", volH.GetStoragePoolStats)
+		volRouter.Post("/", volH.CreateVolume)
+		volRouter.Get("/", volH.ListVolumes)
+		volRouter.Delete("/{id}", volH.DeleteVolume)
 	})
 }
 
@@ -278,7 +298,24 @@ func registerDeploymentRoutes(r chi.Router, depH *v1.DeploymentHandler) {
 		depRouter.Get("/{id}/logs", depH.GetLogs)
 		depRouter.Get("/{id}/logs/stream", depH.StreamLogsSSE)
 		depRouter.Post("/{id}/stop", depH.StopDeployment)
+		depRouter.Post("/{id}/redeploy", depH.RedeployDeployment)
 		depRouter.Post("/{id}/rollback", depH.RollbackDeployment)
+		depRouter.Delete("/{id}", depH.DeleteDeployment)
+	})
+}
+
+// registerNetworkRoutes mendaftarkan rute endpoint Virtual Networks (VPC) dan Cloud Firewall Rules.
+func registerNetworkRoutes(r chi.Router, netH *v1.NetworkHandler) {
+	r.Route("/networks", func(netRouter chi.Router) {
+		netRouter.Post("/", netH.CreateNetwork)
+		netRouter.Get("/", netH.ListNetworks)
+		netRouter.Delete("/{id}", netH.DeleteNetwork)
+	})
+
+	r.Route("/firewall-rules", func(fwRouter chi.Router) {
+		fwRouter.Post("/", netH.CreateFirewallRule)
+		fwRouter.Get("/", netH.ListFirewallRules)
+		fwRouter.Delete("/{id}", netH.DeleteFirewallRule)
 	})
 }
 

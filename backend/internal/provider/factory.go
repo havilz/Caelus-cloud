@@ -6,6 +6,7 @@ import (
 
 	"github.com/havilz/caelus-cloud/backend/internal/domain"
 	"github.com/havilz/caelus-cloud/backend/internal/provider/aws"
+	"github.com/havilz/caelus-cloud/backend/internal/provider/cloudflare"
 	"github.com/havilz/caelus-cloud/backend/internal/provider/contabo"
 	"github.com/havilz/caelus-cloud/backend/internal/provider/custom"
 	"github.com/havilz/caelus-cloud/backend/internal/provider/digitalocean"
@@ -37,6 +38,7 @@ func NewDriverFactoryWithKey(encryptionKey []byte) Factory {
 	f.RegisterDriver("mock", mock.NewMockDriver())
 	f.RegisterDriver("custom", custom.NewCustomDriver())
 	f.RegisterDriver("aws", aws.NewEC2Driver(encryptionKey))
+	f.RegisterDriver("cloudflare", cloudflare.NewCloudflareDriver(encryptionKey))
 	f.RegisterDriver("hetzner", hetzner.NewHetznerDriver(encryptionKey))
 	f.RegisterDriver("digitalocean", digitalocean.NewDigitalOceanDriver(encryptionKey))
 	f.RegisterDriver("contabo", contabo.NewContaboDriver(encryptionKey))

@@ -38,7 +38,9 @@ export function useRealtimeTelemetry({
       clearTimeout(reconnectTimeoutRef.current);
     }
 
-    const rawWsUrl = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8080";
+    const defaultWsProto = typeof window !== "undefined" && window.location.protocol === "https:" ? "wss:" : "ws:";
+    const defaultWsHost = typeof window !== "undefined" ? `${defaultWsProto}//${window.location.hostname}:8080` : "ws://localhost:8080";
+    const rawWsUrl = process.env.NEXT_PUBLIC_WS_URL || defaultWsHost;
     const baseWs = rawWsUrl.replace(/\/ws\/?$/, "").replace(/\/api\/v1\/?$/, "");
     const endpoint = `${baseWs}/api/v1/ws?token=${encodeURIComponent(token)}`;
 

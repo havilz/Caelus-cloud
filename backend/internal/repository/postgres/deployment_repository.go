@@ -23,8 +23,8 @@ func NewDeploymentRepository(pool *pgxpool.Pool) *DeploymentRepository {
 
 func (r *DeploymentRepository) CreateDeployment(ctx context.Context, dep *domain.Deployment) error {
 	query := `
-		INSERT INTO deployments (id, organization_id, server_id, app_name, image_tag, container_name, environment_variables, port_bindings, volume_bindings, restart_policy, status, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+		INSERT INTO deployments (id, organization_id, server_id, app_name, image_tag, container_name, network_name, environment_variables, port_bindings, volume_bindings, restart_policy, status, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
 		RETURNING id, created_at, updated_at;
 	`
 	if dep.ID == uuid.Nil {
@@ -47,6 +47,7 @@ func (r *DeploymentRepository) CreateDeployment(ctx context.Context, dep *domain
 		dep.AppName,
 		dep.ImageTag,
 		dep.ContainerName,
+		dep.NetworkName,
 		envJSON,
 		portsJSON,
 		volsJSON,
@@ -59,7 +60,11 @@ func (r *DeploymentRepository) CreateDeployment(ctx context.Context, dep *domain
 
 func (r *DeploymentRepository) GetDeploymentByID(ctx context.Context, id uuid.UUID) (*domain.Deployment, error) {
 	query := `
-		SELECT id, organization_id, server_id, app_name, image_tag, container_name, environment_variables, port_bindings, volume_bindings, restart_policy, status, error_message, created_at, updated_at, finished_at
+		SELECT id, organization_id, server_id, app_name, image_tag, container_name, COALESCE(network_name, ''),
+		       COALESCE(environment_variables, '{}'::jsonb), 
+		       COALESCE(port_bindings, '[]'::jsonb), 
+		       COALESCE(volume_bindings, '[]'::jsonb), 
+		       restart_policy, status, COALESCE(error_message, ''), created_at, updated_at, finished_at
 		FROM deployments
 		WHERE id = $1;
 	`
@@ -72,6 +77,7 @@ func (r *DeploymentRepository) GetDeploymentByID(ctx context.Context, id uuid.UU
 		&d.AppName,
 		&d.ImageTag,
 		&d.ContainerName,
+		&d.NetworkName,
 		&envBytes,
 		&portsBytes,
 		&volsBytes,
@@ -96,7 +102,11 @@ func (r *DeploymentRepository) GetDeploymentByID(ctx context.Context, id uuid.UU
 
 func (r *DeploymentRepository) ListDeploymentsByOrg(ctx context.Context, orgID uuid.UUID) ([]domain.Deployment, error) {
 	query := `
-		SELECT id, organization_id, server_id, app_name, image_tag, container_name, environment_variables, port_bindings, volume_bindings, restart_policy, status, error_message, created_at, updated_at, finished_at
+		SELECT id, organization_id, server_id, app_name, image_tag, container_name, COALESCE(network_name, ''),
+		       COALESCE(environment_variables, '{}'::jsonb), 
+		       COALESCE(port_bindings, '[]'::jsonb), 
+		       COALESCE(volume_bindings, '[]'::jsonb), 
+		       restart_policy, status, COALESCE(error_message, ''), created_at, updated_at, finished_at
 		FROM deployments
 		WHERE organization_id = $1
 		ORDER BY created_at DESC;
@@ -118,6 +128,7 @@ func (r *DeploymentRepository) ListDeploymentsByOrg(ctx context.Context, orgID u
 			&d.AppName,
 			&d.ImageTag,
 			&d.ContainerName,
+			&d.NetworkName,
 			&envBytes,
 			&portsBytes,
 			&volsBytes,
@@ -140,7 +151,11 @@ func (r *DeploymentRepository) ListDeploymentsByOrg(ctx context.Context, orgID u
 
 func (r *DeploymentRepository) ListDeploymentsByServer(ctx context.Context, serverID uuid.UUID) ([]domain.Deployment, error) {
 	query := `
-		SELECT id, organization_id, server_id, app_name, image_tag, container_name, environment_variables, port_bindings, volume_bindings, restart_policy, status, error_message, created_at, updated_at, finished_at
+		SELECT id, organization_id, server_id, app_name, image_tag, container_name, COALESCE(network_name, ''),
+		       COALESCE(environment_variables, '{}'::jsonb), 
+		       COALESCE(port_bindings, '[]'::jsonb), 
+		       COALESCE(volume_bindings, '[]'::jsonb), 
+		       restart_policy, status, COALESCE(error_message, ''), created_at, updated_at, finished_at
 		FROM deployments
 		WHERE server_id = $1
 		ORDER BY created_at DESC;
@@ -162,6 +177,7 @@ func (r *DeploymentRepository) ListDeploymentsByServer(ctx context.Context, serv
 			&d.AppName,
 			&d.ImageTag,
 			&d.ContainerName,
+			&d.NetworkName,
 			&envBytes,
 			&portsBytes,
 			&volsBytes,
@@ -190,6 +206,12 @@ func (r *DeploymentRepository) UpdateDeploymentStatus(ctx context.Context, id uu
 	`
 	now := time.Now().UTC()
 	_, err := r.pool.Exec(ctx, query, status, errorMsg, finishedAt, now, id)
+	return err
+}
+
+func (r *DeploymentRepository) DeleteDeployment(ctx context.Context, id uuid.UUID) error {
+	query := `DELETE FROM deployments WHERE id = $1;`
+	_, err := r.pool.Exec(ctx, query, id)
 	return err
 }
 
