@@ -54,6 +54,7 @@ func (u *UseCase) CreateDeployment(ctx context.Context, orgID uuid.UUID, req dom
 		VolumeBindings:       req.VolumeBindings,
 		RestartPolicy:        restartPolicy,
 		NetworkName:          req.NetworkName,
+		Command:              req.Command,
 		Status:               domain.DeploymentStatusQueued,
 	}
 

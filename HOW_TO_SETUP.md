@@ -6,6 +6,7 @@ Dokumen ini memuat panduan komprehensif mulai dari instalasi prasyarat, konfigur
 
 ## Daftar Isi
 
+0. [Instalasi Instan 1-Baris Perintah (Smart CLI Provisioner)](#0-instalasi-instan-1-baris-perintah-smart-cli-provisioner)
 1. [Prasyarat Sistem & Perangkat Lunak](#1-prasyarat-sistem--perangkat-lunak)
 2. [Konfigurasi Lingkungan (Environment Variables)](#2-konfigurasi-lingkungan-environment-variables)
 3. [Inisialisasi & Migrasi Basis Data](#3-inisialisasi--migrasi-basis-data)
@@ -29,6 +30,26 @@ Dokumen ini memuat panduan komprehensif mulai dari instalasi prasyarat, konfigur
    - [6.6. Skenario 6: Kedaulatan Penuh (Apa yang Terjadi Jika Caelus / Agent Di-uninstall)](#66-skenario-6-kedaulatan-penuh-apa-yang-terjadi-jika-caelus--agent-di-uninstall)
    - [6.7. Skenario 7: Otomatisasi Dynamic Endpoint Generator pada Agent Command](#67-skenario-7-otomatisasi-dynamic-endpoint-generator-pada-agent-command)
 7. [Troubleshooting & Solusi Kendala Umum](#7-troubleshooting--solusi-kendala-umum)
+
+---
+
+## 0. Instalasi Instan 1-Baris Perintah (Smart CLI Provisioner)
+
+Untuk pengguna atau enterprise yang ingin langsung memasang Caelus Cloud di server tanpa perlu *clone repo* atau konfigurasi manual, cukup jalankan perintah berikut di terminal:
+
+```bash
+curl -fsSL https://get.caelus.cloud/install.sh | bash
+# atau secara lokal dari repository:
+bash scripts/install.sh
+```
+
+### Fitur Wizard CLI Pintar:
+1. **Otomatis Pasang Docker**: Jika Docker belum ada, script akan memasang Docker & Compose resmi secara otomatis.
+2. **Pilihan Topologi Fleksibel**:
+   - **All-in-One Full Stack**: Menjalankan Postgres, Redis, MinIO, Prometheus, Loki, API, dan UI lokal via Docker.
+   - **External Managed Database (Cloud-Native)**: Menghubungkan ke PostgreSQL eksternal (AWS RDS, Supabase, Neon) & Redis (Upstash, Aiven) tanpa menyalakan kontainer DB lokal (menghemat RAM 50%+).
+   - **Hybrid Workstation + Cloudflare Tunnel**: Menjalankan Control Plane di perangkat lokal dan membuka jalur Tunnel aman untuk menerima telemetri VPS jarak jauh.
+3. **Auto-Generate Kunci Kriptografi**: Otomatis menghasilkan `JWT_SECRET` dan `ENCRYPTION_KEY` AES-256 berkekuatan tinggi.
 
 ---
 
@@ -221,8 +242,8 @@ Di dalam satu network/VPC yang sama (misal `production-staging-vpc`):
 
 | Kebutuhan Data | Gunakan Layanan Ini | Alasan Teknis |
 | :--- | :--- | :--- |
-| **Data Tabel PostgreSQL, MySQL, Redis** | 💽 **Block Volume (`/infrastructure/volumes`)** | Membutuhkan partisi disk fisik dengan IOPS tinggi (NVMe/SSD) dan latensi rendah 0ms agar transaksi database cepat. |
-| **Foto Profil, Video Produk, Dokumen PDF, File Backup** | 🪣 **Object Storage (`/storage`)** | File mentah (*unstructured*) yang diunggah pengguna. Disimpan di S3/MinIO dan diakses via link URL publik/privat tanpa membebani database. |
+| **Data Tabel PostgreSQL, MySQL, Redis** | **Block Volume (`/infrastructure/volumes`)** | Membutuhkan partisi disk fisik dengan IOPS tinggi (NVMe/SSD) dan latensi rendah 0ms agar transaksi database cepat. |
+| **Foto Profil, Video Produk, Dokumen PDF, File Backup** | **Object Storage (`/storage`)** | File mentah (*unstructured*) yang diunggah pengguna. Disimpan di S3/MinIO dan diakses via link URL publik/privat tanpa membebani database. |
 
 ---
 
@@ -292,16 +313,114 @@ Perintah instalasi Caelus Agent (`curl -sSL ... | sudo bash`) dirancang adaptif 
 
 ---
 
-## 7. Troubleshooting & Solusi Kendala Umum
+## 7. Troubleshooting & Solusi Kendala Lengkap (Production & Edge Cases)
 
 ### 1. Database Connection Timeout atau Gagal Tersambung
-* Periksa variabel `DB_HOST`, `DB_PORT`, `DB_USER`, dan `DB_PASSWORD` di `.env`.
-* Jalankan `make migrate-up` untuk memastikan seluruh skema tabel migrasi (hingga `000010`) telah teraplikasikan.
+> **Kondisi Terjadinya Kendala:**
+> Saat pertama kali menginstal Caelus di VPS, atau ketika memilih topologi External Managed Database (Supabase/Neon/AWS RDS) dengan kredensial atau firewall pooler yang belum diizinkan.
+* **Penyebab**: Variabel host, port, user, atau password database di `/opt/caelus/.env` salah, atau koneksi SSLMode tidak sesuai.
+* **Solusi**:
+  * Periksa konfigurasi di file konfigurasi server: `nano /opt/caelus/.env`.
+  * Pastikan kontainer migrasi database berjalan sukses: `docker logs caelus-migrate`.
+  * Restart layanan Caelus di server: `cd /opt/caelus && docker compose restart api`.
+
+---
 
 ### 2. Live WebSocket / SSE Streaming Terminal Tidak Terhubung
-* Pastikan backend API aktif di port `8080`.
-* Pastikan firewall atau proxy reverse mengizinkan header `Upgrade: websocket` dan `text/event-stream`.
+> **Kondisi Terjadinya Kendala:**
+> Saat membuka fitur Web Terminal / Live Logs melalui Reverse Proxy (Nginx, Traefik, Cloudflare Proxy, Caddy) tanpa konfigurasi WebSocket upgrade.
+* **Penyebab**: Proxy perantara memotong koneksi HTTP connection upgrade sehingga protokol WebSocket terputus.
+* **Solusi**:
+  * Pastikan backend API aktif dan dapat diakses pada port yang ditentukan di `/opt/caelus/.env` (variabel `APP_PORT`, default: `8080`).
+  * Pastikan firewall atau proxy reverse menyertakan header `Upgrade: websocket` dan `Connection: Upgrade`.
 
-### 3. Agent Host Tidak Mengirimkan Telemetri
-* Periksa status service agent di VPS: `sudo systemctl status caelus-agent`.
-* Pastikan firewall VPS mengizinkan koneksi keluar (*outbound*) port 8080/443 ke Caelus API Control Plane.
+---
+
+### 3. Agent Host Tidak Mengirimkan Telemetri (Umum)
+> **Kondisi Terjadinya Kendala:**
+> Setelah perintah onboarding dijalankan di VPS, namun status server di dashboard Caelus tetap berstatus Merah / Offline.
+* **Penyebab**: Firewall host lokal atau security group cloud memblokir lalu lintas keluar (*outbound traffic*), atau service agent mengalami crash.
+* **Solusi**:
+  * Periksa status service agent di VPS: `systemctl status caelus-agent`.
+  * Cek log detail error telemetri: `journalctl -u caelus-agent -n 20 --no-pager`.
+  * Pastikan firewall VPS mengizinkan koneksi keluar port 8080 / 443 ke Caelus API Control Plane.
+
+---
+
+### 4. `curl: (6) Could not resolve host` pada Tailscale MagicDNS di Container VPS / LXC
+> **Kondisi Terjadinya Kendala:**
+> Saat Control Plane Caelus dijalankan di laptop dengan Tailscale HTTPS MagicDNS (`https://laptop.tailnet.ts.net`), dan perintah onboarding dijalankan pada VPS bertipe **Container / LXC / OpenVZ** (seperti VPS murah, VPS NAT, atau Proxmox unprivileged container).
+* **Penyebab**: Container LXC di beberapa penyedia hosting tidak menyuntikkan DNS Tailscale ke dalam file `/etc/resolv.conf` container tersebut.
+* **Solusi**:
+  Gunakan **Alamat IP Numerik Tailscale** (misal `http://100.115.162.110:8080`) yang tersedia langsung pada tombol preset cepat di modal tambah server Caelus Dashboard, bukan menggunakan nama domain `.ts.net`.
+
+---
+
+### 5. `503 Service Unavailable: no backend` atau Ketiadaan Device `/dev/net/tun` pada LXC Container
+> **Kondisi Terjadinya Kendala:**
+> Saat mencoba menjalankan `tailscaled` atau `tailscale up` di dalam VPS container (LXC/Docker container di VPS) di mana provider membatasi hak akses kernel virtual device TUN/TAP demi keamanan multi-tenant.
+* **Penyebab**: VPS berjenis LXC Unprivileged tidak diberikan izin oleh kernel hypervisor induk untuk membuat virtual network adapter `tailscale0`.
+* **Solusi (Userspace Networking & SOCKS5 Outbound Proxy)**:
+  Jalankan daemon `tailscaled` dalam mode userspace networking dengan proxy lokal port `1055`:
+  ```bash
+  # 1. Bersihkan proses lama & socket yang menggantung
+  pkill -9 tailscaled 2>/dev/null
+  rm -f /var/run/tailscale/tailscaled.sock
+
+  # 2. Jalankan tailscaled mode userspace dengan proxy SOCKS5
+  tailscaled --tun=userspace-networking --socks5-server=localhost:1055 --state=/var/lib/tailscale/tailscaled.state > /var/log/tailscaled.log 2>&1 &
+  sleep 2
+
+  # 3. Hubungkan menggunakan Auth Key Tailscale
+  tailscale up --authkey="tskey-auth-..." --force-reauth
+  ```
+
+---
+
+### 6. Menjalankan Instalasi Agent Melalui Jalur Userspace SOCKS5 Proxy
+> **Kondisi Terjadinya Kendala:**
+> Pada VPS container yang menggunakan Tailscale mode userspace di atas (karena tidak ada interface kernel `tailscale0`), sehingga perintah `curl` dan service `caelus-agent` perlu diarahkan melewati proxy lokal.
+* **Penyebab**: Tanpa proxy, perintah `curl` mencoba menghubungi IP Tailscale `100.x.y.z` melalui internet publik biasa dan berakhir timeout.
+* **Solusi**:
+  Jalankan perintah instalasi dengan menyertakan awalan `ALL_PROXY`:
+  ```bash
+  ALL_PROXY=socks5://localhost:1055 curl -sSL http://<IP_TAILSCALE>:8080/install.sh | ALL_PROXY=socks5://localhost:1055 bash -s -- --server-id="<SERVER_UUID>" --secret="<AGENT_SECRET>" --api="http://<IP_TAILSCALE>:8080"
+  ```
+  *(Script installer Caelus otomatis menyimpan variabel `ALL_PROXY` ke dalam `/opt/caelus/agent.env` sehingga service Systemd tetap terhubung permanen).*
+
+---
+
+### 7. `curl: (23) client returned ERROR on write` saat Memperbarui Binary Agent
+> **Kondisi Terjadinya Kendala:**
+> Saat melakukan update agent di server produksi yang sudah aktif berjalan, di mana file binary lama sedang dieksekusi oleh memori proses Linux.
+* **Penyebab**: File `/opt/caelus/caelus-agent` sedang aktif berjalan di memori dan dikunci oleh kernel Linux (*Text file busy* / Write Lock).
+* **Solusi**:
+  Hentikan service terlebih dahulu atau gunakan pemindahan file atomik (*atomic file replacement* via `/tmp`):
+  ```bash
+  systemctl stop caelus-agent
+  ALL_PROXY=socks5://localhost:1055 curl -sSL http://<IP_TAILSCALE>:8080/agent-bin -o /tmp/caelus-agent
+  mv -f /tmp/caelus-agent /opt/caelus/caelus-agent
+  chmod +x /opt/caelus/caelus-agent
+  systemctl start caelus-agent
+  ```
+
+---
+
+### 8. `'xterm-kitty': unknown terminal type` saat Mengetik `clear` atau `nano` di VPS
+> **Kondisi Terjadinya Kendala:**
+> Saat developer melakukan SSH ke remote VPS minimal (Debian/Alpine) menggunakan terminal modern di laptop (seperti Kitty, Alacritty, Ghostty, WezTerm).
+* **Penyebab**: Terminal modern mengirimkan identitas `$TERM` (misal `xterm-kitty`) yang belum terdaftar di database `/usr/share/terminfo` bawaan OS VPS minimal.
+* **Solusi**:
+  Jalankan 1 baris perintah ini di terminal VPS untuk menyamakan terminfo standar Linux:
+  ```bash
+  echo 'export TERM=xterm-256color' >> ~/.bashrc && export TERM=xterm-256color
+  ```
+
+---
+
+### 9. Cloudflare WARP Default Route Hijacking pada Single-NIC VPS (SSH Terputus)
+> **Kondisi Terjadinya Kendala:**
+> Saat mencoba menghubungkan VPS remote menggunakan Cloudflare WARP Client (`warp-cli connect`) pada VPS yang hanya memiliki 1 kartu jaringan (Single-NIC) dengan port SSH non-standar (misal port NAT `10082`).
+* **Penyebab**: WARP Client membajak rute gateway default `0.0.0.0/0` ke interface `CloudflareWARP`, sehingga paket balasan koneksi SSH terkirim ke Cloudflare alih-alih ke router gateway provider host, menyebabkan SSH langsung terputus seketika.
+* **Solusi**:
+  Hindari penggunaan Cloudflare WARP Client pada VPS single-NIC. Gunakan **Tailscale Mesh VPN** yang hanya merutekan subnet privat CGNAT `100.64.0.0/10` tanpa membajak default gateway internet utama VPS.

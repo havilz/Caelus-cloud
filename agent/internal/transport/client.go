@@ -36,6 +36,7 @@ type HTTPClient struct {
 // NewHTTPClient membuat instance baru HTTPClient dengan konfigurasi koneksi dan TLS.
 func NewHTTPClient(apiEndpoint string, serverID uuid.UUID, agentSecret string, tlsSkipVerify bool) *HTTPClient {
 	transport := &http.Transport{
+		Proxy: http.ProxyFromEnvironment,
 		TLSClientConfig: &tls.Config{
 			InsecureSkipVerify: tlsSkipVerify, //nolint:gosec
 		},

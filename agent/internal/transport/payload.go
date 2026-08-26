@@ -32,24 +32,70 @@ type HostMetrics struct {
 	Hostname           string  `json:"hostname"`
 }
 
+// PortBindingInfo mendefinisikan pemetaan port container ke host.
+type PortBindingInfo struct {
+	HostPort      int    `json:"host_port"`
+	ContainerPort int    `json:"container_port"`
+	Protocol      string `json:"protocol"` // tcp, udp
+	HostIP        string `json:"host_ip,omitempty"`
+}
+
+// VolumeMountInfo mendefinisikan volume atau folder yang di-mount ke container.
+type VolumeMountInfo struct {
+	Name          string `json:"name,omitempty"`
+	Source        string `json:"source"`
+	Destination   string `json:"destination"`
+	Mode          string `json:"mode"` // rw, ro
+	Type          string `json:"type"` // volume, bind
+}
+
 // ContainerMetrics merepresentasikan data status dan utilisasi resource sebuah container Docker.
 type ContainerMetrics struct {
-	ID            string   `json:"id"`
-	Names         []string `json:"names"`
-	Image         string   `json:"image"`
-	State         string   `json:"state"`
-	Status        string   `json:"status"`
-	Created       int64    `json:"created"`
-	CPUUsagePct   float64  `json:"cpu_usage_pct"`
-	MemoryUsageMB float64  `json:"memory_usage_mb"`
-	MemoryLimitMB float64  `json:"memory_limit_mb"`
+	ID                   string            `json:"id"`
+	Names                []string          `json:"names"`
+	Image                string            `json:"image"`
+	State                string            `json:"state"`
+	Status               string            `json:"status"`
+	Created              int64             `json:"created"`
+	CPUUsagePct          float64           `json:"cpu_usage_pct"`
+	MemoryUsageMB        float64           `json:"memory_usage_mb"`
+	MemoryLimitMB        float64           `json:"memory_limit_mb"`
+	PortBindings         []PortBindingInfo `json:"port_bindings,omitempty"`
+	VolumeMounts         []VolumeMountInfo `json:"volume_mounts,omitempty"`
+	Networks             []string          `json:"networks,omitempty"`
+	IPAddress            string            `json:"ip_address,omitempty"`
+	RestartPolicy        string            `json:"restart_policy,omitempty"`
+	EnvironmentVariables map[string]string `json:"environment_variables,omitempty"`
+}
+
+// DiscoveredNetwork merepresentasikan VPC / Docker bridge yang ditemukan pada host.
+type DiscoveredNetwork struct {
+	ID         string `json:"id"`
+	Name       string `json:"name"`
+	Driver     string `json:"driver"`
+	Scope      string `json:"scope"`
+	SubnetCIDR string `json:"subnet_cidr"`
+	Gateway    string `json:"gateway"`
+	Internal   bool   `json:"internal"`
+}
+
+// DiscoveredVolume merepresentasikan persistent volume yang ditemukan pada host.
+type DiscoveredVolume struct {
+	Name       string  `json:"name"`
+	Driver     string  `json:"driver"`
+	Mountpoint string  `json:"mountpoint"`
+	SizeGB     float64 `json:"size_gb"`
+	CreatedAt  string  `json:"created_at,omitempty"`
+	InUse      bool    `json:"in_use"`
 }
 
 // AgentReportPayload adalah payload agregat yang dikirim oleh agent ke control plane Caelus API.
 type AgentReportPayload struct {
-	ServerID        uuid.UUID          `json:"server_id"`
-	Timestamp       time.Time          `json:"timestamp"`
-	Host            HostMetrics        `json:"host"`
-	Containers      []ContainerMetrics `json:"containers"`
-	DockerAvailable bool               `json:"docker_available"`
+	ServerID        uuid.UUID           `json:"server_id"`
+	Timestamp       time.Time           `json:"timestamp"`
+	Host            HostMetrics         `json:"host"`
+	Containers      []ContainerMetrics  `json:"containers"`
+	Networks        []DiscoveredNetwork `json:"networks,omitempty"`
+	Volumes         []DiscoveredVolume  `json:"volumes,omitempty"`
+	DockerAvailable bool                `json:"docker_available"`
 }

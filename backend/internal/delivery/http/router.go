@@ -158,6 +158,12 @@ CAELUS_API_ENDPOINT=$API_ENDPOINT
 CAELUS_INTERVAL=5s
 EOF
 
+if [ -n "$ALL_PROXY" ]; then
+    echo "ALL_PROXY=$ALL_PROXY" >> "$INSTALL_DIR/agent.env"
+    echo "HTTP_PROXY=$ALL_PROXY" >> "$INSTALL_DIR/agent.env"
+    echo "HTTPS_PROXY=$ALL_PROXY" >> "$INSTALL_DIR/agent.env"
+fi
+
 echo "-> Mendaftarkan service systemd..."
 cat <<EOF > /etc/systemd/system/caelus-agent.service
 [Unit]
@@ -175,9 +181,9 @@ RestartSec=5s
 WantedBy=multi-user.target
 EOF
 
-systemctl daemon-reload
-systemctl enable caelus-agent
-systemctl restart caelus-agent
+systemctl daemon-reload 2>/dev/null || true
+systemctl enable caelus-agent 2>/dev/null || true
+systemctl restart caelus-agent 2>/dev/null || true
 
 echo "=== Caelus Cloud Agent Berhasil Diinstal dan Berjalan! ==="
 `

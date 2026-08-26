@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -21,16 +22,20 @@ type MonitoringUsecase interface {
 	CreateAlertRule(ctx context.Context, rule *domain.AlertRule) error
 	ListAlertRules(ctx context.Context, orgID uuid.UUID) ([]domain.AlertRule, error)
 	DeleteAlertRule(ctx context.Context, ruleID uuid.UUID) error
+	SetDiscoveryRepos(deploymentRepo domain.DeploymentRepository, networkRepo domain.NetworkRepository, volumeRepo domain.VolumeRepository)
 }
 
 type monitoringUsecase struct {
-	metricRepo  domain.MetricRepository
-	alertRepo   domain.AlertRepository
-	serverRepo  domain.ServerRepository
-	evaluator   *AlertEvaluator
-	broadcaster domain.TelemetryBroadcaster
-	promAdapter domain.MetricsQueryAdapter
-	lokiAdapter domain.LogQueryAdapter
+	metricRepo     domain.MetricRepository
+	alertRepo      domain.AlertRepository
+	serverRepo     domain.ServerRepository
+	deploymentRepo domain.DeploymentRepository
+	networkRepo    domain.NetworkRepository
+	volumeRepo     domain.VolumeRepository
+	evaluator      *AlertEvaluator
+	broadcaster    domain.TelemetryBroadcaster
+	promAdapter    domain.MetricsQueryAdapter
+	lokiAdapter    domain.LogQueryAdapter
 }
 
 // NewMonitoringUsecase membuat instance baru implementasi MonitoringUsecase.
@@ -54,7 +59,18 @@ func NewMonitoringUsecase(
 	}
 }
 
-// IngestTelemetry memproses laporan telemetri yang dikirimkan oleh caelus-agent.
+// SetDiscoveryRepos menghubungkan repositori deployment, network, dan volume untuk sinkronisasi auto-discovery infrastruktur.
+func (u *monitoringUsecase) SetDiscoveryRepos(
+	deploymentRepo domain.DeploymentRepository,
+	networkRepo domain.NetworkRepository,
+	volumeRepo domain.VolumeRepository,
+) {
+	u.deploymentRepo = deploymentRepo
+	u.networkRepo = networkRepo
+	u.volumeRepo = volumeRepo
+}
+
+// IngestTelemetry memproses laporan telemetri yang dikirimkan oleh caelus-agent dan menyinkronkan infrastruktur yang ditemukan.
 func (u *monitoringUsecase) IngestTelemetry(ctx context.Context, payload *domain.TelemetryReportPayload) error {
 	server, err := u.serverRepo.GetByID(ctx, payload.ServerID)
 	if err != nil {
@@ -117,6 +133,9 @@ func (u *monitoringUsecase) IngestTelemetry(ctx context.Context, payload *domain
 		_ = u.serverRepo.Update(ctx, server)
 	}
 
+	// Menjalankan Auto-Discovery Reverse-Sync untuk Containers, Networks, dan Volumes
+	u.syncDiscoveredInfrastructure(ctx, server, payload)
+
 	if u.evaluator != nil {
 		_ = u.evaluator.EvaluateMetrics(ctx, server, metric)
 	}
@@ -135,54 +154,223 @@ func (u *monitoringUsecase) IngestTelemetry(ctx context.Context, payload *domain
 	return nil
 }
 
+// syncDiscoveredInfrastructure secara otomatis menyinkronkan container, network, dan volume yang ditemukan pada host ke database Caelus.
+func (u *monitoringUsecase) syncDiscoveredInfrastructure(ctx context.Context, server *domain.Server, payload *domain.TelemetryReportPayload) {
+	// 1. Sinkronisasi Containers ke Tabel Deployments
+	if u.deploymentRepo != nil && len(payload.Containers) > 0 {
+		existingDeps, _ := u.deploymentRepo.ListDeploymentsByServer(ctx, server.ID)
+		depMap := make(map[string]*domain.Deployment)
+		for i := range existingDeps {
+			depMap[existingDeps[i].ContainerName] = &existingDeps[i]
+		}
+
+		discoveredNames := make(map[string]bool)
+		for _, c := range payload.Containers {
+			// Lewati kontainer builder sementara (image sha256 tanpa tag)
+			if strings.HasPrefix(c.Image, "sha256:") {
+				continue
+			}
+
+			containerName := ""
+			if len(c.Names) > 0 {
+				containerName = strings.TrimPrefix(c.Names[0], "/")
+			}
+			if containerName == "" {
+				containerName = c.ID
+				if len(containerName) > 12 {
+					containerName = containerName[:12]
+				}
+			}
+
+			discoveredNames[containerName] = true
+
+			status := domain.DeploymentStatusRunning
+			switch c.State {
+			case "exited", "stopped":
+				status = domain.DeploymentStatusStopped
+			case "restarting":
+				status = domain.DeploymentStatusDeploying
+			}
+
+			if existing, exists := depMap[containerName]; exists {
+				if existing.Status != status {
+					_ = u.deploymentRepo.UpdateDeploymentStatus(ctx, existing.ID, status, "", nil)
+				}
+			} else {
+				var ports []domain.PortBinding
+				for _, p := range c.PortBindings {
+					ports = append(ports, domain.PortBinding{
+						HostPort:      p.HostPort,
+						ContainerPort: p.ContainerPort,
+						Protocol:      p.Protocol,
+					})
+				}
+
+				var volumeBindings []domain.VolumeBinding
+				for _, v := range c.VolumeMounts {
+					volumeBindings = append(volumeBindings, domain.VolumeBinding{
+						HostPath:      v.Source,
+						ContainerPath: v.Destination,
+						Mode:          v.Mode,
+					})
+				}
+
+				networkName := ""
+				if len(c.Networks) > 0 {
+					networkName = c.Networks[0]
+				}
+
+				createdAt := time.Now()
+				if c.Created > 0 {
+					createdAt = time.Unix(c.Created, 0)
+				}
+
+				newDep := &domain.Deployment{
+					ID:                   uuid.New(),
+					OrganizationID:       server.OrganizationID,
+					ServerID:             &server.ID,
+					AppName:              containerName,
+					ImageTag:             c.Image,
+					ContainerName:        containerName,
+					EnvironmentVariables: c.EnvironmentVariables,
+					PortBindings:         ports,
+					VolumeBindings:       volumeBindings,
+					RestartPolicy:        c.RestartPolicy,
+					NetworkName:          networkName,
+					Status:               status,
+					CreatedAt:            createdAt,
+					UpdatedAt:            time.Now(),
+				}
+				_ = u.deploymentRepo.CreateDeployment(ctx, newDep)
+			}
+		}
+
+		// Otomatis hapus kontainer yang sudah diprune / dihapus dari Docker host
+		for name, dep := range depMap {
+			if !discoveredNames[name] {
+				_ = u.deploymentRepo.DeleteDeployment(ctx, dep.ID)
+			}
+		}
+	}
+
+	// 2. Sinkronisasi Networks ke Tabel Networks
+	if u.networkRepo != nil && len(payload.Networks) > 0 {
+		existingNets, _ := u.networkRepo.ListNetworksByOrg(ctx, server.OrganizationID)
+		netMap := make(map[string]bool)
+		for _, n := range existingNets {
+			netMap[n.Name] = true
+		}
+
+		for _, n := range payload.Networks {
+			if n.Name == "host" || n.Name == "none" {
+				continue
+			}
+			if !netMap[n.Name] {
+				netType := domain.NetworkTypeBridge
+				if n.Driver == "overlay" {
+					netType = domain.NetworkTypeOverlay
+				}
+				newNet := &domain.Network{
+					ID:              uuid.New(),
+					OrganizationID:  server.OrganizationID,
+					Name:            n.Name,
+					Type:            netType,
+					CIDR:            n.SubnetCIDR,
+					Gateway:         n.Gateway,
+					Driver:          n.Driver,
+					Region:          "local",
+					Status:          domain.NetworkStatusActive,
+					AttachedServers: 1,
+					CreatedAt:       time.Now(),
+					UpdatedAt:       time.Now(),
+				}
+				_ = u.networkRepo.CreateNetwork(ctx, newNet)
+				netMap[n.Name] = true
+			}
+		}
+	}
+
+	// 3. Sinkronisasi Persistent Volumes ke Tabel Volumes
+	if u.volumeRepo != nil && len(payload.Volumes) > 0 {
+		existingVols, _ := u.volumeRepo.ListVolumesByOrg(ctx, server.OrganizationID)
+		volMap := make(map[string]bool)
+		for _, v := range existingVols {
+			volMap[v.Name] = true
+		}
+
+		for _, v := range payload.Volumes {
+			if !volMap[v.Name] {
+				sizeGB := int(v.SizeGB)
+				if sizeGB <= 0 {
+					sizeGB = 1
+				}
+				newVol := &domain.Volume{
+					ID:             uuid.New(),
+					OrganizationID: server.OrganizationID,
+					ServerID:       &server.ID,
+					Name:           v.Name,
+					SizeGB:         sizeGB,
+					Type:           domain.VolumeTypeDockerVolume,
+					FSType:         domain.FileSystemExt4,
+					MountPath:      v.Mountpoint,
+					Status:         domain.VolumeStatusInUse,
+					CreatedAt:      time.Now(),
+					UpdatedAt:      time.Now(),
+				}
+				_ = u.volumeRepo.CreateVolume(ctx, newVol)
+				volMap[v.Name] = true
+			}
+		}
+	}
+}
+
 // GetServerLiveMetrics mengambil snapshot metrik terbaru dari database.
 func (u *monitoringUsecase) GetServerLiveMetrics(ctx context.Context, serverID uuid.UUID) (*domain.ServerMetric, error) {
 	return u.metricRepo.GetLatestByServerID(ctx, serverID)
 }
 
-// GetServerMetricHistory mengambil deret waktu metrik server dalam rentang waktu yang ditentukan.
+// GetServerMetricHistory mengambil riwayat deret waktu metrik server dari database.
 func (u *monitoringUsecase) GetServerMetricHistory(ctx context.Context, serverID uuid.UUID, duration time.Duration) ([]domain.ServerMetric, error) {
-	if duration <= 0 {
-		duration = 1 * time.Hour
-	}
-	now := time.Now().UTC()
-	from := now.Add(-duration)
-
-	return u.metricRepo.GetHistoryByServerID(ctx, serverID, from, now, 100)
+	to := time.Now().UTC()
+	from := to.Add(-duration)
+	return u.metricRepo.GetHistoryByServerID(ctx, serverID, from, to, 100)
 }
 
-// ListAlerts mengambil daftar peringatan aktif atau riwayat berdasarkan filter status.
+// ListAlerts mengambil daftar notifikasi insiden alert pada organisasi.
 func (u *monitoringUsecase) ListAlerts(ctx context.Context, orgID uuid.UUID, status *domain.AlertStatus, page, limit int) ([]domain.Alert, int64, error) {
+	if limit <= 0 {
+		limit = 20
+	}
+	if page <= 0 {
+		page = 1
+	}
 	return u.alertRepo.ListAlertsByOrg(ctx, orgID, status, page, limit)
 }
 
-// AcknowledgeAlert menandai alert telah ditinjau oleh pengguna.
+// AcknowledgeAlert mengubah status alert menjadi acknowledged oleh user.
 func (u *monitoringUsecase) AcknowledgeAlert(ctx context.Context, alertID, userID uuid.UUID) error {
 	now := time.Now().UTC()
 	return u.alertRepo.UpdateAlertStatus(ctx, alertID, domain.AlertStatusAcknowledged, &userID, &now)
 }
 
-// ResolveAlert menandai insiden alert telah terselesaikan.
+// ResolveAlert menyelesaikan dan menutup status insiden alert.
 func (u *monitoringUsecase) ResolveAlert(ctx context.Context, alertID, userID uuid.UUID) error {
 	now := time.Now().UTC()
 	return u.alertRepo.UpdateAlertStatus(ctx, alertID, domain.AlertStatusResolved, &userID, &now)
 }
 
-// CreateAlertRule membuat aturan ambang batas alert baru.
+// CreateAlertRule mendaftarkan aturan threshold metrik baru.
 func (u *monitoringUsecase) CreateAlertRule(ctx context.Context, rule *domain.AlertRule) error {
-	if rule.Name == "" {
-		return fmt.Errorf("%w: alert rule name is required", domain.ErrValidation)
+	if rule.ID == uuid.Nil {
+		rule.ID = uuid.New()
 	}
-	if rule.MetricName == "" {
-		return fmt.Errorf("%w: metric name is required", domain.ErrValidation)
-	}
-	if rule.Threshold <= 0 {
-		return fmt.Errorf("%w: threshold must be greater than 0", domain.ErrValidation)
-	}
+	now := time.Now().UTC()
+	rule.CreatedAt = now
+	rule.UpdatedAt = now
 	return u.alertRepo.CreateRule(ctx, rule)
 }
 
-// ListAlertRules mengambil seluruh aturan evaluasi alert milik organisasi.
+// ListAlertRules mengambil daftar aturan monitoring alert organisasi.
 func (u *monitoringUsecase) ListAlertRules(ctx context.Context, orgID uuid.UUID) ([]domain.AlertRule, error) {
 	return u.alertRepo.ListRulesByOrg(ctx, orgID)
 }

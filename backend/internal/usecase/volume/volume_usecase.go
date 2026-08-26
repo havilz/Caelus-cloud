@@ -13,11 +13,12 @@ import (
 )
 
 type UseCase struct {
-	repo domain.VolumeRepository
+	repo       domain.VolumeRepository
+	serverRepo domain.ServerRepository
 }
 
-func NewUseCase(repo domain.VolumeRepository) *UseCase {
-	return &UseCase{repo: repo}
+func NewUseCase(repo domain.VolumeRepository, serverRepo domain.ServerRepository) *UseCase {
+	return &UseCase{repo: repo, serverRepo: serverRepo}
 }
 
 // GetStoragePoolStats mengembalikan metrik kapasitas disk fisik host real-time
@@ -97,11 +98,20 @@ func (u *UseCase) CreateVolume(ctx context.Context, orgID uuid.UUID, req domain.
 		return nil, fmt.Errorf("ukuran volume harus lebih dari 0 GB")
 	}
 
-	// Validasi fisik terhadap sisa kapasitas disk host
-	stats, err := u.GetStoragePoolStats(ctx)
-	if err == nil && stats != nil {
-		if float64(req.SizeGB) > stats.FreeGB {
-			return nil, fmt.Errorf("kapasitas volume (%d GB) melebihi sisa disk fisik server (%.1f GB tersedia)", req.SizeGB, stats.FreeGB)
+	// Validasi fisik terhadap sisa kapasitas disk host lokal atau server target
+	if req.ServerID == nil {
+		stats, err := u.GetStoragePoolStats(ctx)
+		if err == nil && stats != nil {
+			if float64(req.SizeGB) > stats.FreeGB {
+				return nil, fmt.Errorf("kapasitas volume (%d GB) melebihi sisa disk fisik host lokal (%.1f GB tersedia)", req.SizeGB, stats.FreeGB)
+			}
+		}
+	} else if u.serverRepo != nil {
+		targetServer, err := u.serverRepo.GetByID(ctx, *req.ServerID)
+		if err == nil && targetServer != nil && targetServer.DiskGB > 0 {
+			if req.SizeGB > targetServer.DiskGB {
+				return nil, fmt.Errorf("kapasitas volume (%d GB) melebihi alokasi disk server %s (%d GB tersedia)", req.SizeGB, targetServer.Name, targetServer.DiskGB)
+			}
 		}
 	}
 

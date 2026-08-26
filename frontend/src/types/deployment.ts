@@ -32,6 +32,7 @@ export interface Deployment {
   volume_bindings?: VolumeBinding[];
   restart_policy: string;
   network_name?: string;
+  command?: string;
   status: DeploymentStatus;
   error_message?: string;
   created_at: string;
@@ -52,6 +53,7 @@ export interface DeploymentRequest {
   app_name: string;
   image_tag: string;
   container_name?: string;
+  command?: string;
   network_name?: string;
   environment_variables?: Record<string, string>;
   port_bindings?: PortBinding[];

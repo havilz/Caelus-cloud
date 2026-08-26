@@ -203,7 +203,10 @@ func main() {
 	networkUc := networkUsecase.NewUseCase(networkRepo)
 
 	volumeRepo := postgres.NewVolumeRepository(client.Pool)
-	volumeUc := volumeUsecase.NewUseCase(volumeRepo)
+	volumeUc := volumeUsecase.NewUseCase(volumeRepo, serverRepo)
+
+	// Hubungkan repositori Auto-Discovery ke Monitoring Usecase
+	monitoringUc.SetDiscoveryRepos(deploymentRepo, networkRepo, volumeRepo)
 
 	routerConfig := deliveryHttp.RouterConfig{
 		Config:     cfg,

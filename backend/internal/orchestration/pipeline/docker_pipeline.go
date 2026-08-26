@@ -116,15 +116,28 @@ func (p *DockerPipeline) runPipeline(ctx context.Context, dep *domain.Deployment
 		runArgs = append(runArgs, "--restart", dep.RestartPolicy)
 	}
 
-	if dep.NetworkName != "" {
-		dockerNetName := dep.NetworkName
-		if !strings.HasPrefix(dockerNetName, "caelus-") {
+	dockerNetName := dep.NetworkName
+	if hasDocker && (dockerNetName == "" || dockerNetName == "caelus-network") {
+		netCheck := exec.CommandContext(ctx, "docker", "network", "ls", "--format", "{{.Name}}")
+		if out, err := netCheck.Output(); err == nil {
+			for _, line := range strings.Split(string(out), "\n") {
+				line = strings.TrimSpace(line)
+				if strings.Contains(line, "caelus-network") {
+					dockerNetName = line
+					break
+				}
+			}
+		}
+	}
+
+	if dockerNetName != "" {
+		if !strings.HasPrefix(dockerNetName, "caelus-") && !strings.Contains(dockerNetName, "_") {
 			dockerNetName = fmt.Sprintf("caelus-%s", dep.NetworkName)
 		}
 		if hasDocker {
 			_ = exec.CommandContext(ctx, "docker", "network", "create", "--driver", "bridge", dockerNetName).Run()
 		}
-		p.log(ctx, dep.ID, "system", fmt.Sprintf("Attaching to VPC Network: %s (%s)", dep.NetworkName, dockerNetName))
+		p.log(ctx, dep.ID, "system", fmt.Sprintf("Attaching to Network: %s", dockerNetName))
 		runArgs = append(runArgs, "--network", dockerNetName)
 	}
 
@@ -146,6 +159,18 @@ func (p *DockerPipeline) runPipeline(ctx context.Context, dep *domain.Deployment
 	}
 
 	runArgs = append(runArgs, dep.ImageTag)
+
+	if dep.Command != "" {
+		cmdParts := strings.Fields(dep.Command)
+		runArgs = append(runArgs, cmdParts...)
+	} else if strings.Contains(dep.ImageTag, "cloudflared") {
+		// Auto-support for cloudflared Quick Tunnel or Token-based tunnel
+		if tunnelURL, ok := dep.EnvironmentVariables["TUNNEL_URL"]; ok && tunnelURL != "" {
+			runArgs = append(runArgs, "tunnel", "--no-autoupdate", "--url", tunnelURL)
+		} else if tunnelToken, ok := dep.EnvironmentVariables["TUNNEL_TOKEN"]; ok && tunnelToken != "" {
+			runArgs = append(runArgs, "tunnel", "--no-autoupdate", "run", "--token", tunnelToken)
+		}
+	}
 
 	// Step 3: Menjalankan Container Fisik
 	if hasDocker {

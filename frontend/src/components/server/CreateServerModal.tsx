@@ -52,6 +52,19 @@ export const CreateServerModal: React.FC<CreateServerModalProps> = ({ isOpen, on
   // Success Connection Step State
   const [createdServer, setCreatedServer] = useState<Server | null>(null);
   const [copiedType, setCopiedType] = useState<string | null>(null);
+  const [targetEndpoint, setTargetEndpoint] = useState<string>("");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const hostname = window.location.hostname;
+      const port = window.location.port;
+      if (hostname.includes(".ts.net") || port === "3000") {
+        setTargetEndpoint(`http://${hostname}:8080`);
+      } else {
+        setTargetEndpoint(window.location.origin);
+      }
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     if (isOpen) {
@@ -132,10 +145,10 @@ export const CreateServerModal: React.FC<CreateServerModalProps> = ({ isOpen, on
     }
   };
 
-  const apiEndpoint = typeof window !== "undefined" ? `${window.location.protocol}//${window.location.hostname}:8080` : "http://localhost:8080";
+  const activeEndpoint = targetEndpoint.trim() || (typeof window !== "undefined" ? `http://${window.location.hostname}:8080` : "http://localhost:8080");
   const agentSecret = createdServer ? "caelus_agent_sec_" + createdServer.id.replace(/-/g, "").substring(0, 16) : "";
   const oneLineCommand = createdServer
-    ? `curl -sSL ${apiEndpoint}/install.sh | sudo bash -s -- --server-id="${createdServer.id}" --secret="${agentSecret}" --api="${apiEndpoint}"`
+    ? `curl -sSL ${activeEndpoint}/install.sh | bash -s -- --server-id="${createdServer.id}" --secret="${agentSecret}" --api="${activeEndpoint}"`
     : "";
 
   const handleCopy = (text: string, type: string) => {
@@ -173,6 +186,54 @@ export const CreateServerModal: React.FC<CreateServerModalProps> = ({ isOpen, on
             </div>
             <div className="p-2 rounded-lg bg-emerald-500/20 text-emerald-400">
               <CheckCircle2 className="w-5 h-5" />
+            </div>
+          </div>
+
+          {/* Smart API Endpoint Selector */}
+          <div className="p-3 rounded-xl bg-[#141414] border border-[#262626] space-y-2.5">
+            <div className="flex items-center justify-between">
+              <label className="text-[11px] font-semibold text-[#ededed]">
+                Alamat Target API Control Plane (URL Caelus Backend)
+              </label>
+              <span className="text-[10px] text-[#707070]">Bisa disesuaikan jika via IP Tailscale/Public</span>
+            </div>
+            <Input
+              type="text"
+              value={targetEndpoint}
+              onChange={(e) => setTargetEndpoint(e.target.value)}
+              placeholder="http://100.x.y.z:8080 atau http://ip-public:8080"
+              className="font-mono text-xs text-emerald-400 bg-[#0d0d0d] border-[#333333]"
+            />
+            {/* Quick Presets */}
+            <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+              <span className="text-[10px] text-[#707070] mr-1">Preset Cepat:</span>
+              <button
+                type="button"
+                onClick={() => {
+                  if (typeof window !== "undefined") {
+                    setTargetEndpoint(`http://${window.location.hostname}:8080`);
+                  }
+                }}
+                className="text-[10px] px-2 py-0.5 rounded bg-[#1f1f1f] hover:bg-[#2a2a2a] text-emerald-400 border border-[#333333] transition-colors cursor-pointer"
+              >
+                🎯 Hostname/IP Host ({typeof window !== "undefined" ? window.location.hostname : ""}:8080)
+              </button>
+              <button
+                type="button"
+                onClick={() => setTargetEndpoint("http://100.115.162.110:8080")}
+                className="text-[10px] px-2 py-0.5 rounded bg-[#1f1f1f] hover:bg-[#2a2a2a] text-blue-400 border border-[#333333] transition-colors cursor-pointer"
+              >
+                🔒 IP Tailscale (100.115.162.110:8080)
+              </button>
+              {typeof window !== "undefined" && window.location.origin && (
+                <button
+                  type="button"
+                  onClick={() => setTargetEndpoint(window.location.origin)}
+                  className="text-[10px] px-2 py-0.5 rounded bg-[#1f1f1f] hover:bg-[#2a2a2a] text-[#a1a1a1] border border-[#333333] transition-colors cursor-pointer"
+                >
+                  🌐 Origin ({window.location.origin})
+                </button>
+              )}
             </div>
           </div>
 

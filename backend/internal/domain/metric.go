@@ -55,26 +55,72 @@ type HostMetricsPayload struct {
 	Hostname           string  `json:"hostname"`
 }
 
-// ContainerMetricPayload merepresentasikan metrik container yang dilaporkan oleh agent.
+// PortBindingPayload mendefinisikan pemetaan port container ke host.
+type PortBindingPayload struct {
+	HostPort      int    `json:"host_port"`
+	ContainerPort int    `json:"container_port"`
+	Protocol      string `json:"protocol"`
+	HostIP        string `json:"host_ip,omitempty"`
+}
+
+// VolumeMountPayload mendefinisikan volume atau folder mount container.
+type VolumeMountPayload struct {
+	Name        string `json:"name,omitempty"`
+	Source      string `json:"source"`
+	Destination string `json:"destination"`
+	Mode        string `json:"mode"`
+	Type        string `json:"type"`
+}
+
+// ContainerMetricPayload merepresentasikan metrik container dan konfigurasi lengkapnya.
 type ContainerMetricPayload struct {
-	ID            string   `json:"id"`
-	Names         []string `json:"names"`
-	Image         string   `json:"image"`
-	State         string   `json:"state"`
-	Status        string   `json:"status"`
-	Created       int64    `json:"created"`
-	CPUUsagePct   float64  `json:"cpu_usage_pct"`
-	MemoryUsageMB float64  `json:"memory_usage_mb"`
-	MemoryLimitMB float64  `json:"memory_limit_mb"`
+	ID                   string               `json:"id"`
+	Names                []string             `json:"names"`
+	Image                string               `json:"image"`
+	State                string               `json:"state"`
+	Status               string               `json:"status"`
+	Created              int64                `json:"created"`
+	CPUUsagePct          float64              `json:"cpu_usage_pct"`
+	MemoryUsageMB        float64              `json:"memory_usage_mb"`
+	MemoryLimitMB        float64              `json:"memory_limit_mb"`
+	PortBindings         []PortBindingPayload `json:"port_bindings,omitempty"`
+	VolumeMounts         []VolumeMountPayload `json:"volume_mounts,omitempty"`
+	Networks             []string             `json:"networks,omitempty"`
+	IPAddress            string               `json:"ip_address,omitempty"`
+	RestartPolicy        string               `json:"restart_policy,omitempty"`
+	EnvironmentVariables map[string]string    `json:"environment_variables,omitempty"`
+}
+
+// DiscoveredNetworkPayload merepresentasikan VPC / Docker bridge yang ditemukan pada host.
+type DiscoveredNetworkPayload struct {
+	ID         string `json:"id"`
+	Name       string `json:"name"`
+	Driver     string `json:"driver"`
+	Scope      string `json:"scope"`
+	SubnetCIDR string `json:"subnet_cidr"`
+	Gateway    string `json:"gateway"`
+	Internal   bool   `json:"internal"`
+}
+
+// DiscoveredVolumePayload merepresentasikan persistent volume yang ditemukan pada host.
+type DiscoveredVolumePayload struct {
+	Name       string  `json:"name"`
+	Driver     string  `json:"driver"`
+	Mountpoint string  `json:"mountpoint"`
+	SizeGB     float64 `json:"size_gb"`
+	CreatedAt  string  `json:"created_at,omitempty"`
+	InUse      bool    `json:"in_use"`
 }
 
 // TelemetryReportPayload merepresentasikan DTO payload lengkap yang dikirim oleh daemon caelus-agent.
 type TelemetryReportPayload struct {
-	ServerID        uuid.UUID                `json:"server_id"`
-	Timestamp       time.Time                `json:"timestamp"`
-	Host            HostMetricsPayload       `json:"host"`
-	Containers      []ContainerMetricPayload `json:"containers"`
-	DockerAvailable bool                     `json:"docker_available"`
+	ServerID        uuid.UUID                  `json:"server_id"`
+	Timestamp       time.Time                  `json:"timestamp"`
+	Host            HostMetricsPayload         `json:"host"`
+	Containers      []ContainerMetricPayload   `json:"containers"`
+	Networks        []DiscoveredNetworkPayload `json:"networks,omitempty"`
+	Volumes         []DiscoveredVolumePayload  `json:"volumes,omitempty"`
+	DockerAvailable bool                       `json:"docker_available"`
 }
 
 // MetricRepository mendefinisikan kontrak persistensi data time-series metrik server.
@@ -89,4 +135,3 @@ type TelemetryBroadcaster interface {
 	BroadcastToServer(serverID uuid.UUID, event string, data any)
 	BroadcastToOrg(orgID uuid.UUID, event string, data any)
 }
-

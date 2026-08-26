@@ -56,7 +56,7 @@ func main() {
 	}
 }
 
-// runCollectionCycle menjalankan satu siklus pengumpulan data telemetri host dan container serta mengirimkannya ke API.
+// runCollectionCycle menjalankan satu siklus pengumpulan data telemetri host, container, network, dan volume.
 func runCollectionCycle(
 	ctx context.Context,
 	sysCollector collector.Collector,
@@ -74,10 +74,23 @@ func runCollectionCycle(
 
 	dockerAvail := dockerInspector.IsAvailable(ctx)
 	var containers []transport.ContainerMetrics
+	var networks []transport.DiscoveredNetwork
+	var volumes []transport.DiscoveredVolume
+
 	if dockerAvail {
 		containers, err = dockerInspector.InspectContainers(ctx)
 		if err != nil {
 			slog.Warn("failed to inspect docker containers", "error", err)
+		}
+
+		networks, err = dockerInspector.InspectNetworks(ctx)
+		if err != nil {
+			slog.Warn("failed to inspect docker networks", "error", err)
+		}
+
+		volumes, err = dockerInspector.InspectVolumes(ctx)
+		if err != nil {
+			slog.Warn("failed to inspect docker volumes", "error", err)
 		}
 	}
 
@@ -86,6 +99,8 @@ func runCollectionCycle(
 		Timestamp:       time.Now().UTC(),
 		Host:            *hostMetrics,
 		Containers:      containers,
+		Networks:        networks,
+		Volumes:         volumes,
 		DockerAvailable: dockerAvail,
 	}
 
@@ -103,6 +118,8 @@ func runCollectionCycle(
 		"mem_pct", hostMetrics.MemoryUsagePct,
 		"disk_pct", hostMetrics.DiskUsagePct,
 		"containers_count", len(containers),
+		"networks_count", len(networks),
+		"volumes_count", len(volumes),
 		"docker_active", dockerAvail,
 	)
 }

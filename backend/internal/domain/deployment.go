@@ -48,6 +48,7 @@ type Deployment struct {
 	VolumeBindings       []VolumeBinding   `json:"volume_bindings,omitempty"`
 	RestartPolicy        string            `json:"restart_policy"`
 	NetworkName          string            `json:"network_name,omitempty"`
+	Command              string            `json:"command,omitempty"`
 	Status               DeploymentStatus  `json:"status"`
 	ErrorMessage         string            `json:"error_message,omitempty"`
 	CreatedAt            time.Time         `json:"created_at"`
@@ -70,6 +71,7 @@ type DeploymentRequest struct {
 	AppName              string            `json:"app_name"`
 	ImageTag             string            `json:"image_tag"`
 	ContainerName        string            `json:"container_name,omitempty"`
+	Command              string            `json:"command,omitempty"`
 	NetworkName          string            `json:"network_name,omitempty"`
 	EnvironmentVariables map[string]string `json:"environment_variables,omitempty"`
 	PortBindings         []PortBinding     `json:"port_bindings,omitempty"`
