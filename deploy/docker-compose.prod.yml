@@ -45,6 +45,26 @@ services:
       - caelus-network
 
   # ----------------------------------------------------------------------------
+  # Caelus Database Migration Runner (GHCR Image - berjalan sekali)
+  # ----------------------------------------------------------------------------
+  migrate:
+    image: ghcr.io/havilz/caelus-migrate:latest
+    container_name: caelus-migrate
+    restart: "no"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=caelus_user
+      - DB_PASSWORD=caelus_password
+      - DB_NAME=caelus_cloud_db
+      - DB_SSLMODE=disable
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - caelus-network
+
+  # ----------------------------------------------------------------------------
   # MinIO Object Storage
   # ----------------------------------------------------------------------------
   minio:
@@ -93,8 +113,14 @@ services:
       - STORAGE_ACCESS_KEY=${STORAGE_ACCESS_KEY:-minioadmin}
       - STORAGE_SECRET_KEY=${STORAGE_SECRET_KEY:-minioadmin123}
     depends_on:
-      - redis
-      - minio
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     networks:
@@ -121,8 +147,14 @@ services:
       - STORAGE_ACCESS_KEY=${STORAGE_ACCESS_KEY:-minioadmin}
       - STORAGE_SECRET_KEY=${STORAGE_SECRET_KEY:-minioadmin123}
     depends_on:
-      - redis
-      - minio
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     networks:
       - caelus-network
 
