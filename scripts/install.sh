@@ -26,7 +26,7 @@ C_DIM="\033[2m"
 
 INSTALL_DIR="${CAELUS_DIR:-$HOME/caelus-cloud}"
 REPO_URL="https://github.com/havilz/Caelus-cloud.git"
-COMPOSE_URL="https://raw.githubusercontent.com/havilz/Caelus-cloud/master/docker-compose.yml"
+COMPOSE_URL="https://raw.githubusercontent.com/havilz/Caelus-cloud/master/deploy/docker-compose.prod.yml"
 
 print_banner() {
   clear 2>/dev/null || true
