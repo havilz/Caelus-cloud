@@ -155,7 +155,7 @@ wizard_topology_selection() {
   echo -e "      ${C_DIM}• Otomatis menghubungkan Cloudflare Tunnel agar VPS luar bisa lapor telemetri.${C_RESET}"
   echo -e "${C_DIM}────────────────────────────────────────────────────────────────────${C_RESET}"
   echo -ne "  ${C_BOLD}Masukkan nomor pilihan [1/2/3] (Default: 1): ${C_RESET}"
-  read -r TOPOLOGY_CHOICE
+  read -r TOPOLOGY_CHOICE < /dev/tty || TOPOLOGY_CHOICE="1"
   TOPOLOGY_CHOICE="${TOPOLOGY_CHOICE:-1}"
 
   # Default Variable Initialization
@@ -186,35 +186,35 @@ wizard_topology_selection() {
       echo ""
       echo -e "  ${C_YELLOW}${C_BOLD}── Konfigurasi Managed PostgreSQL Eksternal ──${C_RESET}"
       echo -ne "  Host PostgreSQL (e.g. db.xyz.supabase.co / rds.amazonaws.com): "
-      read -r DB_HOST
+      read -r DB_HOST < /dev/tty || true
       echo -ne "  Port PostgreSQL [5432]: "
-      read -r INPUT_DB_PORT
+      read -r INPUT_DB_PORT < /dev/tty || true
       DB_PORT="${INPUT_DB_PORT:-5432}"
       echo -ne "  User PostgreSQL [postgres]: "
-      read -r INPUT_DB_USER
+      read -r INPUT_DB_USER < /dev/tty || true
       DB_USER="${INPUT_DB_USER:-postgres}"
       echo -ne "  Password PostgreSQL: "
-      read -s DB_PASSWORD
+      read -s DB_PASSWORD < /dev/tty || true
       echo ""
       echo -ne "  Nama Database [postgres]: "
-      read -r INPUT_DB_NAME
+      read -r INPUT_DB_NAME < /dev/tty || true
       DB_NAME="${INPUT_DB_NAME:-postgres}"
       echo -ne "  SSL Mode (require/verify-full/disable) [require]: "
-      read -r INPUT_SSL_MODE
+      read -r INPUT_SSL_MODE < /dev/tty || true
       DB_SSL_MODE="${INPUT_SSL_MODE:-require}"
 
       echo ""
       echo -e "  ${C_YELLOW}${C_BOLD}── Konfigurasi Managed Redis Eksternal ──${C_RESET}"
       echo -ne "  Host Redis (e.g. global-redis.upstash.io / aivencloud.com): "
-      read -r REDIS_HOST
+      read -r REDIS_HOST < /dev/tty || true
       echo -ne "  Port Redis [6379]: "
-      read -r INPUT_REDIS_PORT
+      read -r INPUT_REDIS_PORT < /dev/tty || true
       REDIS_PORT="${INPUT_REDIS_PORT:-6379}"
       echo -ne "  Password Redis: "
-      read -s REDIS_PASSWORD
+      read -s REDIS_PASSWORD < /dev/tty || true
       echo ""
       echo -ne "  Gunakan Redis TLS (true/false) [true]: "
-      read -r INPUT_REDIS_TLS
+      read -r INPUT_REDIS_TLS < /dev/tty || true
       REDIS_USE_TLS="${INPUT_REDIS_TLS:-true}"
       ;;
 
@@ -223,12 +223,12 @@ wizard_topology_selection() {
       TUNNEL_ENABLED="true"
       echo ""
       echo -ne "  Masukkan Domain Publik untuk Dashboard Caelus Anda (e.g. caelus.domainanda.com): "
-      read -r PUBLIC_DOMAIN
+      read -r PUBLIC_DOMAIN < /dev/tty || true
       PUBLIC_DOMAIN="${PUBLIC_DOMAIN:-localhost:3000}"
       PUBLIC_API_URL="https://${PUBLIC_DOMAIN}/api"
 
       echo -ne "  Masukkan Cloudflare Tunnel Token (Opsional, tekan Enter untuk lewati jika pakai Quick Tunnel): "
-      read -r TUNNEL_TOKEN
+      read -r TUNNEL_TOKEN < /dev/tty || true
       ;;
 
     *)

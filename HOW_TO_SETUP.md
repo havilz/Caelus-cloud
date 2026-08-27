@@ -38,8 +38,8 @@ Dokumen ini memuat panduan komprehensif mulai dari instalasi prasyarat, konfigur
 Untuk pengguna atau enterprise yang ingin langsung memasang Caelus Cloud di server tanpa perlu *clone repo* atau konfigurasi manual, cukup jalankan perintah berikut di terminal:
 
 ```bash
-curl -fsSL https://get.caelus.cloud/install.sh | bash
-# atau secara lokal dari repository:
+curl -fsSL https://raw.githubusercontent.com/havilz/Caelus-cloud/master/scripts/install.sh | bash
+# atau secara lokal dari repository yang sudah di-clone:
 bash scripts/install.sh
 ```
 
