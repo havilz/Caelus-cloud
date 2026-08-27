@@ -197,7 +197,9 @@ func (u *monitoringUsecase) syncDiscoveredInfrastructure(ctx context.Context, se
 				status = domain.DeploymentStatusDeploying
 			}
 
+			var targetDepID uuid.UUID
 			if existing, exists := depMap[containerName]; exists {
+				targetDepID = existing.ID
 				if existing.Status != status {
 					_ = u.deploymentRepo.UpdateDeploymentStatus(ctx, existing.ID, status, "", nil)
 				}
@@ -247,6 +249,25 @@ func (u *monitoringUsecase) syncDiscoveredInfrastructure(ctx context.Context, se
 					UpdatedAt:            time.Now(),
 				}
 				_ = u.deploymentRepo.CreateDeployment(ctx, newDep)
+				targetDepID = newDep.ID
+			}
+
+			if targetDepID != uuid.Nil && len(c.Logs) > 0 {
+				existingLogs, _ := u.deploymentRepo.GetLogsByDeployment(ctx, targetDepID, 30)
+				existingMsgs := make(map[string]bool)
+				for _, el := range existingLogs {
+					existingMsgs[el.Message] = true
+				}
+				for _, logLine := range c.Logs {
+					if !existingMsgs[logLine] {
+						_ = u.deploymentRepo.AppendLog(ctx, &domain.DeploymentLog{
+							DeploymentID: targetDepID,
+							Timestamp:    time.Now().UTC(),
+							Stream:       "stdout",
+							Message:      logLine,
+						})
+					}
+				}
 			}
 		}
 

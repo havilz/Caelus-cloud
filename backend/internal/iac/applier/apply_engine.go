@@ -440,6 +440,21 @@ func (a *Applier) executeChange(ctx context.Context, orgID uuid.UUID, change dom
 					})
 				}
 
+				if targetDep != nil {
+					_ = a.deps.DeploymentRepo.AppendLog(ctx, &domain.DeploymentLog{
+						DeploymentID: targetDep.ID,
+						Timestamp:    now,
+						Stream:       "system",
+						Message:      fmt.Sprintf("IaC provisioning container '%s' with image '%s'", spec.Name, spec.Image),
+					})
+					_ = a.deps.DeploymentRepo.AppendLog(ctx, &domain.DeploymentLog{
+						DeploymentID: targetDep.ID,
+						Timestamp:    now.Add(50 * time.Millisecond),
+						Stream:       "stdout",
+						Message:      "Deploy action dispatched to node agent for physical execution",
+					})
+				}
+
 				return &AppliedAction{
 					Change: change,
 					UndoFunc: func(c context.Context) error {

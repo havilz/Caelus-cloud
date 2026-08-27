@@ -1,6 +1,7 @@
 package docker
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -183,6 +184,7 @@ func (i *UnixSocketInspector) InspectContainers(ctx context.Context) ([]transpor
 			metric.CPUUsagePct = math.Round(cpuPct*100) / 100
 			metric.MemoryUsageMB = math.Round(memMB*100) / 100
 			metric.MemoryLimitMB = math.Round(limitMB*100) / 100
+			metric.Logs = i.fetchContainerLogs(ctx, c.ID)
 		}
 
 		result = append(result, metric)
@@ -363,6 +365,44 @@ func (i *UnixSocketInspector) fetchContainerStats(ctx context.Context, container
 	limitMB := float64(stats.MemoryStats.Limit) / (1024.0 * 1024.0)
 
 	return cpuPercent, memMB, limitMB
+}
+
+// fetchContainerLogs mengambil snippet baris log output stdout/stderr terbaru dari container.
+func (i *UnixSocketInspector) fetchContainerLogs(ctx context.Context, containerID string) []string {
+	url := fmt.Sprintf("http://localhost/containers/%s/logs?stdout=1&stderr=1&tail=15&timestamps=0", containerID)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil
+	}
+
+	resp, err := i.client.Do(req)
+	if err != nil {
+		return nil
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil
+	}
+
+	raw, err := io.ReadAll(io.LimitReader(resp.Body, 16384))
+	if err != nil || len(raw) == 0 {
+		return nil
+	}
+
+	var lines []string
+	scanner := bufio.NewScanner(bytes.NewReader(raw))
+	for scanner.Scan() {
+		line := scanner.Bytes()
+		if len(line) > 8 && (line[0] <= 2) && line[1] == 0 && line[2] == 0 && line[3] == 0 {
+			line = line[8:]
+		}
+		str := strings.TrimSpace(string(line))
+		if str != "" {
+			lines = append(lines, str)
+		}
+	}
+	return lines
 }
 
 // CreateVolume membuat Docker named volume baru via Docker Unix Socket REST API.

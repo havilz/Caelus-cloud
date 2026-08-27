@@ -385,6 +385,7 @@ func registerStorageRoutes(r chi.Router, sh *v1.StorageHandler) {
 	r.Route("/storage", func(storageRouter chi.Router) {
 		storageRouter.Get("/buckets", sh.ListBuckets)
 		storageRouter.Post("/buckets", sh.CreateBucket)
+		storageRouter.Post("/sync", sh.SyncBuckets)
 		storageRouter.Get("/buckets/{name}", sh.GetBucket)
 		storageRouter.Delete("/buckets/{name}", sh.DeleteBucket)
 

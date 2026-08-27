@@ -19,11 +19,13 @@ import {
   Shield,
   Loader2,
   Archive,
+  RefreshCw,
 } from 'lucide-react';
 
 export default function StorageDashboardPage() {
   const [buckets, setBuckets] = useState<Bucket[]>([]);
   const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [deletingBucket, setDeletingBucket] = useState<string | null>(null);
@@ -39,6 +41,18 @@ export default function StorageDashboardPage() {
       setLoading(false);
     }
   }, []);
+
+  const handleSyncBuckets = async () => {
+    try {
+      setSyncing(true);
+      const synced = await storageService.syncBuckets();
+      setBuckets(synced);
+    } catch (err) {
+      console.error('Failed to sync cloud buckets:', err);
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   useEffect(() => {
     fetchBuckets();
@@ -91,6 +105,16 @@ export default function StorageDashboardPage() {
         </div>
 
         <div className="flex items-center space-x-3">
+          <button
+            onClick={handleSyncBuckets}
+            disabled={syncing}
+            className="px-3.5 py-2 rounded-lg bg-[#1a1a1a] border border-[#2e2e2e] text-xs font-medium text-[#ededed] hover:border-cyan-500/40 flex items-center space-x-2 transition-all shadow-sm disabled:opacity-50"
+            title="Sync two-way buckets directly with Cloudflare R2, AWS S3, and MinIO"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 text-cyan-400 ${syncing ? 'animate-spin' : ''}`} />
+            <span>{syncing ? 'Syncing...' : 'Sync Cloud Storage'}</span>
+          </button>
+
           <Link
             href="/storage/backups"
             className="px-3.5 py-2 rounded-lg bg-[#1a1a1a] border border-[#2e2e2e] text-xs font-medium text-[#ededed] hover:border-emerald-500/40 flex items-center space-x-2 transition-all shadow-sm"

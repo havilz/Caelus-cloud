@@ -86,6 +86,23 @@ func (h *StorageHandler) ListBuckets(w http.ResponseWriter, r *http.Request) {
 	response.Paginated(w, http.StatusOK, "buckets retrieved successfully", buckets, page, limit, int64(total))
 }
 
+// SyncBuckets melakukan sinkronisasi dua arah (Two-Way Discovery Sync) antara Caelus dan penyedia storage aktif.
+func (h *StorageHandler) SyncBuckets(w http.ResponseWriter, r *http.Request) {
+	orgID, ok := middleware.GetOrganizationIDFromContext(r.Context())
+	if !ok || orgID == uuid.Nil {
+		response.Error(w, http.StatusForbidden, "organization context required", nil)
+		return
+	}
+
+	synced, err := h.usecase.SyncBuckets(r.Context(), orgID)
+	if err != nil {
+		response.Error(w, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
+
+	response.Success(w, http.StatusOK, fmt.Sprintf("synchronized %d buckets from active cloud storage providers", len(synced)), synced)
+}
+
 // GetBucket mengambil detail satu bucket berdasarkan nama.
 func (h *StorageHandler) GetBucket(w http.ResponseWriter, r *http.Request) {
 	orgID, ok := middleware.GetOrganizationIDFromContext(r.Context())

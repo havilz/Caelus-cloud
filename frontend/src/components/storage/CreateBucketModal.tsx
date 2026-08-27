@@ -103,55 +103,16 @@ export const CreateBucketModal: React.FC<CreateBucketModalProps> = ({
               </div>
             )}
 
-            {/* Target Storage Host / Node */}
-            <div>
-              <label className={`${AppText.label} mb-1.5 block`}>
-                Target Storage Host / Node
-              </label>
-              <select
-                value={targetServerId}
-                onChange={(e) => setTargetServerId(e.target.value)}
-                className="w-full px-3.5 py-2 rounded-lg bg-[#141414] border border-[#2e2e2e] text-[#ededed] text-xs font-mono focus:outline-none focus:border-emerald-500 transition-colors"
-              >
-                <option value="">Local Host (Current Machine / MinIO Cluster)</option>
-                {servers.map((s: any) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name} ({s.ip_address || s.ipAddress || 'Agent Node'} - {s.status})
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Bucket Name */}
-            <div>
-              <label className={`${AppText.label} mb-1.5 block`}>
-                Bucket Name
-              </label>
-              <input
-                type="text"
-                required
-                placeholder="e.g. production-assets"
-                value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value.toLowerCase().trim() })
-                }
-                className="w-full px-3.5 py-2 rounded-lg bg-[#141414] border border-[#2e2e2e] text-[#ededed] placeholder-[#707070] text-sm focus:outline-none focus:border-emerald-500 transition-colors"
-              />
-              <p className="mt-1 text-[11px] text-[#707070]">
-                Must be globally unique, lowercase alphanumeric and hyphens.
-              </p>
-            </div>
-
-            {/* Provider Selection */}
+            {/* 1. Storage Provider Selection (Top) */}
             <div>
               <label className={`${AppText.label} mb-1.5 block`}>
                 Storage Provider
               </label>
               <div className="grid grid-cols-3 gap-2">
                 {[
-                  { id: 'minio', name: 'MinIO', desc: 'Local Cluster' },
-                  { id: 's3', name: 'AWS S3', desc: 'Global Cloud' },
-                  { id: 'r2', name: 'Cloudflare R2', desc: 'Zero Egress' },
+                  { id: 'minio', name: 'MinIO', desc: 'On-Premise / Local' },
+                  { id: 'r2', name: 'Cloudflare R2', desc: 'Global Edge Storage' },
+                  { id: 's3', name: 'AWS S3', desc: 'Global Cloud S3' },
                 ].map((prov) => {
                   const isSelected = formData.provider_type === prov.id;
                   return (
@@ -179,34 +140,89 @@ export const CreateBucketModal: React.FC<CreateBucketModalProps> = ({
               </div>
             </div>
 
-            {/* Cloud Provider Account Information (If AWS / R2 chosen) */}
-            {formData.provider_type !== 'minio' && (
+            {/* 2. Target Storage Host / Node (Hanya Muncul Jika Provider = MinIO) */}
+            {formData.provider_type === 'minio' ? (
+              <div className="p-3.5 rounded-xl bg-[#141414] border border-[#262626] space-y-2">
+                <label className={`${AppText.label} block`}>
+                  Target Storage Host / Node
+                </label>
+                <select
+                  value={targetServerId}
+                  onChange={(e) => setTargetServerId(e.target.value)}
+                  className="w-full px-3.5 py-2 rounded-lg bg-[#1a1a1a] border border-[#2e2e2e] text-[#ededed] text-xs font-mono focus:outline-none focus:border-emerald-500 transition-colors"
+                >
+                  <option value="">Control Plane (Built-in Local Cluster)</option>
+                  {servers.map((s: any) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name} ({s.ip_address || s.ipAddress || 'Agent Node'} - {s.status})
+                    </option>
+                  ))}
+                </select>
+                <p className="text-[11px] text-[#707070]">
+                  S3-compatible on-premise storage instance running on your selected physical node.
+                </p>
+              </div>
+            ) : (
               <div className="p-3 rounded-lg bg-cyan-950/20 border border-cyan-800/30 text-cyan-300 text-xs">
                 <div className="flex items-center justify-between">
                   <span className="font-semibold">Linked Cloud Provider Credentials</span>
                   <span className="text-[10px] px-2 py-0.5 rounded bg-cyan-900/40 text-cyan-200">Auto-Managed</span>
                 </div>
                 <p className="text-[11px] text-cyan-400/80 mt-1">
-                  Using API credentials registered in Cloud Providers module for {formData.provider_type === 's3' ? 'AWS S3' : 'Cloudflare R2'}.
+                  Cloud-managed global storage. Menggunakan kredensial API yang terhubung di Cloud Providers untuk {formData.provider_type === 's3' ? 'AWS S3' : 'Cloudflare R2'}.
                 </p>
               </div>
             )}
 
-            {/* Region */}
+            {/* 3. Bucket Name */}
             <div>
               <label className={`${AppText.label} mb-1.5 block`}>
-                Storage Region
+                Bucket Name
               </label>
-              <select
-                value={formData.region}
-                onChange={(e) => setFormData({ ...formData, region: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-lg bg-[#141414] border border-[#2e2e2e] text-[#ededed] text-sm focus:outline-none focus:border-emerald-500 transition-colors"
-              >
-                <option value="us-east-1">US East (N. Virginia)</option>
-                <option value="ap-southeast-1">Asia Pacific (Singapore)</option>
-                <option value="eu-central-1">Europe (Frankfurt)</option>
-              </select>
+              <input
+                type="text"
+                required
+                placeholder="e.g. production-assets"
+                value={formData.name}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value.toLowerCase().trim() })
+                }
+                className="w-full px-3.5 py-2 rounded-lg bg-[#141414] border border-[#2e2e2e] text-[#ededed] placeholder-[#707070] text-sm focus:outline-none focus:border-emerald-500 transition-colors"
+              />
+              <p className="mt-1 text-[11px] text-[#707070]">
+                Must be globally unique, lowercase alphanumeric and hyphens.
+              </p>
             </div>
+
+            {/* 4. Region (Hanya jika bukan R2) */}
+            {formData.provider_type !== 'r2' ? (
+              <div>
+                <label className={`${AppText.label} mb-1.5 block`}>
+                  Storage Region
+                </label>
+                <select
+                  value={formData.region}
+                  onChange={(e) => setFormData({ ...formData, region: e.target.value })}
+                  className="w-full px-3.5 py-2 rounded-lg bg-[#141414] border border-[#2e2e2e] text-[#ededed] text-sm focus:outline-none focus:border-emerald-500 transition-colors"
+                >
+                  <option value="us-east-1">US East (N. Virginia)</option>
+                  <option value="ap-southeast-1">Asia Pacific (Singapore)</option>
+                  <option value="eu-central-1">Europe (Frankfurt)</option>
+                </select>
+              </div>
+            ) : (
+              <div>
+                <label className={`${AppText.label} mb-1.5 block`}>
+                  Storage Region
+                </label>
+                <input
+                  type="text"
+                  disabled
+                  value="Automatic (Global Low-Latency Edge)"
+                  className="w-full px-3.5 py-2 rounded-lg bg-[#1a1a1a] border border-[#2e2e2e] text-[#a1a1a1] text-xs focus:outline-none"
+                />
+              </div>
+            )}
 
             {/* Toggles */}
             <div className="space-y-2.5 pt-1">

@@ -18,6 +18,11 @@ export const storageService = {
     return res.data;
   },
 
+  async syncBuckets(): Promise<Bucket[]> {
+    const res = await apiClient.post<APIResponse<Bucket[]>>('/storage/sync');
+    return res.data.data || [];
+  },
+
   async getBucket(name: string): Promise<Bucket> {
     const res = await apiClient.get<APIResponse<Bucket>>(`/storage/buckets/${name}`);
     return res.data.data!;

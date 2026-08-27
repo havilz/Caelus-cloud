@@ -111,6 +111,27 @@ func (h *DeploymentHandler) GetLogs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if len(logs) == 0 {
+		if dep, err := h.depUsecase.GetDeployment(r.Context(), id); err == nil && dep != nil {
+			logs = append(logs, domain.DeploymentLog{
+				ID:           1,
+				DeploymentID: dep.ID,
+				Timestamp:    dep.CreatedAt,
+				Stream:       "system",
+				Message:      fmt.Sprintf("[SYSTEM] Container '%s' (Image: %s) state: %s", dep.AppName, dep.ImageTag, dep.Status),
+			})
+			if dep.Status == domain.DeploymentStatusRunning {
+				logs = append(logs, domain.DeploymentLog{
+					ID:           2,
+					DeploymentID: dep.ID,
+					Timestamp:    dep.UpdatedAt,
+					Stream:       "stdout",
+					Message:      fmt.Sprintf("Container %s is active and operational on node.", dep.ContainerName),
+				})
+			}
+		}
+	}
+
 	response.Success(w, http.StatusOK, "Deployment logs retrieved", logs)
 }
 
@@ -159,10 +180,9 @@ func (h *DeploymentHandler) StreamLogsSSE(w http.ResponseWriter, r *http.Request
 				}
 			}
 
-			// Check if deployment has reached terminal status
+			// Only close stream if deployment has explicitly failed or stopped
 			dep, err := h.depUsecase.GetDeployment(r.Context(), id)
-			if err == nil && (dep.Status == domain.DeploymentStatusRunning || dep.Status == domain.DeploymentStatusFailed || dep.Status == domain.DeploymentStatusStopped) {
-				// Send completed event after final flush
+			if err == nil && (dep.Status == domain.DeploymentStatusFailed || dep.Status == domain.DeploymentStatusStopped) {
 				fmt.Fprintf(w, "event: complete\ndata: {\"status\": \"%s\"}\n\n", dep.Status)
 				flusher.Flush()
 				return

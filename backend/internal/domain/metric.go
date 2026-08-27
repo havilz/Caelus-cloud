@@ -89,6 +89,7 @@ type ContainerMetricPayload struct {
 	IPAddress            string               `json:"ip_address,omitempty"`
 	RestartPolicy        string               `json:"restart_policy,omitempty"`
 	EnvironmentVariables map[string]string    `json:"environment_variables,omitempty"`
+	Logs                 []string             `json:"logs,omitempty"`
 }
 
 // DiscoveredNetworkPayload merepresentasikan VPC / Docker bridge yang ditemukan pada host.

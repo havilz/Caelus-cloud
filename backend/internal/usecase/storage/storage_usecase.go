@@ -22,6 +22,9 @@ type StorageUsecase interface {
 	// ListBuckets mengambil daftar seluruh bucket milik organisasi.
 	ListBuckets(ctx context.Context, orgID uuid.UUID, limit, offset int) ([]domain.Bucket, int, error)
 
+	// SyncBuckets melakukan sinkronisasi dua arah (Two-Way Discovery Sync) antara Caelus dan penyedia storage aktif (Cloudflare R2, AWS, MinIO).
+	SyncBuckets(ctx context.Context, orgID uuid.UUID) ([]domain.Bucket, error)
+
 	// GetBucket mengambil detail satu bucket berdasarkan nama dan kepemilikan organisasi.
 	GetBucket(ctx context.Context, orgID uuid.UUID, name string) (*domain.Bucket, error)
 
@@ -211,6 +214,89 @@ func (u *storageUsecase) CreateBucket(ctx context.Context, orgID uuid.UUID, name
 // ListBuckets mengambil daftar seluruh bucket milik organisasi.
 func (u *storageUsecase) ListBuckets(ctx context.Context, orgID uuid.UUID, limit, offset int) ([]domain.Bucket, int, error) {
 	return u.bucketRepo.ListByOrgID(ctx, orgID, limit, offset)
+}
+
+// SyncBuckets melakukan sinkronisasi dua arah (Two-Way Discovery Sync) antara Caelus dan penyedia storage aktif (Cloudflare R2, AWS, MinIO).
+func (u *storageUsecase) SyncBuckets(ctx context.Context, orgID uuid.UUID) ([]domain.Bucket, error) {
+	existingDBBuckets, _, err := u.bucketRepo.ListByOrgID(ctx, orgID, 1000, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	dbBucketMap := make(map[string]domain.Bucket)
+	for _, b := range existingDBBuckets {
+		dbBucketMap[fmt.Sprintf("%s:%s", b.ProviderType, b.Name)] = b
+	}
+
+	// 1. Kumpulkan seluruh provider yang aktif untuk organisasi ini
+	providersToSync := []domain.StorageProviderType{domain.StorageProviderMinIO}
+
+	if u.credRepo != nil {
+		creds, _ := u.credRepo.ListByOrg(ctx, orgID)
+		for _, c := range creds {
+			if c.Provider != nil {
+				slug := strings.ToLower(c.Provider.Slug)
+				switch slug {
+				case "cloudflare", "r2":
+					providersToSync = append(providersToSync, domain.StorageProviderR2)
+				case "aws", "s3":
+					providersToSync = append(providersToSync, domain.StorageProviderS3)
+				case "gcp":
+					providersToSync = append(providersToSync, domain.StorageProviderGCP)
+				case "digitalocean":
+					providersToSync = append(providersToSync, domain.StorageProviderDigitalOcean)
+				}
+			}
+		}
+	}
+
+	// 2. Iterasi setiap provider dan lakukan rekonsiliasi
+	for _, prov := range providersToSync {
+		adapter, err := u.getAdapter(ctx, orgID, prov)
+		if err != nil || adapter == nil {
+			continue
+		}
+
+		remoteBuckets, err := adapter.ListBuckets(ctx)
+		if err != nil {
+			continue
+		}
+
+		remoteNames := make(map[string]bool)
+		for _, rb := range remoteBuckets {
+			remoteNames[rb.Name] = true
+			key := fmt.Sprintf("%s:%s", prov, rb.Name)
+
+			if _, exists := dbBucketMap[key]; !exists {
+				// Bucket baru terdeteksi di remote cloud / MinIO -> Daftarkan ke database
+				newBucket := &domain.Bucket{
+					ID:             uuid.New(),
+					OrganizationID: orgID,
+					Name:           rb.Name,
+					ProviderType:   prov,
+					Region:         rb.Region,
+					IsPublic:       false,
+					Versioning:     false,
+					CreatedAt:      rb.CreatedAt,
+					UpdatedAt:      time.Now().UTC(),
+				}
+				_ = u.bucketRepo.Create(ctx, newBucket)
+			}
+		}
+
+		// Hapus bucket di DB yang sudah dihapus secara fisik di cloud untuk provider ini
+		for _, b := range existingDBBuckets {
+			if b.ProviderType == prov {
+				if !remoteNames[b.Name] {
+					_ = u.bucketRepo.Delete(ctx, b.ID)
+				}
+			}
+		}
+	}
+
+	// Kembalikan daftar bucket terbaru setelah sinkronisasi
+	synced, _, err := u.bucketRepo.ListByOrgID(ctx, orgID, 1000, 0)
+	return synced, err
 }
 
 // GetBucket mengambil detail satu bucket berdasarkan nama dan kepemilikan organisasi.

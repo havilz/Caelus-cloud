@@ -27,6 +27,7 @@ import { Deployment, DeploymentLog, DeploymentRequest, VolumeBinding } from '@/t
 import { deploymentService } from '@/services/deployment.service';
 import { networkService, VirtualNetwork } from '@/services/network.service';
 import { volumeService, StorageVolume } from '@/services/volume.service';
+import { getApiBaseURL } from '@/services/api';
 
 const QUICK_IMAGES = [
   { name: 'Nginx Web Server', tag: 'nginx:alpine', port: 80 },
@@ -100,17 +101,16 @@ export default function ContainersOrchestrationPage() {
   useEffect(() => {
     if (!selectedDeployment) return;
 
-    // Fetch initial logs
+    // Fetch initial logs immediately
     deploymentService
       .getLogs(selectedDeployment.id, 200)
-      .then((data) => setLogs(data))
+      .then((data) => {
+        if (data) setLogs(data);
+      })
       .catch(console.error);
 
-    // Setup SSE streaming if deployment is active/running
-    const apiBase =
-      process.env.NEXT_PUBLIC_API_URL ||
-      (typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.hostname}:8080` : '');
-    const sseUrl = `${apiBase}/api/v1/deployments/${selectedDeployment.id}/logs/stream`;
+    // Setup SSE streaming
+    const sseUrl = `${getApiBaseURL()}/deployments/${selectedDeployment.id}/logs/stream`;
 
     let eventSource: EventSource | null = null;
     try {
@@ -121,7 +121,7 @@ export default function ContainersOrchestrationPage() {
         try {
           const newLog: DeploymentLog = JSON.parse(event.data);
           setLogs((prev) => {
-            if (prev.some((l) => l.id === newLog.id)) return prev;
+            if (prev.some((l) => l.id === newLog.id || (l.message === newLog.message && l.timestamp === newLog.timestamp))) return prev;
             return [...prev, newLog];
           });
         } catch (e) {
@@ -131,22 +131,38 @@ export default function ContainersOrchestrationPage() {
 
       eventSource.addEventListener('complete', () => {
         setIsStreaming(false);
-        eventSource?.close();
       });
 
       eventSource.onerror = () => {
         setIsStreaming(false);
-        eventSource?.close();
       };
     } catch (err) {
       console.error('SSE initialization error:', err);
       setIsStreaming(false);
     }
 
+    // Polling fallback to ensure live telemetry logs are refreshed continuously
+    const pollInterval = setInterval(() => {
+      deploymentService
+        .getLogs(selectedDeployment.id, 200)
+        .then((data) => {
+          if (data && data.length > 0) {
+            setLogs((prev) => {
+              if (prev.length !== data.length) {
+                return data;
+              }
+              return prev;
+            });
+          }
+        })
+        .catch(() => {});
+    }, 3000);
+
     return () => {
       if (eventSource) {
         eventSource.close();
       }
+      clearInterval(pollInterval);
       setIsStreaming(false);
     };
   }, [selectedDeployment]);
