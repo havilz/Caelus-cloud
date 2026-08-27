@@ -19,6 +19,7 @@ import {
   ChevronDown,
   Cloud,
   Code2,
+  Globe,
 } from "lucide-react";
 import { AppText } from "@/core/theme";
 
@@ -49,6 +50,7 @@ const navItems: readonly NavItem[] = [
       { name: "Cloud Providers", href: "/infrastructure/providers", icon: Cloud },
       { name: "Declarative IaC", href: "/infrastructure/iac", icon: Code2 },
       { name: "Containers", href: "/infrastructure/containers", icon: Box },
+      { name: "Custom Domains", href: "/infrastructure/domains", icon: Globe },
       { name: "Networks", href: "/infrastructure/networks", icon: Network },
       { name: "Volumes", href: "/infrastructure/volumes", icon: HardDrive },
     ],

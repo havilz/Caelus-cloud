@@ -32,6 +32,7 @@ type Handlers struct {
 	DeploymentHandler *v1.DeploymentHandler
 	NetworkHandler    *v1.NetworkHandler
 	VolumeHandler     *v1.VolumeHandler
+	DomainHandler     *v1.DomainHandler
 	WSHandler         *ws.Handler
 }
 
@@ -267,8 +268,23 @@ func registerAPIRoutes(r *chi.Mux, rc RouterConfig) {
 				if rc.Handlers.VolumeHandler != nil {
 					registerVolumeRoutes(protectedRouter, rc.Handlers.VolumeHandler)
 				}
+
+				if rc.Handlers.DomainHandler != nil {
+					registerDomainRoutes(protectedRouter, rc.Handlers.DomainHandler)
+				}
 			})
 		}
+	})
+}
+
+// registerDomainRoutes mendaftarkan rute endpoint Custom Domain dan Ingress Routing.
+func registerDomainRoutes(r chi.Router, dh *v1.DomainHandler) {
+	r.Route("/domains", func(domainRouter chi.Router) {
+		domainRouter.Get("/", dh.ListDomains)
+		domainRouter.Post("/", dh.CreateDomain)
+		domainRouter.Get("/{id}", dh.GetDomain)
+		domainRouter.Delete("/{id}", dh.DeleteDomain)
+		domainRouter.Post("/{id}/verify", dh.VerifyDomain)
 	})
 }
 
