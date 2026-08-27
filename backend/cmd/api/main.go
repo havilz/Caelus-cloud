@@ -25,6 +25,7 @@ import (
 	"github.com/havilz/caelus-cloud/backend/internal/sentinel"
 	storageFactory "github.com/havilz/caelus-cloud/backend/internal/storage"
 	minioStorage "github.com/havilz/caelus-cloud/backend/internal/storage/minio"
+	"github.com/havilz/caelus-cloud/backend/internal/usecase/actionqueue"
 	"github.com/havilz/caelus-cloud/backend/internal/usecase/auth"
 	automationUsecase "github.com/havilz/caelus-cloud/backend/internal/usecase/automation"
 	backupUsecase "github.com/havilz/caelus-cloud/backend/internal/usecase/backup"
@@ -119,10 +120,12 @@ func main() {
 	credUc := provUsecase.NewCredentialUsecase(credRepo, providerRepo, []byte(cfg.JWT.EncryptionKey))
 	serverUc := server.NewServerUsecase(serverRepo, providerRepo, credRepo, factory)
 
+	actionQueue := actionqueue.NewActionQueue()
+
 	alertEvaluator := monitoring.NewAlertEvaluator(alertRepo, wsHub)
 	promAdapter := prometheus.NewClient(os.Getenv("PROMETHEUS_URL"))
 	lokiAdapter := loki.NewClient(os.Getenv("LOKI_URL"))
-	monitoringUc := monitoring.NewMonitoringUsecase(metricRepo, alertRepo, serverRepo, alertEvaluator, wsHub, promAdapter, lokiAdapter)
+	monitoringUc := monitoring.NewMonitoringUsecase(metricRepo, alertRepo, serverRepo, alertEvaluator, wsHub, promAdapter, lokiAdapter, actionQueue)
 
 	storageUc := storageUsecase.NewStorageUsecase(bucketRepo, storageFactoryInstance, credRepo, []byte(cfg.JWT.EncryptionKey))
 	backupUc := backupUsecase.NewBackupUsecase(backupRepo, serverRepo, bucketRepo, storageFactoryInstance)
@@ -196,6 +199,7 @@ func main() {
 		StorageFactory: storageFactoryInstance,
 		DeploymentRepo: deploymentRepo,
 		AutomationRepo: automationRepo,
+		ActionQueue:    actionQueue,
 	})
 	deploymentUc := orchestrationUsecase.NewUseCase(deploymentRepo, wsHub)
 
@@ -203,7 +207,7 @@ func main() {
 	networkUc := networkUsecase.NewUseCase(networkRepo)
 
 	volumeRepo := postgres.NewVolumeRepository(client.Pool)
-	volumeUc := volumeUsecase.NewUseCase(volumeRepo, serverRepo)
+	volumeUc := volumeUsecase.NewUseCase(volumeRepo, serverRepo, actionQueue)
 
 	// Hubungkan repositori Auto-Discovery ke Monitoring Usecase
 	monitoringUc.SetDiscoveryRepos(deploymentRepo, networkRepo, volumeRepo)

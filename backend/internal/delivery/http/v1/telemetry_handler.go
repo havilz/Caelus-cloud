@@ -47,9 +47,12 @@ func (h *TelemetryHandler) IngestReport(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	actions := h.usecase.GetPendingActions(payload.ServerID)
+
 	response.Success(w, http.StatusOK, "telemetry report ingested successfully", map[string]any{
 		"server_id":   payload.ServerID,
 		"recorded_at": payload.Timestamp,
+		"actions":     actions,
 	})
 }
 

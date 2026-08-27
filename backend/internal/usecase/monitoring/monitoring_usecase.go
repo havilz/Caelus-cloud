@@ -9,11 +9,13 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/havilz/caelus-cloud/backend/internal/domain"
+	"github.com/havilz/caelus-cloud/backend/internal/usecase/actionqueue"
 )
 
 // MonitoringUsecase mendefinisikan interface logika bisnis ingestion telemetri, metrik history, dan pengelolaan alert.
 type MonitoringUsecase interface {
 	IngestTelemetry(ctx context.Context, payload *domain.TelemetryReportPayload) error
+	GetPendingActions(serverID uuid.UUID) []domain.AgentAction
 	GetServerLiveMetrics(ctx context.Context, serverID uuid.UUID) (*domain.ServerMetric, error)
 	GetServerMetricHistory(ctx context.Context, serverID uuid.UUID, duration time.Duration) ([]domain.ServerMetric, error)
 	ListAlerts(ctx context.Context, orgID uuid.UUID, status *domain.AlertStatus, page, limit int) ([]domain.Alert, int64, error)
@@ -36,6 +38,7 @@ type monitoringUsecase struct {
 	broadcaster    domain.TelemetryBroadcaster
 	promAdapter    domain.MetricsQueryAdapter
 	lokiAdapter    domain.LogQueryAdapter
+	actionQueue    actionqueue.ActionQueue
 }
 
 // NewMonitoringUsecase membuat instance baru implementasi MonitoringUsecase.
@@ -47,6 +50,7 @@ func NewMonitoringUsecase(
 	broadcaster domain.TelemetryBroadcaster,
 	promAdapter domain.MetricsQueryAdapter,
 	lokiAdapter domain.LogQueryAdapter,
+	actionQueue actionqueue.ActionQueue,
 ) MonitoringUsecase {
 	return &monitoringUsecase{
 		metricRepo:  metricRepo,
@@ -56,6 +60,7 @@ func NewMonitoringUsecase(
 		broadcaster: broadcaster,
 		promAdapter: promAdapter,
 		lokiAdapter: lokiAdapter,
+		actionQueue: actionQueue,
 	}
 }
 
@@ -296,14 +301,36 @@ func (u *monitoringUsecase) syncDiscoveredInfrastructure(ctx context.Context, se
 		volMap := make(map[string]bool)
 		for _, v := range existingVols {
 			volMap[v.Name] = true
+			volMap["caelus-"+v.Name] = true
+			volMap[strings.TrimPrefix(v.Name, "caelus-")] = true
 		}
 
 		for _, v := range payload.Volumes {
-			if !volMap[v.Name] {
+			// Cegah re-discovery jika volume sedang dalam antrean hapus fisik (DELETE_VOLUME)
+			if u.actionQueue != nil && (u.actionQueue.HasPendingAction(server.ID, "DELETE_VOLUME", v.Name) || u.actionQueue.HasPendingAction(server.ID, "DELETE_VOLUME", strings.TrimPrefix(v.Name, "caelus-"))) {
+				continue
+			}
+
+			normalized := strings.TrimPrefix(v.Name, "caelus-")
+			if !volMap[v.Name] && !volMap[normalized] {
 				sizeGB := int(v.SizeGB)
 				if sizeGB <= 0 {
 					sizeGB = 1
 				}
+
+				volStatus := domain.VolumeStatusAvailable
+				for _, c := range payload.Containers {
+					for _, m := range c.VolumeMounts {
+						if m.Name == v.Name || m.Name == normalized || m.Source == v.Name || m.Source == normalized {
+							volStatus = domain.VolumeStatusInUse
+							break
+						}
+					}
+					if volStatus == domain.VolumeStatusInUse {
+						break
+					}
+				}
+
 				newVol := &domain.Volume{
 					ID:             uuid.New(),
 					OrganizationID: server.OrganizationID,
@@ -313,15 +340,24 @@ func (u *monitoringUsecase) syncDiscoveredInfrastructure(ctx context.Context, se
 					Type:           domain.VolumeTypeDockerVolume,
 					FSType:         domain.FileSystemExt4,
 					MountPath:      v.Mountpoint,
-					Status:         domain.VolumeStatusInUse,
+					Status:         volStatus,
 					CreatedAt:      time.Now(),
 					UpdatedAt:      time.Now(),
 				}
 				_ = u.volumeRepo.CreateVolume(ctx, newVol)
 				volMap[v.Name] = true
+				volMap[normalized] = true
 			}
 		}
 	}
+}
+
+// GetPendingActions mengambil dan menghapus seluruh instruksi yang tertunda untuk server tertentu.
+func (u *monitoringUsecase) GetPendingActions(serverID uuid.UUID) []domain.AgentAction {
+	if u.actionQueue == nil {
+		return nil
+	}
+	return u.actionQueue.PopAll(serverID)
 }
 
 // GetServerLiveMetrics mengambil snapshot metrik terbaru dari database.

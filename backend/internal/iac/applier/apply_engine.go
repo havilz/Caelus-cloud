@@ -13,6 +13,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/havilz/caelus-cloud/backend/internal/domain"
+	"github.com/havilz/caelus-cloud/backend/internal/usecase/actionqueue"
 )
 
 // AppliedAction melacak tindakan yang berhasil dieksekusi untuk keperluan rollback jika terjadi kegagalan berikutnya.
@@ -30,6 +31,7 @@ type Dependencies struct {
 	StorageFactory domain.StorageFactory
 	DeploymentRepo domain.DeploymentRepository
 	AutomationRepo domain.AutomationRepository
+	ActionQueue    actionqueue.ActionQueue
 }
 
 // Applier mengeksekusi rencana IaC dan mengelola rollback otomatis.
@@ -251,9 +253,10 @@ func (a *Applier) executeChange(ctx context.Context, orgID uuid.UUID, change dom
 			if spec != nil {
 				provType := domain.StorageProviderMinIO
 				stType := strings.ToLower(strings.TrimSpace(spec.Type))
-				if stType == "s3" || stType == "aws" {
+				switch stType {
+				case "s3", "aws":
 					provType = domain.StorageProviderS3
-				} else if stType == "r2" || stType == "cloudflare" {
+				case "r2", "cloudflare":
 					provType = domain.StorageProviderR2
 				}
 
@@ -356,11 +359,34 @@ func (a *Applier) executeChange(ctx context.Context, orgID uuid.UUID, change dom
 					}
 				}
 
+				// Resolve target server if specified in spec.Server
+				var targetServerID *uuid.UUID
+				if a.deps.ServerRepo != nil && strings.TrimSpace(spec.Server) != "" {
+					targetServerStr := strings.TrimSpace(spec.Server)
+					if sUUID, err := uuid.Parse(targetServerStr); err == nil {
+						if s, err := a.deps.ServerRepo.GetByID(ctx, sUUID); err == nil && s != nil {
+							targetServerID = &s.ID
+						}
+					}
+					if targetServerID == nil {
+						servers, _, _ := a.deps.ServerRepo.ListByOrg(ctx, orgID, 1, 100)
+						for _, s := range servers {
+							if strings.EqualFold(s.Name, targetServerStr) || (s.Hostname != nil && strings.EqualFold(*s.Hostname, targetServerStr)) {
+								targetServerID = &s.ID
+								break
+							}
+						}
+					}
+				}
+
+				var targetDep *domain.Deployment
+				now := time.Now().UTC()
+
 				if !depExists {
-					now := time.Now().UTC()
 					deployment := &domain.Deployment{
 						ID:                   uuid.New(),
 						OrganizationID:       orgID,
+						ServerID:             targetServerID,
 						AppName:              spec.Name,
 						ImageTag:             spec.Image,
 						ContainerName:        spec.Name,
@@ -376,15 +402,60 @@ func (a *Applier) executeChange(ctx context.Context, orgID uuid.UUID, change dom
 					if err := a.deps.DeploymentRepo.CreateDeployment(ctx, deployment); err != nil {
 						return nil, fmt.Errorf("failed creating container %s: %w", spec.Name, err)
 					}
-
-					return &AppliedAction{
-						Change: change,
-						UndoFunc: func(c context.Context) error {
-							return a.deps.DeploymentRepo.UpdateDeploymentStatus(c, deployment.ID, domain.DeploymentStatusRolledBack, "IaC Rollback", nil)
-						},
-					}, nil
+					targetDep = deployment
+				} else {
+					for _, ed := range existingDeps {
+						if ed.ContainerName == spec.Name || ed.AppName == spec.Name {
+							targetDep = &ed
+							targetDep.ServerID = targetServerID
+							targetDep.ImageTag = spec.Image
+							targetDep.EnvironmentVariables = spec.Environment
+							targetDep.PortBindings = portBindings
+							targetDep.VolumeBindings = volBindings
+							targetDep.RestartPolicy = restartPolicy
+							targetDep.Status = domain.DeploymentStatusRunning
+							targetDep.UpdatedAt = now
+							_ = a.deps.DeploymentRepo.UpdateDeploymentStatus(ctx, targetDep.ID, domain.DeploymentStatusRunning, "", &now)
+							break
+						}
+					}
 				}
-				return &AppliedAction{Change: change, UndoFunc: func(_ context.Context) error { return nil }}, nil
+
+				// Always dispatch physical container creation to remote VPS agent via ActionQueue
+				if targetServerID != nil && a.deps.ActionQueue != nil {
+					deployPayload := map[string]interface{}{
+						"name":           spec.Name,
+						"image":          spec.Image,
+						"ports":          spec.Ports,
+						"environment":    spec.Environment,
+						"volumes":        spec.Volumes,
+						"restart_policy": restartPolicy,
+					}
+					payloadBytes, _ := json.Marshal(deployPayload)
+					a.deps.ActionQueue.Enqueue(*targetServerID, domain.AgentAction{
+						ID:      uuid.New().String(),
+						Type:    "DEPLOY_CONTAINER",
+						Target:  spec.Name,
+						Payload: string(payloadBytes),
+					})
+				}
+
+				return &AppliedAction{
+					Change: change,
+					UndoFunc: func(c context.Context) error {
+						if targetServerID != nil && a.deps.ActionQueue != nil {
+							a.deps.ActionQueue.Enqueue(*targetServerID, domain.AgentAction{
+								ID:     uuid.New().String(),
+								Type:   "DELETE_CONTAINER",
+								Target: spec.Name,
+							})
+						}
+						if targetDep != nil {
+							return a.deps.DeploymentRepo.UpdateDeploymentStatus(c, targetDep.ID, domain.DeploymentStatusRolledBack, "IaC Rollback", nil)
+						}
+						return nil
+					},
+				}, nil
 			}
 		}
 
@@ -400,9 +471,10 @@ func (a *Applier) executeChange(ctx context.Context, orgID uuid.UUID, change dom
 
 			if spec != nil {
 				triggerType := domain.TriggerTypeMetricThreshold
-				if spec.Trigger == "server_status_changed" {
+				switch spec.Trigger {
+				case "server_status_changed":
 					triggerType = domain.TriggerTypeServerStatusChanged
-				} else if spec.Trigger == "scheduled_cron" {
+				case "scheduled_cron":
 					triggerType = domain.TriggerTypeScheduledCron
 				}
 

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -107,9 +108,53 @@ func runCollectionCycle(
 	sendCtx, sendCancel := context.WithTimeout(ctx, 15*time.Second)
 	defer sendCancel()
 
-	if err := transportClient.SendReport(sendCtx, payload); err != nil {
+	actions, err := transportClient.SendReport(sendCtx, payload)
+	if err != nil {
 		slog.Error("failed to send telemetry report to api", "error", err)
 		return
+	}
+
+	// Eksekusi instruksi aksi remote dari Control Plane (Create/Delete Volume, dll)
+	if len(actions) > 0 {
+		for _, act := range actions {
+			slog.Info("received remote action from control plane", "action_id", act.ID, "type", act.Type, "target", act.Target)
+			switch act.Type {
+			case "CREATE_VOLUME":
+				if err := dockerInspector.CreateVolume(ctx, act.Target); err != nil {
+					slog.Error("failed to execute CREATE_VOLUME", "target", act.Target, "error", err)
+				} else {
+					slog.Info("successfully created volume on host", "target", act.Target)
+				}
+			case "DELETE_VOLUME":
+				if err := dockerInspector.RemoveVolume(ctx, act.Target); err != nil {
+					slog.Error("failed to execute DELETE_VOLUME", "target", act.Target, "error", err)
+				} else {
+					slog.Info("successfully removed volume from host", "target", act.Target)
+				}
+			case "DEPLOY_CONTAINER":
+				var payload transport.ContainerDeployPayload
+				if act.Payload != "" {
+					if err := json.Unmarshal([]byte(act.Payload), &payload); err != nil {
+						slog.Error("failed to unmarshal DEPLOY_CONTAINER payload", "error", err)
+						continue
+					}
+				}
+				if payload.Name == "" {
+					payload.Name = act.Target
+				}
+				if err := dockerInspector.DeployContainer(ctx, payload); err != nil {
+					slog.Error("failed to execute DEPLOY_CONTAINER", "target", act.Target, "error", err)
+				} else {
+					slog.Info("successfully deployed container on host", "target", act.Target, "image", payload.Image)
+				}
+			case "DELETE_CONTAINER":
+				if err := dockerInspector.RemoveContainer(ctx, act.Target); err != nil {
+					slog.Error("failed to execute DELETE_CONTAINER", "target", act.Target, "error", err)
+				} else {
+					slog.Info("successfully removed container from host", "target", act.Target)
+				}
+			}
+		}
 	}
 
 	slog.Info("telemetry report dispatched successfully",

@@ -10,15 +10,17 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/havilz/caelus-cloud/backend/internal/domain"
+	"github.com/havilz/caelus-cloud/backend/internal/usecase/actionqueue"
 )
 
 type UseCase struct {
-	repo       domain.VolumeRepository
-	serverRepo domain.ServerRepository
+	repo        domain.VolumeRepository
+	serverRepo  domain.ServerRepository
+	actionQueue actionqueue.ActionQueue
 }
 
-func NewUseCase(repo domain.VolumeRepository, serverRepo domain.ServerRepository) *UseCase {
-	return &UseCase{repo: repo, serverRepo: serverRepo}
+func NewUseCase(repo domain.VolumeRepository, serverRepo domain.ServerRepository, actionQueue actionqueue.ActionQueue) *UseCase {
+	return &UseCase{repo: repo, serverRepo: serverRepo, actionQueue: actionQueue}
 }
 
 // GetStoragePoolStats mengembalikan metrik kapasitas disk fisik host real-time
@@ -140,12 +142,16 @@ func (u *UseCase) CreateVolume(ctx context.Context, orgID uuid.UUID, req domain.
 
 	cleanName := strings.TrimSpace(strings.ToLower(req.Name))
 	cleanName = strings.ReplaceAll(cleanName, " ", "-")
+	dockerVolName := cleanName
+	if !strings.HasPrefix(dockerVolName, "caelus-") {
+		dockerVolName = fmt.Sprintf("caelus-%s", cleanName)
+	}
 
 	vol := &domain.Volume{
 		ID:             uuid.New(),
 		OrganizationID: orgID,
 		ServerID:       req.ServerID,
-		Name:           cleanName,
+		Name:           dockerVolName,
 		SizeGB:         req.SizeGB,
 		Type:           volType,
 		FSType:         fsType,
@@ -159,9 +165,15 @@ func (u *UseCase) CreateVolume(ctx context.Context, orgID uuid.UUID, req domain.
 		return nil, fmt.Errorf("gagal menyimpan volume ke database: %w", err)
 	}
 
-	// Buat Docker Named Volume fisik jika docker tersedia di host
-	if _, lookErr := exec.LookPath("docker"); lookErr == nil {
-		dockerVolName := fmt.Sprintf("caelus-%s", cleanName)
+	// Jika volume ditargetkan untuk remote server VPS, antrekan perintah ke Agent
+	if req.ServerID != nil && u.actionQueue != nil {
+		u.actionQueue.Enqueue(*req.ServerID, domain.AgentAction{
+			ID:     uuid.New().String(),
+			Type:   "CREATE_VOLUME",
+			Target: dockerVolName,
+		})
+	} else if _, lookErr := exec.LookPath("docker"); lookErr == nil {
+		// Jika untuk local host, buat Docker volume fisik langsung
 		_ = exec.CommandContext(ctx, "docker", "volume", "create", dockerVolName).Run()
 	}
 
@@ -179,10 +191,29 @@ func (u *UseCase) GetVolume(ctx context.Context, id uuid.UUID) (*domain.Volume, 
 func (u *UseCase) DeleteVolume(ctx context.Context, orgID uuid.UUID, id uuid.UUID) error {
 	vol, err := u.repo.GetVolumeByID(ctx, id)
 	if err == nil && vol != nil {
-		// Hapus Docker volume fisik jika ada
-		if _, lookErr := exec.LookPath("docker"); lookErr == nil {
-			dockerVolName := fmt.Sprintf("caelus-%s", vol.Name)
+		dockerVolName := vol.Name
+		if !strings.HasPrefix(dockerVolName, "caelus-") {
+			dockerVolName = fmt.Sprintf("caelus-%s", vol.Name)
+		}
+
+		// Jika volume berada di remote server, antrekan penghapusan fisik ke Agent
+		if vol.ServerID != nil && u.actionQueue != nil {
+			u.actionQueue.Enqueue(*vol.ServerID, domain.AgentAction{
+				ID:     uuid.New().String(),
+				Type:   "DELETE_VOLUME",
+				Target: dockerVolName,
+			})
+			if vol.Name != dockerVolName {
+				u.actionQueue.Enqueue(*vol.ServerID, domain.AgentAction{
+					ID:     uuid.New().String(),
+					Type:   "DELETE_VOLUME",
+					Target: vol.Name,
+				})
+			}
+		} else if _, lookErr := exec.LookPath("docker"); lookErr == nil {
+			// Hapus fisik di Docker host lokal jika lokal
 			_ = exec.CommandContext(ctx, "docker", "volume", "rm", "-f", dockerVolName).Run()
+			_ = exec.CommandContext(ctx, "docker", "volume", "rm", "-f", vol.Name).Run()
 		}
 	}
 	return u.repo.DeleteVolume(ctx, id)

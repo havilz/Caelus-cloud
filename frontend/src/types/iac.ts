@@ -58,6 +58,48 @@ export interface IaCState {
   created_at: string;
 }
 
+export interface ContainerSpec {
+  name: string;
+  server?: string;
+  image: string;
+  ports?: string[];
+  environment?: Record<string, string>;
+  volumes?: string[];
+  restart_policy?: string;
+}
+
+export interface ServerSpec {
+  name: string;
+  provider: string;
+  region?: string;
+  size?: string;
+  image?: string;
+  tags?: Record<string, string>;
+}
+
+export interface StorageSpec {
+  name: string;
+  type: string;
+  region?: string;
+  versioning?: boolean;
+  access?: string;
+}
+
+export interface RuleSpec {
+  name: string;
+  trigger: string;
+  condition?: Record<string, any>;
+  action: Record<string, any>;
+}
+
+export interface DeclarativeManifest {
+  version: string;
+  servers?: ServerSpec[];
+  storages?: StorageSpec[];
+  containers?: ContainerSpec[];
+  rules?: RuleSpec[];
+}
+
 export interface IaCConfiguration {
   id: string;
   organization_id: string;

@@ -61,7 +61,7 @@ func setupTelemetryHTTPTest() (http.Handler, *mockMetricRepo, *mockAlertRepo, *m
 
 	wsHub := ws.NewHub()
 	evaluator := monitoring.NewAlertEvaluator(mockAlertRepo, wsHub)
-	monitoringUc := monitoring.NewMonitoringUsecase(mockMetricRepo, mockAlertRepo, mockServerRepo, evaluator, wsHub, nil, nil)
+	monitoringUc := monitoring.NewMonitoringUsecase(mockMetricRepo, mockAlertRepo, mockServerRepo, evaluator, wsHub, nil, nil, nil)
 
 	routerConfig := deliveryHttp.RouterConfig{
 		JWTManager: jwtManager,

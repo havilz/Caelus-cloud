@@ -63,6 +63,7 @@ type StorageSpec struct {
 // ContainerSpec mendefinisikan spesifikasi deklaratif container Docker.
 type ContainerSpec struct {
 	Name          string            `json:"name" yaml:"name"`
+	Server        string            `json:"server,omitempty" yaml:"server,omitempty"` // Server Name or Server UUID
 	Image         string            `json:"image" yaml:"image"`
 	Ports         []string          `json:"ports,omitempty" yaml:"ports,omitempty"` // e.g. ["80:80", "443:443"]
 	Environment   map[string]string `json:"environment,omitempty" yaml:"environment,omitempty"`

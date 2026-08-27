@@ -21,7 +21,7 @@ var (
 
 // Client mendefinisikan interface pengiriman payload telemetri ke control plane.
 type Client interface {
-	SendReport(ctx context.Context, payload *AgentReportPayload) error
+	SendReport(ctx context.Context, payload *AgentReportPayload) ([]AgentAction, error)
 }
 
 // HTTPClient mengimplementasikan interface Client menggunakan protokol HTTP/HTTPS.
@@ -57,11 +57,11 @@ func NewHTTPClient(apiEndpoint string, serverID uuid.UUID, agentSecret string, t
 	}
 }
 
-// SendReport mengirimkan payload data metrik ke endpoint API dengan mekanisme retry dan otentikasi header.
-func (c *HTTPClient) SendReport(ctx context.Context, payload *AgentReportPayload) error {
+// SendReport mengirimkan payload data metrik ke endpoint API dan mengembalikan instruksi aksi tertunda.
+func (c *HTTPClient) SendReport(ctx context.Context, payload *AgentReportPayload) ([]AgentAction, error) {
 	bodyBytes, err := json.Marshal(payload)
 	if err != nil {
-		return fmt.Errorf("failed to marshal agent payload: %w", err)
+		return nil, fmt.Errorf("failed to marshal agent payload: %w", err)
 	}
 
 	url := fmt.Sprintf("%s/api/v1/telemetry/report", c.apiEndpoint)
@@ -72,7 +72,7 @@ func (c *HTTPClient) SendReport(ctx context.Context, payload *AgentReportPayload
 	for attempt := 1; attempt <= c.maxRetries; attempt++ {
 		req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(bodyBytes))
 		if err != nil {
-			return fmt.Errorf("failed to create http request: %w", err)
+			return nil, fmt.Errorf("failed to create http request: %w", err)
 		}
 
 		c.applyHeaders(req)
@@ -85,23 +85,26 @@ func (c *HTTPClient) SendReport(ctx context.Context, payload *AgentReportPayload
 			continue
 		}
 
-		err = c.evaluateResponse(resp)
+		if resp.StatusCode >= 200 && resp.StatusCode < 300 {
+			var respPayload AgentReportResponse
+			_ = json.NewDecoder(resp.Body).Decode(&respPayload)
+			_ = resp.Body.Close()
+			return respPayload.Data.Actions, nil
+		}
+
+		if resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden {
+			_ = resp.Body.Close()
+			return nil, ErrUnauthorizedPayload
+		}
+
+		respBody, _ := io.ReadAll(io.LimitReader(resp.Body, 1024))
 		_ = resp.Body.Close()
-
-		if err == nil {
-			return nil
-		}
-
-		if errors.Is(err, ErrUnauthorizedPayload) {
-			return err
-		}
-
-		lastErr = err
+		lastErr = fmt.Errorf("%w: status %d, body: %s", ErrServerError, resp.StatusCode, string(respBody))
 		time.Sleep(backoff)
 		backoff *= 2
 	}
 
-	return fmt.Errorf("failed to send telemetry report after %d attempts: %w", c.maxRetries, lastErr)
+	return nil, fmt.Errorf("failed to send telemetry report after %d attempts: %w", c.maxRetries, lastErr)
 }
 
 // applyHeaders menambahkan header autentikasi dan metadata ke request HTTP.

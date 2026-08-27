@@ -142,8 +142,12 @@ fi
 INSTALL_DIR="/opt/caelus"
 mkdir -p "$INSTALL_DIR"
 
-echo "-> Mengunduh binary agent..."
-curl -sSL "$API_ENDPOINT/agent-bin" -o "$INSTALL_DIR/caelus-agent"
+echo "-> Menghentikan service lama jika sedang berjalan..."
+systemctl stop caelus-agent 2>/dev/null || true
+
+echo "-> Mengunduh binary agent terbaru..."
+curl -sSL "$API_ENDPOINT/agent-bin" -o "$INSTALL_DIR/caelus-agent.tmp"
+mv -f "$INSTALL_DIR/caelus-agent.tmp" "$INSTALL_DIR/caelus-agent"
 chmod +x "$INSTALL_DIR/caelus-agent"
 
 echo "-> Membuat konfigurasi agent..."

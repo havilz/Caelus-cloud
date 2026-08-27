@@ -65,6 +65,7 @@ func TestMonitoringUsecase_IngestTelemetry(t *testing.T) {
 		wsHub,
 		nil,
 		nil,
+		nil,
 	)
 
 	payload := &domain.TelemetryReportPayload{
@@ -139,6 +140,7 @@ func TestMonitoringUsecase_GetMetricsHistory(t *testing.T) {
 		nil,
 		nil,
 		nil,
+		nil,
 	)
 
 	ctx := context.Background()
@@ -175,6 +177,7 @@ func TestMonitoringUsecase_AlertLifecycle(t *testing.T) {
 		&mockMetricRepo{},
 		mockAlertRepo,
 		newMockServerRepo(),
+		nil,
 		nil,
 		nil,
 		nil,

@@ -57,6 +57,7 @@ storages:
 
 containers:
   - name: redis-cache
+    server: debian-vps-1
     image: redis:7-alpine
     ports:
       - "6379:6379"
@@ -93,15 +94,18 @@ storages:
     yaml: `version: v1
 
 containers:
-  - name: api-gateway
-    image: traefik:v2.10
-    ports:
-      - "80:80"
-      - "443:443"
-  - name: frontend-service
-    image: nginx:alpine
+  - name: test-whoami-app
+    server: debian-vps-1
+    image: traefik/whoami:latest
+    restart_policy: unless-stopped
     ports:
       - "8080:80"
+  - name: frontend-service
+    server: debian-vps-1
+    image: nginx:alpine
+    restart_policy: unless-stopped
+    ports:
+      - "80:80"
 
 rules:
   - name: auto-reboot-on-high-cpu

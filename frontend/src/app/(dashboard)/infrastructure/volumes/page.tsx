@@ -41,7 +41,7 @@ export default function VolumesManagementPage() {
   const [volServerId, setVolServerId] = useState<string>("");
   const [volName, setVolName] = useState<string>("");
   const [volType, setVolType] = useState<"nvme" | "ssd" | "docker-volume">("nvme");
-  const [volSize, setVolSize] = useState<number>(10);
+  const [volSize, setVolSize] = useState<number>(1);
   const [volFs, setVolFs] = useState<"ext4" | "xfs" | "btrfs">("ext4");
   const [volMount, setVolMount] = useState<string>("/mnt/data");
 
@@ -76,17 +76,25 @@ export default function VolumesManagementPage() {
     if (!volName.trim()) return;
 
     const selectedTargetServer = servers.find((s: any) => s.id === volServerId);
-    const maxAllowedGB = selectedTargetServer
-      ? (selectedTargetServer.disk_gb || selectedTargetServer.diskGb || 25)
-      : (stats ? Math.floor(stats.free_gb) : 75);
+    
+    let maxAllowedGB = 75;
+    if (selectedTargetServer) {
+      const totalGB = selectedTargetServer.disk_gb || selectedTargetServer.diskGb || 25;
+      const usedGB = volumes
+        .filter((v: any) => v.server_id === selectedTargetServer.id || v.serverId === selectedTargetServer.id)
+        .reduce((sum: number, v: any) => sum + (Number(v.size_gb || v.sizeGb) || 0), 0);
+      maxAllowedGB = Math.max(0, totalGB - usedGB);
+    } else if (stats) {
+      maxAllowedGB = Math.floor(stats.free_gb);
+    }
 
-    // Hard-cap validation against target server or local host disk space
+    // Hard-cap validation against remaining free disk space
     if (!selectedTargetServer && stats && volSize > stats.free_gb) {
       setErrorMsg(`Kapasitas (${volSize} GB) melebihi ruang bebas disk fisik host lokal (${stats.free_gb.toFixed(1)} GB tersedia).`);
       return;
     }
     if (selectedTargetServer && volSize > maxAllowedGB) {
-      setErrorMsg(`Kapasitas (${volSize} GB) melebihi alokasi disk server target ${selectedTargetServer.name} (${maxAllowedGB} GB).`);
+      setErrorMsg(`Kapasitas (${volSize} GB) melebihi sisa ruang bebas server target ${selectedTargetServer.name} (${maxAllowedGB} GB sisa tersedia).`);
       return;
     }
 
@@ -104,7 +112,7 @@ export default function VolumesManagementPage() {
 
       setSuccessMsg(`Volume "${volName}" berhasil dibuat secara fisik.`);
       setVolName("");
-      setVolSize(10);
+      setVolSize(1);
       setIsCreateModalOpen(false);
       await loadData();
     } catch (err: any) {
@@ -511,40 +519,43 @@ export default function VolumesManagementPage() {
         maxWidth="md"
       >
         <div className="space-y-4 text-xs">
-          {/* Target Host Storage Pool Notice */}
           {(() => {
             const currentTarget = servers.find((s: any) => s.id === volServerId);
-            const maxCap = currentTarget
-              ? (currentTarget.disk_gb || currentTarget.diskGb || 25)
-              : (stats ? Math.floor(stats.free_gb) : 75);
+            
+            let maxCap = 75;
+            if (currentTarget) {
+              const totalCap = Number(currentTarget.disk_gb || currentTarget.diskGb) || 25;
+              const usedCap = volumes
+                .filter((v: any) => {
+                  const sId = v.server_id || v.serverId || v.attachedServerId;
+                  return sId && currentTarget.id && String(sId).toLowerCase() === String(currentTarget.id).toLowerCase();
+                })
+                .reduce((sum: number, v: any) => sum + (Number(v.size_gb || v.sizeGB || v.sizeGb) || 0), 0);
+              maxCap = Math.max(1, totalCap - usedCap);
+            } else if (stats) {
+              maxCap = Math.max(1, Math.floor(stats.free_gb));
+            }
 
             return (
-              <>
-                <div className="p-3 bg-slate-900/80 border border-slate-800 rounded-xl text-xs flex items-center justify-between">
-                  <span className="text-slate-400">
-                    {currentTarget ? `Kapasitas Disk Server Target (${currentTarget.name}):` : "Ruang Bebas Harddisk Host Lokal:"}
-                  </span>
-                  <strong className="text-emerald-400 font-mono">
-                    {currentTarget ? `${maxCap} GB Dialokasikan` : (stats ? `${stats.free_gb.toFixed(1)} GB Tersedia` : "75.0 GB Tersedia")}
-                  </strong>
+              <form onSubmit={handleCreateVolume} className="space-y-4 text-xs">
+                <div>
+                  <label className="block text-slate-300 font-medium mb-1">Target Server / Host Node</label>
+                  <select
+                    value={volServerId}
+                    onChange={(e) => {
+                      setVolServerId(e.target.value);
+                      setVolSize(1);
+                    }}
+                    className="w-full bg-[#161b22] border border-slate-800 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-emerald-500 font-mono"
+                  >
+                    <option value="">Local Host (Current Machine - {stats ? `${stats.free_gb.toFixed(1)} GB Free` : "75.0 GB Free"})</option>
+                    {servers.map((s: any) => (
+                      <option key={s.id} value={s.id}>
+                        {s.name} ({s.status})
+                      </option>
+                    ))}
+                  </select>
                 </div>
-
-                <form onSubmit={handleCreateVolume} className="mt-4 space-y-4 text-xs">
-                  <div>
-                    <label className="block text-slate-300 font-medium mb-1">Target Server / Host Node</label>
-                    <select
-                      value={volServerId}
-                      onChange={(e) => setVolServerId(e.target.value)}
-                      className="w-full bg-[#161b22] border border-slate-800 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-emerald-500 font-mono"
-                    >
-                      <option value="">Local Host (Current Machine - {stats ? `${stats.free_gb.toFixed(1)} GB Free` : "75.0 GB Free"})</option>
-                      {servers.map((s: any) => (
-                        <option key={s.id} value={s.id}>
-                          {s.name} ({s.ip_address || s.ipAddress || "Agent Node"} - {s.disk_gb || s.diskGb || 25} GB - {s.status})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
 
                   <div>
                     <label className="block text-slate-300 font-medium mb-1">Volume Name</label>
@@ -638,7 +649,6 @@ export default function VolumesManagementPage() {
                     </button>
                   </div>
                 </form>
-              </>
             );
           })()}
         </div>

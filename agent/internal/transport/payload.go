@@ -89,6 +89,35 @@ type DiscoveredVolume struct {
 	InUse      bool    `json:"in_use"`
 }
 
+// AgentAction merepresentasikan perintah/instruksi yang dikirim control plane ke agent.
+type AgentAction struct {
+	ID      string `json:"id"`
+	Type    string `json:"type"` // CREATE_VOLUME, DELETE_VOLUME, DEPLOY_CONTAINER, dll
+	Target  string `json:"target"`
+	Payload string `json:"payload,omitempty"`
+}
+
+// ContainerDeployPayload merepresentasikan parameter konfigurasi untuk deploy container di remote host.
+type ContainerDeployPayload struct {
+	Name          string            `json:"name"`
+	Image         string            `json:"image"`
+	Ports         []string          `json:"ports,omitempty"`
+	Environment   map[string]string `json:"environment,omitempty"`
+	Volumes       []string          `json:"volumes,omitempty"`
+	RestartPolicy string            `json:"restart_policy,omitempty"`
+}
+
+// AgentReportResponse merepresentasikan struktur balasan dari POST /api/v1/telemetry/report.
+type AgentReportResponse struct {
+	Success bool   `json:"success"`
+	Message string `json:"message"`
+	Data    struct {
+		ServerID   string        `json:"server_id"`
+		RecordedAt string        `json:"recorded_at"`
+		Actions    []AgentAction `json:"actions,omitempty"`
+	} `json:"data"`
+}
+
 // AgentReportPayload adalah payload agregat yang dikirim oleh agent ke control plane Caelus API.
 type AgentReportPayload struct {
 	ServerID        uuid.UUID           `json:"server_id"`

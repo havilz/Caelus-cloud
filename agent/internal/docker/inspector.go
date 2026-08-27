@@ -1,12 +1,15 @@
 package docker
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"math"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -20,6 +23,10 @@ type Inspector interface {
 	InspectContainers(ctx context.Context) ([]transport.ContainerMetrics, error)
 	InspectNetworks(ctx context.Context) ([]transport.DiscoveredNetwork, error)
 	InspectVolumes(ctx context.Context) ([]transport.DiscoveredVolume, error)
+	CreateVolume(ctx context.Context, name string) error
+	RemoveVolume(ctx context.Context, name string) error
+	DeployContainer(ctx context.Context, payload transport.ContainerDeployPayload) error
+	RemoveContainer(ctx context.Context, name string) error
 }
 
 // UnixSocketInspector mengimplementasikan Inspector melalui komunikasi Unix domain socket ke Docker daemon.
@@ -42,7 +49,7 @@ func NewInspector(socketPath string) *UnixSocketInspector {
 		socketPath: socketPath,
 		client: &http.Client{
 			Transport: tr,
-			Timeout:   5 * time.Second,
+			Timeout:   10 * time.Second,
 		},
 	}
 }
@@ -356,4 +363,219 @@ func (i *UnixSocketInspector) fetchContainerStats(ctx context.Context, container
 	limitMB := float64(stats.MemoryStats.Limit) / (1024.0 * 1024.0)
 
 	return cpuPercent, memMB, limitMB
+}
+
+// CreateVolume membuat Docker named volume baru via Docker Unix Socket REST API.
+func (i *UnixSocketInspector) CreateVolume(ctx context.Context, name string) error {
+	if !i.IsAvailable(ctx) {
+		return fmt.Errorf("docker daemon is not available")
+	}
+
+	body := fmt.Sprintf(`{"Name":"%s","Driver":"local"}`, name)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://localhost/volumes/create", strings.NewReader(body))
+	if err != nil {
+		return fmt.Errorf("failed to build create volume request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := i.client.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to execute create volume request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
+		return fmt.Errorf("docker API returned status %d when creating volume %s", resp.StatusCode, name)
+	}
+	return nil
+}
+
+// RemoveVolume menghapus Docker volume secara fisik via Docker Unix Socket REST API.
+func (i *UnixSocketInspector) RemoveVolume(ctx context.Context, name string) error {
+	if !i.IsAvailable(ctx) {
+		return fmt.Errorf("docker daemon is not available")
+	}
+
+	url := fmt.Sprintf("http://localhost/volumes/%s?force=1", name)
+	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, url, nil)
+	if err != nil {
+		return fmt.Errorf("failed to build remove volume request: %w", err)
+	}
+
+	resp, err := i.client.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to execute remove volume request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNoContent && resp.StatusCode != http.StatusNotFound {
+		return fmt.Errorf("docker API returned status %d when removing volume %s", resp.StatusCode, name)
+	}
+	return nil
+}
+
+// DeployContainer mengunduh image, membuat container dengan port forwarding, env, volume, dan menjalankannya via Docker REST API.
+func (i *UnixSocketInspector) DeployContainer(ctx context.Context, payload transport.ContainerDeployPayload) error {
+	if !i.IsAvailable(ctx) {
+		return fmt.Errorf("docker daemon is not available")
+	}
+
+	containerName := strings.TrimSpace(payload.Name)
+	if containerName == "" {
+		return fmt.Errorf("container name cannot be empty")
+	}
+	imageName := strings.TrimSpace(payload.Image)
+	if imageName == "" {
+		return fmt.Errorf("image name cannot be empty")
+	}
+
+	// 1. Pull Image via Docker API: POST /images/create?fromImage=...
+	// Use a dedicated long-timeout client (5 min) for image pull - standard client timeout (10s) is too short.
+	pullTransport := &http.Transport{
+		DialContext: func(pCtx context.Context, _, _ string) (net.Conn, error) {
+			var dialer net.Dialer
+			return dialer.DialContext(pCtx, "unix", i.socketPath)
+		},
+		DisableCompression: true,
+	}
+	pullClient := &http.Client{
+		Transport: pullTransport,
+		Timeout:   5 * time.Minute,
+	}
+	pullURL := fmt.Sprintf("http://localhost/images/create?fromImage=%s", url.QueryEscape(imageName))
+	pullReq, err := http.NewRequestWithContext(ctx, http.MethodPost, pullURL, nil)
+	if err != nil {
+		return fmt.Errorf("failed building image pull request: %w", err)
+	}
+	pullResp, pErr := pullClient.Do(pullReq)
+	if pErr != nil {
+		return fmt.Errorf("image pull request failed for %s: %w", imageName, pErr)
+	}
+	_, _ = io.Copy(io.Discard, pullResp.Body)
+	_ = pullResp.Body.Close()
+	if pullResp.StatusCode != http.StatusOK {
+		return fmt.Errorf("docker image pull returned status %d for image %s", pullResp.StatusCode, imageName)
+	}
+
+	// 2. Remove existing container if any with force=1
+	_ = i.RemoveContainer(ctx, containerName)
+
+	// 3. Prepare PortBindings, ExposedPorts, Binds, Env
+	exposedPorts := make(map[string]struct{})
+	portBindings := make(map[string][]map[string]string)
+
+	for _, p := range payload.Ports {
+		parts := strings.Split(p, ":")
+		if len(parts) == 2 {
+			hostPort := strings.TrimSpace(parts[0])
+			containerPort := strings.TrimSpace(parts[1])
+			if !strings.Contains(containerPort, "/") {
+				containerPort += "/tcp"
+			}
+			exposedPorts[containerPort] = struct{}{}
+			portBindings[containerPort] = []map[string]string{
+				{"HostPort": hostPort},
+			}
+		}
+	}
+
+	var envList []string
+	for k, v := range payload.Environment {
+		envList = append(envList, fmt.Sprintf("%s=%s", k, v))
+	}
+
+	restartPolicyName := strings.TrimSpace(payload.RestartPolicy)
+	if restartPolicyName == "" {
+		restartPolicyName = "unless-stopped"
+	}
+
+	createPayload := map[string]interface{}{
+		"Image":        imageName,
+		"ExposedPorts": exposedPorts,
+		"Env":          envList,
+		"HostConfig": map[string]interface{}{
+			"PortBindings": portBindings,
+			"Binds":        payload.Volumes,
+			"RestartPolicy": map[string]string{
+				"Name": restartPolicyName,
+			},
+		},
+	}
+
+	bodyBytes, err := json.Marshal(createPayload)
+	if err != nil {
+		return fmt.Errorf("failed marshaling container create payload: %w", err)
+	}
+
+	createURL := fmt.Sprintf("http://localhost/containers/create?name=%s", url.QueryEscape(containerName))
+	createReq, err := http.NewRequestWithContext(ctx, http.MethodPost, createURL, bytes.NewReader(bodyBytes))
+	if err != nil {
+		return fmt.Errorf("failed building container create request: %w", err)
+	}
+	createReq.Header.Set("Content-Type", "application/json")
+
+	createResp, err := i.client.Do(createReq)
+	if err != nil {
+		return fmt.Errorf("failed executing container create request: %w", err)
+	}
+	defer createResp.Body.Close()
+
+	if createResp.StatusCode != http.StatusOK && createResp.StatusCode != http.StatusCreated {
+		respBody, _ := io.ReadAll(io.LimitReader(createResp.Body, 1024))
+		return fmt.Errorf("docker API returned status %d when creating container %s: %s", createResp.StatusCode, containerName, string(respBody))
+	}
+
+	var createResult struct {
+		ID string `json:"Id"`
+	}
+	_ = json.NewDecoder(createResp.Body).Decode(&createResult)
+
+	// 4. Start Container: POST /containers/{id}/start
+	startID := containerName
+	if createResult.ID != "" {
+		startID = createResult.ID
+	}
+
+	startURL := fmt.Sprintf("http://localhost/containers/%s/start", url.PathEscape(startID))
+	startReq, err := http.NewRequestWithContext(ctx, http.MethodPost, startURL, nil)
+	if err != nil {
+		return fmt.Errorf("failed building container start request: %w", err)
+	}
+
+	startResp, err := i.client.Do(startReq)
+	if err != nil {
+		return fmt.Errorf("failed executing container start request: %w", err)
+	}
+	defer startResp.Body.Close()
+
+	if startResp.StatusCode != http.StatusOK && startResp.StatusCode != http.StatusNoContent && startResp.StatusCode != http.StatusNotModified {
+		respBody, _ := io.ReadAll(io.LimitReader(startResp.Body, 1024))
+		return fmt.Errorf("docker API returned status %d when starting container %s: %s", startResp.StatusCode, containerName, string(respBody))
+	}
+
+	return nil
+}
+
+// RemoveContainer menghentikan dan menghapus Docker container via Docker Unix Socket REST API.
+func (i *UnixSocketInspector) RemoveContainer(ctx context.Context, name string) error {
+	if !i.IsAvailable(ctx) {
+		return fmt.Errorf("docker daemon is not available")
+	}
+
+	url := fmt.Sprintf("http://localhost/containers/%s?force=1", url.PathEscape(name))
+	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, url, nil)
+	if err != nil {
+		return fmt.Errorf("failed to build remove container request: %w", err)
+	}
+
+	resp, err := i.client.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to execute remove container request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNoContent && resp.StatusCode != http.StatusNotFound {
+		return fmt.Errorf("docker API returned status %d when removing container %s", resp.StatusCode, name)
+	}
+	return nil
 }
