@@ -43,6 +43,7 @@ CREATE TABLE IF NOT EXISTS alert_rules (
 CREATE INDEX IF NOT EXISTS idx_alert_rules_org ON alert_rules(organization_id);
 CREATE INDEX IF NOT EXISTS idx_alert_rules_server ON alert_rules(server_id);
 
+DROP TRIGGER IF EXISTS update_alert_rules_updated_at ON alert_rules;
 CREATE TRIGGER update_alert_rules_updated_at
     BEFORE UPDATE ON alert_rules
     FOR EACH ROW

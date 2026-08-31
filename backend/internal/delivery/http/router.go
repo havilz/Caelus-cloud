@@ -33,6 +33,7 @@ type Handlers struct {
 	NetworkHandler    *v1.NetworkHandler
 	VolumeHandler     *v1.VolumeHandler
 	DomainHandler     *v1.DomainHandler
+	SettingsHandler   *v1.SettingsHandler
 	WSHandler         *ws.Handler
 }
 
@@ -272,8 +273,42 @@ func registerAPIRoutes(r *chi.Mux, rc RouterConfig) {
 				if rc.Handlers.DomainHandler != nil {
 					registerDomainRoutes(protectedRouter, rc.Handlers.DomainHandler)
 				}
+
+				if rc.Handlers.SettingsHandler != nil {
+					registerSettingsRoutes(protectedRouter, rc.Handlers.SettingsHandler)
+				}
 			})
 		}
+	})
+}
+
+// registerSettingsRoutes mendaftarkan rute endpoint Pengaturan Profil, Organisasi, Anggota Tim, API Keys, Webhooks, dan Audit Logs.
+func registerSettingsRoutes(r chi.Router, sh *v1.SettingsHandler) {
+	r.Route("/settings", func(sr chi.Router) {
+		sr.Get("/profile", sh.GetProfile)
+		sr.Put("/profile", sh.UpdateProfile)
+		sr.Post("/change-password", sh.ChangePassword)
+
+		sr.Get("/organization", sh.GetOrganization)
+		sr.Put("/organization", sh.UpdateOrganization)
+
+		sr.Get("/members", sh.ListMembers)
+		sr.Post("/members/invite", sh.InviteMember)
+		sr.Put("/members/{user_id}/role", sh.UpdateMemberRole)
+		sr.Delete("/members/{user_id}", sh.RemoveMember)
+		sr.Delete("/invitations/{invitation_id}", sh.DeleteInvitation)
+
+		sr.Get("/api-keys", sh.ListAPIKeys)
+		sr.Post("/api-keys", sh.CreateAPIKey)
+		sr.Delete("/api-keys/{key_id}", sh.DeleteAPIKey)
+
+		sr.Get("/webhooks", sh.ListWebhooks)
+		sr.Post("/webhooks", sh.CreateWebhook)
+		sr.Put("/webhooks/{webhook_id}", sh.UpdateWebhook)
+		sr.Post("/webhooks/{webhook_id}/test", sh.TestWebhook)
+		sr.Delete("/webhooks/{webhook_id}", sh.DeleteWebhook)
+
+		sr.Get("/audit-logs", sh.ListAuditLogs)
 	})
 }
 

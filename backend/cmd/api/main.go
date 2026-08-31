@@ -40,6 +40,7 @@ import (
 	storageUsecase "github.com/havilz/caelus-cloud/backend/internal/usecase/storage"
 	volumeUsecase "github.com/havilz/caelus-cloud/backend/internal/usecase/volume"
 	domainUsecase "github.com/havilz/caelus-cloud/backend/internal/usecase/domain"
+	settingsUsecase "github.com/havilz/caelus-cloud/backend/internal/usecase/settings"
 	"github.com/havilz/caelus-cloud/backend/pkg/config"
 	"github.com/havilz/caelus-cloud/backend/pkg/jwt"
 	"github.com/havilz/caelus-cloud/backend/pkg/logger"
@@ -213,6 +214,10 @@ func main() {
 	domainRepo := postgres.NewDomainRepository(client.Pool)
 	domainUc := domainUsecase.NewUseCase(domainRepo, serverRepo, actionQueue)
 
+	apiKeyRepo := postgres.NewAPIKeyRepository(client.Pool)
+	webhookRepo := postgres.NewWebhookRepository(client.Pool)
+	settingsUc := settingsUsecase.NewSettingsUsecase(userRepo, orgRepo, apiKeyRepo, webhookRepo, auditRepo)
+
 	// Hubungkan repositori Auto-Discovery ke Monitoring Usecase
 	monitoringUc.SetDiscoveryRepos(deploymentRepo, networkRepo, volumeRepo)
 
@@ -237,6 +242,7 @@ func main() {
 			NetworkHandler:    v1.NewNetworkHandler(networkUc),
 			VolumeHandler:     v1.NewVolumeHandler(volumeUc),
 			DomainHandler:     v1.NewDomainHandler(domainUc),
+			SettingsHandler:   v1.NewSettingsHandler(settingsUc),
 			WSHandler:         ws.NewHandler(wsHub, jwtManager),
 		},
 	}

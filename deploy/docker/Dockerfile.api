@@ -10,10 +10,11 @@ RUN go mod download
 
 COPY . .
 
+# Build API binary
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o /app/bin/caelus-api ./cmd/api/main.go
 
 # Stage 2: Runtime image
-FROM alpine:3.19
+FROM alpine:latest
 
 RUN apk --no-cache add ca-certificates tzdata docker-cli
 
@@ -21,6 +22,8 @@ WORKDIR /app
 
 COPY --from=builder /app/bin/caelus-api /app/caelus-api
 COPY --from=builder /app/migrations /app/migrations
+# Agent binary pre-compiled untuk linux/amd64, disertakan agar endpoint /agent-bin berfungsi
+COPY caelus-agent-linux /app/agent/bin/caelus-agent
 
 EXPOSE 8080
 

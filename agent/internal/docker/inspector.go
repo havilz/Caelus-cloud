@@ -28,6 +28,9 @@ type Inspector interface {
 	RemoveVolume(ctx context.Context, name string) error
 	DeployContainer(ctx context.Context, payload transport.ContainerDeployPayload) error
 	RemoveContainer(ctx context.Context, name string) error
+	StartContainer(ctx context.Context, name string) error
+	StopContainer(ctx context.Context, name string) error
+	RestartContainer(ctx context.Context, name string) error
 }
 
 // UnixSocketInspector mengimplementasikan Inspector melalui komunikasi Unix domain socket ke Docker daemon.
@@ -619,3 +622,76 @@ func (i *UnixSocketInspector) RemoveContainer(ctx context.Context, name string) 
 	}
 	return nil
 }
+
+// StartContainer memulai container yang berhenti via Docker Unix Socket REST API.
+func (i *UnixSocketInspector) StartContainer(ctx context.Context, name string) error {
+	if !i.IsAvailable(ctx) {
+		return fmt.Errorf("docker daemon is not available")
+	}
+
+	url := fmt.Sprintf("http://localhost/containers/%s/start", url.PathEscape(name))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, nil)
+	if err != nil {
+		return fmt.Errorf("failed to build start container request: %w", err)
+	}
+
+	resp, err := i.client.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to execute start container request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNoContent && resp.StatusCode != http.StatusNotModified {
+		return fmt.Errorf("docker API returned status %d when starting container %s", resp.StatusCode, name)
+	}
+	return nil
+}
+
+// StopContainer menghentikan container aktif via Docker Unix Socket REST API.
+func (i *UnixSocketInspector) StopContainer(ctx context.Context, name string) error {
+	if !i.IsAvailable(ctx) {
+		return fmt.Errorf("docker daemon is not available")
+	}
+
+	url := fmt.Sprintf("http://localhost/containers/%s/stop?t=10", url.PathEscape(name))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, nil)
+	if err != nil {
+		return fmt.Errorf("failed to build stop container request: %w", err)
+	}
+
+	resp, err := i.client.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to execute stop container request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNoContent && resp.StatusCode != http.StatusNotModified && resp.StatusCode != http.StatusNotFound {
+		return fmt.Errorf("docker API returned status %d when stopping container %s", resp.StatusCode, name)
+	}
+	return nil
+}
+
+// RestartContainer me-restart container via Docker Unix Socket REST API.
+func (i *UnixSocketInspector) RestartContainer(ctx context.Context, name string) error {
+	if !i.IsAvailable(ctx) {
+		return fmt.Errorf("docker daemon is not available")
+	}
+
+	url := fmt.Sprintf("http://localhost/containers/%s/restart?t=10", url.PathEscape(name))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, nil)
+	if err != nil {
+		return fmt.Errorf("failed to build restart container request: %w", err)
+	}
+
+	resp, err := i.client.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to execute restart container request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNoContent {
+		return fmt.Errorf("docker API returned status %d when restarting container %s", resp.StatusCode, name)
+	}
+	return nil
+}
+

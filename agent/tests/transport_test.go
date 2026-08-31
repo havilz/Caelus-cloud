@@ -42,10 +42,11 @@ func TestTransport_SendReportSuccess(t *testing.T) {
 		DockerAvailable: true,
 	}
 
-	err := client.SendReport(ctx, payload)
+	actions, err := client.SendReport(ctx, payload)
 	if err != nil {
 		t.Fatalf("expected no error, got: %v", err)
 	}
+	_ = actions
 
 	if receivedHeaders.Get("Authorization") != "Bearer "+secret {
 		t.Errorf("expected auth header 'Bearer %s', got '%s'", secret, receivedHeaders.Get("Authorization"))
@@ -77,7 +78,7 @@ func TestTransport_SendReportUnauthorized(t *testing.T) {
 		Timestamp: time.Now().UTC(),
 	}
 
-	err := client.SendReport(ctx, payload)
+	_, err := client.SendReport(ctx, payload)
 	if err != transport.ErrUnauthorizedPayload {
 		t.Fatalf("expected ErrUnauthorizedPayload, got: %v", err)
 	}
@@ -109,7 +110,7 @@ func TestTransport_SendReportRetrySuccess(t *testing.T) {
 		Timestamp: time.Now().UTC(),
 	}
 
-	err := client.SendReport(ctx, payload)
+	_, err := client.SendReport(ctx, payload)
 	if err != nil {
 		t.Fatalf("expected retry to succeed, got: %v", err)
 	}

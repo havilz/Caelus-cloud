@@ -24,6 +24,7 @@ CREATE INDEX IF NOT EXISTS idx_volumes_status ON volumes(status);
 CREATE INDEX IF NOT EXISTS idx_volumes_server ON volumes(server_id);
 
 -- Auto-update updated_at timestamp trigger
+DROP TRIGGER IF EXISTS update_volumes_updated_at ON volumes;
 CREATE TRIGGER update_volumes_updated_at
     BEFORE UPDATE ON volumes
     FOR EACH ROW

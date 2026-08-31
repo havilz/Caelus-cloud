@@ -84,6 +84,14 @@ func (u *monitoringUsecase) IngestTelemetry(ctx context.Context, payload *domain
 
 	containersJSONBytes, _ := json.Marshal(payload.Containers)
 
+	// Hapus karakter Unicode tidak valid (termasuk null byte \u0000) yang ditolak PostgreSQL (SQLSTATE 22P05)
+	containersJSONStr := strings.Map(func(r rune) rune {
+		if r == 0 {
+			return -1
+		}
+		return r
+	}, string(containersJSONBytes))
+
 	metric := &domain.ServerMetric{
 		ServerID:           payload.ServerID,
 		CPUUsagePct:        payload.Host.CPUUsagePct,
@@ -100,7 +108,7 @@ func (u *monitoringUsecase) IngestTelemetry(ctx context.Context, payload *domain
 		UptimeSeconds:      int64(payload.Host.UptimeSeconds),
 		ContainersCount:    len(payload.Containers),
 		DockerAvailable:    payload.DockerAvailable,
-		ContainersJSON:     string(containersJSONBytes),
+		ContainersJSON:     containersJSONStr,
 		RecordedAt:         payload.Timestamp,
 	}
 

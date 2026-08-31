@@ -1,0 +1,3 @@
+DROP TABLE IF EXISTS webhooks CASCADE;
+DROP TABLE IF EXISTS api_keys CASCADE;
+DROP TABLE IF EXISTS organization_invitations CASCADE;

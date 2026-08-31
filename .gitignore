@@ -41,7 +41,7 @@ Thumbs.db
 
 # Internal Docs and module
 docs/
-changelog/
+#changelog/
 graphify-out/
 .agents/
 .agent/

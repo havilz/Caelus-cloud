@@ -71,11 +71,13 @@ CREATE INDEX IF NOT EXISTS idx_security_incidents_org ON security_incidents(orga
 CREATE INDEX IF NOT EXISTS idx_security_incidents_status ON security_incidents(status);
 
 -- 4. Triggers for updated_at
+DROP TRIGGER IF EXISTS update_security_scans_updated_at ON security_scans;
 CREATE TRIGGER update_security_scans_updated_at
     BEFORE UPDATE ON security_scans
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_security_incidents_updated_at ON security_incidents;
 CREATE TRIGGER update_security_incidents_updated_at
     BEFORE UPDATE ON security_incidents
     FOR EACH ROW

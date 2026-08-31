@@ -173,6 +173,22 @@ func (m *mockOrgRepo) RemoveMember(ctx context.Context, orgID, userID uuid.UUID)
 	return nil
 }
 
+func (m *mockOrgRepo) CreateInvitation(ctx context.Context, inv *domain.OrganizationInvitation) error {
+	return nil
+}
+
+func (m *mockOrgRepo) GetInvitationByToken(ctx context.Context, token string) (*domain.OrganizationInvitation, error) {
+	return nil, domain.ErrNotFound
+}
+
+func (m *mockOrgRepo) ListInvitations(ctx context.Context, orgID uuid.UUID) ([]domain.OrganizationInvitation, error) {
+	return nil, nil
+}
+
+func (m *mockOrgRepo) DeleteInvitation(ctx context.Context, id uuid.UUID) error {
+	return nil
+}
+
 func setupTestAuthUsecase() (auth.Usecase, *mockUserRepo, *mockOrgRepo, jwt.Manager) {
 	userRepo := newMockUserRepo()
 	orgRepo := newMockOrgRepo()

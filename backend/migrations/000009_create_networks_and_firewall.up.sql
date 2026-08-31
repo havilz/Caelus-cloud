@@ -39,11 +39,13 @@ CREATE INDEX IF NOT EXISTS idx_firewall_rules_org ON firewall_rules(organization
 CREATE INDEX IF NOT EXISTS idx_firewall_rules_network ON firewall_rules(network_id);
 
 -- 3. Triggers for updated_at
+DROP TRIGGER IF EXISTS update_networks_updated_at ON networks;
 CREATE TRIGGER update_networks_updated_at
     BEFORE UPDATE ON networks
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_firewall_rules_updated_at ON firewall_rules;
 CREATE TRIGGER update_firewall_rules_updated_at
     BEFORE UPDATE ON firewall_rules
     FOR EACH ROW

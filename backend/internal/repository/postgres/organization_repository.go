@@ -352,3 +352,125 @@ func (r *OrganizationRepository) RemoveMember(ctx context.Context, orgID, userID
 
 	return nil
 }
+
+// CreateInvitation menyimpan data undangan baru ke dalam tabel organization_invitations.
+func (r *OrganizationRepository) CreateInvitation(ctx context.Context, inv *domain.OrganizationInvitation) error {
+	query := `
+		INSERT INTO organization_invitations (id, organization_id, email, role, token, invited_by, expires_at, created_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		RETURNING id, created_at;
+	`
+
+	if inv.ID == uuid.Nil {
+		inv.ID = uuid.New()
+	}
+
+	err := r.pool.QueryRow(
+		ctx,
+		query,
+		inv.ID,
+		inv.OrganizationID,
+		inv.Email,
+		inv.Role,
+		inv.Token,
+		inv.InvitedBy,
+		inv.ExpiresAt,
+		inv.CreatedAt,
+	).Scan(&inv.ID, &inv.CreatedAt)
+
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			return domain.ErrConflict
+		}
+		return fmt.Errorf("gagal membuat undangan organisasi: %w", err)
+	}
+
+	return nil
+}
+
+// GetInvitationByToken mengambil data undangan berdasarkan token rahasia.
+func (r *OrganizationRepository) GetInvitationByToken(ctx context.Context, token string) (*domain.OrganizationInvitation, error) {
+	query := `
+		SELECT id, organization_id, email, role, token, invited_by, expires_at, created_at
+		FROM organization_invitations
+		WHERE token = $1;
+	`
+
+	var inv domain.OrganizationInvitation
+	err := r.pool.QueryRow(ctx, query, token).Scan(
+		&inv.ID,
+		&inv.OrganizationID,
+		&inv.Email,
+		&inv.Role,
+		&inv.Token,
+		&inv.InvitedBy,
+		&inv.ExpiresAt,
+		&inv.CreatedAt,
+	)
+
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, domain.ErrNotFound
+		}
+		return nil, fmt.Errorf("gagal mengambil undangan berdasarkan token: %w", err)
+	}
+
+	return &inv, nil
+}
+
+// ListInvitations mengambil seluruh daftar undangan aktif dalam organisasi.
+func (r *OrganizationRepository) ListInvitations(ctx context.Context, orgID uuid.UUID) ([]domain.OrganizationInvitation, error) {
+	query := `
+		SELECT id, organization_id, email, role, token, invited_by, expires_at, created_at
+		FROM organization_invitations
+		WHERE organization_id = $1 AND expires_at > CURRENT_TIMESTAMP
+		ORDER BY created_at DESC;
+	`
+
+	rows, err := r.pool.Query(ctx, query, orgID)
+	if err != nil {
+		return nil, fmt.Errorf("gagal mengambil daftar undangan organisasi: %w", err)
+	}
+	defer rows.Close()
+
+	var invitations []domain.OrganizationInvitation
+	for rows.Next() {
+		var inv domain.OrganizationInvitation
+		if err := rows.Scan(
+			&inv.ID,
+			&inv.OrganizationID,
+			&inv.Email,
+			&inv.Role,
+			&inv.Token,
+			&inv.InvitedBy,
+			&inv.ExpiresAt,
+			&inv.CreatedAt,
+		); err != nil {
+			return nil, fmt.Errorf("gagal memindai data undangan: %w", err)
+		}
+		invitations = append(invitations, inv)
+	}
+
+	return invitations, nil
+}
+
+// DeleteInvitation menghapus undangan organisasi berdasarkan ID.
+func (r *OrganizationRepository) DeleteInvitation(ctx context.Context, id uuid.UUID) error {
+	query := `
+		DELETE FROM organization_invitations
+		WHERE id = $1;
+	`
+
+	cmdTag, err := r.pool.Exec(ctx, query, id)
+	if err != nil {
+		return fmt.Errorf("gagal menghapus undangan organisasi: %w", err)
+	}
+
+	if cmdTag.RowsAffected() == 0 {
+		return domain.ErrNotFound
+	}
+
+	return nil
+}
+

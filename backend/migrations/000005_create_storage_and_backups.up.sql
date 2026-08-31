@@ -19,6 +19,7 @@ CREATE INDEX IF NOT EXISTS idx_buckets_name ON buckets(name);
 CREATE INDEX IF NOT EXISTS idx_buckets_created_at ON buckets(created_at DESC);
 
 -- Trigger updated_at untuk tabel buckets
+DROP TRIGGER IF EXISTS update_buckets_modtime ON buckets;
 CREATE TRIGGER update_buckets_modtime
     BEFORE UPDATE ON buckets
     FOR EACH ROW
@@ -54,6 +55,7 @@ CREATE INDEX IF NOT EXISTS idx_backup_policies_server_id ON backup_policies(serv
 CREATE INDEX IF NOT EXISTS idx_backup_policies_active ON backup_policies(is_active) WHERE is_active = true;
 
 -- Trigger updated_at untuk tabel backup_policies
+DROP TRIGGER IF EXISTS update_backup_policies_modtime ON backup_policies;
 CREATE TRIGGER update_backup_policies_modtime
     BEFORE UPDATE ON backup_policies
     FOR EACH ROW
@@ -95,6 +97,7 @@ CREATE INDEX IF NOT EXISTS idx_backup_records_expires_at ON backup_records(expir
 CREATE INDEX IF NOT EXISTS idx_backup_records_started_at ON backup_records(started_at DESC);
 
 -- Trigger updated_at untuk tabel backup_records
+DROP TRIGGER IF EXISTS update_backup_records_modtime ON backup_records;
 CREATE TRIGGER update_backup_records_modtime
     BEFORE UPDATE ON backup_records
     FOR EACH ROW

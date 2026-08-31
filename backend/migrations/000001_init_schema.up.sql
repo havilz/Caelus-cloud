@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 
+DROP TRIGGER IF EXISTS update_users_updated_at ON users;
 CREATE TRIGGER update_users_updated_at
     BEFORE UPDATE ON users
     FOR EACH ROW
@@ -47,6 +48,7 @@ CREATE TABLE IF NOT EXISTS organizations (
 
 CREATE INDEX IF NOT EXISTS idx_organizations_slug ON organizations(slug);
 
+DROP TRIGGER IF EXISTS update_organizations_updated_at ON organizations;
 CREATE TRIGGER update_organizations_updated_at
     BEFORE UPDATE ON organizations
     FOR EACH ROW
@@ -66,6 +68,7 @@ CREATE TABLE IF NOT EXISTS organization_members (
 CREATE INDEX IF NOT EXISTS idx_org_members_org ON organization_members(organization_id);
 CREATE INDEX IF NOT EXISTS idx_org_members_user ON organization_members(user_id);
 
+DROP TRIGGER IF EXISTS update_org_members_updated_at ON organization_members;
 CREATE TRIGGER update_org_members_updated_at
     BEFORE UPDATE ON organization_members
     FOR EACH ROW
@@ -110,6 +113,7 @@ CREATE TABLE IF NOT EXISTS credentials (
 CREATE INDEX IF NOT EXISTS idx_credentials_org ON credentials(organization_id);
 CREATE INDEX IF NOT EXISTS idx_credentials_provider ON credentials(provider_id);
 
+DROP TRIGGER IF EXISTS update_credentials_updated_at ON credentials;
 CREATE TRIGGER update_credentials_updated_at
     BEFORE UPDATE ON credentials
     FOR EACH ROW
@@ -140,6 +144,7 @@ CREATE INDEX IF NOT EXISTS idx_servers_provider ON servers(provider_id);
 CREATE INDEX IF NOT EXISTS idx_servers_status ON servers(status);
 CREATE INDEX IF NOT EXISTS idx_servers_ip ON servers(ip_address);
 
+DROP TRIGGER IF EXISTS update_servers_updated_at ON servers;
 CREATE TRIGGER update_servers_updated_at
     BEFORE UPDATE ON servers
     FOR EACH ROW

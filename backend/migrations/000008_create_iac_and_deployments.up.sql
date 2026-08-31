@@ -83,11 +83,13 @@ CREATE TABLE IF NOT EXISTS deployment_logs (
 CREATE INDEX IF NOT EXISTS idx_deployment_logs_deployment ON deployment_logs(deployment_id, timestamp ASC);
 
 -- 6. Triggers for updated_at
+DROP TRIGGER IF EXISTS update_iac_configurations_updated_at ON iac_configurations;
 CREATE TRIGGER update_iac_configurations_updated_at
     BEFORE UPDATE ON iac_configurations
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_deployments_updated_at ON deployments;
 CREATE TRIGGER update_deployments_updated_at
     BEFORE UPDATE ON deployments
     FOR EACH ROW

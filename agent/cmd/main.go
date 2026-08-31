@@ -153,6 +153,24 @@ func runCollectionCycle(
 				} else {
 					slog.Info("successfully removed container from host", "target", act.Target)
 				}
+			case "START_CONTAINER":
+				if err := dockerInspector.StartContainer(ctx, act.Target); err != nil {
+					slog.Error("failed to execute START_CONTAINER", "target", act.Target, "error", err)
+				} else {
+					slog.Info("successfully started container on host", "target", act.Target)
+				}
+			case "STOP_CONTAINER":
+				if err := dockerInspector.StopContainer(ctx, act.Target); err != nil {
+					slog.Error("failed to execute STOP_CONTAINER", "target", act.Target, "error", err)
+				} else {
+					slog.Info("successfully stopped container on host", "target", act.Target)
+				}
+			case "RESTART_CONTAINER":
+				if err := dockerInspector.RestartContainer(ctx, act.Target); err != nil {
+					slog.Error("failed to execute RESTART_CONTAINER", "target", act.Target, "error", err)
+				} else {
+					slog.Info("successfully restarted container on host", "target", act.Target)
+				}
 			}
 		}
 	}
