@@ -33,6 +33,10 @@ type Server struct {
 	MemoryMB         int          `json:"memory_mb"`
 	DiskGB           int          `json:"disk_gb"`
 	Region           string       `json:"region"`
+	// AgentSecretHash menyimpan hash Argon2id dari secret agent untuk validasi middleware telemetri (C-1).
+	AgentSecretHash   *string      `json:"-"`
+	// AgentSecretPrefix adalah 8 karakter pertama secret plaintext untuk ditampilkan di dashboard.
+	AgentSecretPrefix *string      `json:"agent_secret_prefix,omitempty"`
 	CreatedAt        time.Time    `json:"created_at"`
 	UpdatedAt        time.Time    `json:"updated_at"`
 	Provider         *Provider    `json:"provider,omitempty"`
@@ -46,4 +50,8 @@ type ServerRepository interface {
 	Update(ctx context.Context, server *Server) error
 	UpdateStatus(ctx context.Context, id uuid.UUID, status ServerStatus) error
 	Delete(ctx context.Context, id uuid.UUID) error
+	// SetAgentSecret menyimpan hash Argon2id dan prefix secret agent pada server.
+	SetAgentSecret(ctx context.Context, serverID uuid.UUID, secretHash, secretPrefix string) error
+	// GetByID dengan kolom agent_secret_hash untuk keperluan validasi middleware (internal, tidak diekspos ke handler).
+	GetByIDWithSecret(ctx context.Context, id uuid.UUID) (*Server, error)
 }

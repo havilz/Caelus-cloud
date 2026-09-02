@@ -38,6 +38,24 @@ var knownVulnRules = []KnownVulnRule{
 		Remediation:    "Segera lakukan upgrade paket openssh-server ke versi patch keamanan terbaru.",
 		RemediationCmd: "sudo apt update && sudo apt install --only-upgrade openssh-server -y",
 	},
+	{
+		CheckID:        "vuln-sudo-baron-samedit-cve-2021-3156",
+		OSTypePattern:  "linux",
+		Severity:       domain.SeverityHigh,
+		Title:          "Audit Privilege Escalation Sudo (CVE-2021-3156 / Baron Samedit)",
+		Description:    "Pemeriksaan kerentanan buffer overflow pada utilitas sudo yang memungkinkan pengguna biasa memperoleh akses root lokal.",
+		Remediation:    "Perbarui biner paket sudo ke versi terbaru repositori OS.",
+		RemediationCmd: "sudo apt update && sudo apt install --only-upgrade sudo -y || sudo yum update sudo -y",
+	},
+	{
+		CheckID:        "vuln-docker-socket-mount-security",
+		OSTypePattern:  "linux",
+		Severity:       domain.SeverityCritical,
+		Title:          "Audit Keamanan Izin Bind-Mount Socket Docker (/var/run/docker.sock)",
+		Description:    "Paparan socket daemon Docker ke container yang tidak terpercaya memungkinkan pengambilalihan kontrol host penuh.",
+		Remediation:    "Gunakan proxy API Docker terbatas (seperti socket-proxy) atau jalankan container tanpa bind-mount docker.sock.",
+		RemediationCmd: "ls -la /var/run/docker.sock",
+	},
 }
 
 // VulnScanner memeriksa kerentanan CVE yang diketahui pada sistem operasi dan pustaka sistem.

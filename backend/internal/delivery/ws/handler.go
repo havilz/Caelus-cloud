@@ -74,6 +74,7 @@ func (h *Handler) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 }
 
 // HandleSSE menangani streaming data telemetri satu arah via Server-Sent Events (SSE).
+// Endpoint ini dilindungi middleware JWT Authenticate — hanya user terautentikasi yang bisa akses (C-1).
 func (h *Handler) HandleSSE(w http.ResponseWriter, r *http.Request) {
 	serverIDStr := chi.URLParam(r, "server_id")
 	serverID, err := uuid.Parse(serverIDStr)
@@ -91,7 +92,7 @@ func (h *Handler) HandleSSE(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")
 	w.Header().Set("Connection", "keep-alive")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+	// Header Access-Control-Allow-Origin dikelola secara terpusat oleh middleware CORS global (L-1)
 
 	clientID := uuid.New().String()
 	client := NewClient(clientID, uuid.Nil, uuid.Nil, h.hub)

@@ -30,6 +30,10 @@ var commonPorts = []CommonPortDef{
 	{Port: 5432, Service: "PostgreSQL", IsHighRisk: true, Severity: domain.SeverityHigh, Description: "Database PostgreSQL terbuka ke jaringan publik.", Remediation: "Ubah pg_hba.conf dan bind listen_addresses ke '127.0.0.1' atau private VPN."},
 	{Port: 6379, Service: "Redis", IsHighRisk: true, Severity: domain.SeverityCritical, Description: "In-memory cache Redis terbuka ke publik.", Remediation: "Aktifkan requirepass, bind ke 127.0.0.1, dan blokir port 6379 dari internet eksternal."},
 	{Port: 27017, Service: "MongoDB", IsHighRisk: true, Severity: domain.SeverityCritical, Description: "Database NoSQL MongoDB terbuka ke publik.", Remediation: "Aktifkan autentikasi dan bind IP ke localhost atau jaringan privat."},
+	{Port: 11211, Service: "Memcached", IsHighRisk: true, Severity: domain.SeverityCritical, Description: "Cache Memcached tanpa otentikasi terbuka ke jaringan publik.", Remediation: "Tutup port 11211 dari akses publik dan aktifkan flag '-l 127.0.0.1'."},
+	{Port: 2375, Service: "Docker Unencrypted API", IsHighRisk: true, Severity: domain.SeverityCritical, Description: "Docker Engine Daemon TCP Socket terbuka tanpa enkripsi TLS (Potensi Container Escape / Remote Root Takeover).", Remediation: "Matikan daemon TCP port 2375 atau aktifkan TLS Mutual Auth (port 2376)."},
+	{Port: 9200, Service: "Elasticsearch", IsHighRisk: true, Severity: domain.SeverityHigh, Description: "Endpoint HTTP REST API Elasticsearch terbuka ke publik.", Remediation: "Aktifkan xpack.security.enabled dan kunci akses port 9200 dengan UFW/IPtables."},
+	{Port: 5900, Service: "VNC Remote Desktop", IsHighRisk: true, Severity: domain.SeverityHigh, Description: "Layanan VNC Remote Desktop terbuka ke jaringan publik.", Remediation: "Gunakan VNC melalui SSH Tunnel atau matikan service jika tidak digunakan."},
 	{Port: 8080, Service: "HTTP-Alt", IsHighRisk: false, Severity: domain.SeverityLow, Description: "Port alternatif HTTP terbuka.", Remediation: "Pastikan aplikasi di port 8080 memiliki otentikasi yang memadai."},
 }
 

@@ -86,6 +86,22 @@ func (m *mockServerRepo) Delete(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
+func (m *mockServerRepo) SetAgentSecret(ctx context.Context, serverID uuid.UUID, secretHash, secretPrefix string) error {
+	if srv, exists := m.servers[serverID]; exists {
+		srv.AgentSecretHash = &secretHash
+		srv.AgentSecretPrefix = &secretPrefix
+	}
+	return nil
+}
+
+func (m *mockServerRepo) GetByIDWithSecret(ctx context.Context, id uuid.UUID) (*domain.Server, error) {
+	if srv, exists := m.servers[id]; exists {
+		return srv, nil
+	}
+	return nil, domain.ErrNotFound
+}
+
+
 func setupServerUsecaseTest() (server.ServerUsecase, *mockServerRepo, *mockProviderRepo, uuid.UUID, uuid.UUID) {
 	serverRepo := newMockServerRepo()
 	provRepo := newMockProviderRepo()

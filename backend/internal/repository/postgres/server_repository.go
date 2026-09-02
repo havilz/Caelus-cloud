@@ -289,3 +289,76 @@ func (r *ServerRepository) Delete(ctx context.Context, id uuid.UUID) error {
 
 	return nil
 }
+
+// SetAgentSecret menyimpan hash Argon2id dan prefix plaintext secret agent ke kolom servers.
+// Dipanggil saat server pertama kali didaftarkan atau saat secret agent di-rotate.
+// Parameter ctx merupakan konteks eksekusi query.
+// Parameter serverID merupakan UUID server target.
+// Parameter secretHash merupakan string hash Argon2id dari agent secret.
+// Parameter secretPrefix merupakan 8 karakter pertama dari plaintext secret untuk tampilan di dashboard.
+// Mengembalikan error jika server tidak ditemukan atau query gagal.
+func (r *ServerRepository) SetAgentSecret(ctx context.Context, serverID uuid.UUID, secretHash, secretPrefix string) error {
+	query := `
+		UPDATE servers
+		SET agent_secret_hash = $2, agent_secret_prefix = $3, updated_at = NOW()
+		WHERE id = $1;
+	`
+
+	cmdTag, err := r.pool.Exec(ctx, query, serverID, secretHash, secretPrefix)
+	if err != nil {
+		return fmt.Errorf("gagal menyimpan agent secret hash: %w", err)
+	}
+
+	if cmdTag.RowsAffected() == 0 {
+		return domain.ErrNotFound
+	}
+
+	return nil
+}
+
+// GetByIDWithSecret mengambil data server beserta kolom agent_secret_hash untuk keperluan validasi middleware telemetri.
+// Berbeda dengan GetByID, method ini menyertakan agent_secret_hash yang tidak diekspos ke handler publik.
+// Parameter ctx merupakan konteks eksekusi query.
+// Parameter id merupakan UUID server yang dicari.
+// Mengembalikan *domain.Server dengan field AgentSecretHash terisi, atau error jika tidak ditemukan.
+func (r *ServerRepository) GetByIDWithSecret(ctx context.Context, id uuid.UUID) (*domain.Server, error) {
+	query := `
+		SELECT id, organization_id, credential_id, provider_id, external_server_id,
+		       name, hostname, ip_address, status, os_type, cpu_cores, memory_mb, disk_gb, region,
+		       agent_secret_hash, agent_secret_prefix, created_at, updated_at
+		FROM servers
+		WHERE id = $1;
+	`
+
+	var s domain.Server
+	err := r.pool.QueryRow(ctx, query, id).Scan(
+		&s.ID,
+		&s.OrganizationID,
+		&s.CredentialID,
+		&s.ProviderID,
+		&s.ExternalServerID,
+		&s.Name,
+		&s.Hostname,
+		&s.IPAddress,
+		&s.Status,
+		&s.OSType,
+		&s.CPUCores,
+		&s.MemoryMB,
+		&s.DiskGB,
+		&s.Region,
+		&s.AgentSecretHash,
+		&s.AgentSecretPrefix,
+		&s.CreatedAt,
+		&s.UpdatedAt,
+	)
+
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, domain.ErrNotFound
+		}
+		return nil, fmt.Errorf("gagal mengambil server dengan secret: %w", err)
+	}
+
+	return &s, nil
+}
+

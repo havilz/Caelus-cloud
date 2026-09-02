@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/havilz/caelus-cloud/backend/internal/domain"
@@ -84,34 +85,49 @@ func (e *Engine) diffServers(desired []domain.ServerSpec, current []domain.Serve
 	for _, d := range desired {
 		desiredMap[d.Name] = true
 		curr, exists := currentMap[d.Name]
+
+		// Format transparansi status provider (H-2: BYOS / Local Host vs Cloud Provider Driver)
+		providerMode := "Cloud Provider Driver"
+		pLower := strings.ToLower(d.Provider)
+		if pLower == "" || pLower == "custom" || pLower == "custom_vps" || pLower == "byos" || pLower == "local" {
+			providerMode = "BYOS / Local Host Agent"
+		} else {
+			providerMode = fmt.Sprintf("Cloud Provider Driver (%s)", d.Provider)
+		}
+
+		afterMap := structToMap(d)
+		afterMap["provider_mode"] = providerMode
+
 		if !exists {
 			changes = append(changes, domain.IaCChange{
 				ResourceType: domain.ResourceTypeServer,
 				ResourceName: d.Name,
 				Action:       domain.ActionCreate,
-				After:        structToMap(d),
-				Reason:       fmt.Sprintf("Server '%s' will be provisioned on provider '%s'", d.Name, d.Provider),
+				After:        afterMap,
+				Reason:       fmt.Sprintf("Server '%s' will be provisioned using %s", d.Name, providerMode),
 			})
 		} else {
-			changedFields := findChangedFields(structToMap(curr), structToMap(d))
+			currMap := structToMap(curr)
+			currMap["provider_mode"] = providerMode
+			changedFields := findChangedFields(currMap, afterMap)
 			if len(changedFields) > 0 {
 				changes = append(changes, domain.IaCChange{
 					ResourceType:  domain.ResourceTypeServer,
 					ResourceName:  d.Name,
 					Action:        domain.ActionUpdate,
-					Before:        structToMap(curr),
-					After:         structToMap(d),
+					Before:        currMap,
+					After:         afterMap,
 					ChangedFields: changedFields,
-					Reason:        fmt.Sprintf("Server '%s' configuration will be updated: %v", d.Name, changedFields),
+					Reason:        fmt.Sprintf("Server '%s' (%s) configuration will be updated: %v", d.Name, providerMode, changedFields),
 				})
 			} else {
 				changes = append(changes, domain.IaCChange{
 					ResourceType: domain.ResourceTypeServer,
 					ResourceName: d.Name,
 					Action:       domain.ActionNoOp,
-					Before:       structToMap(curr),
-					After:        structToMap(d),
-					Reason:       "No changes detected",
+					Before:       currMap,
+					After:        afterMap,
+					Reason:       fmt.Sprintf("[%s] No changes detected", providerMode),
 				})
 			}
 		}
@@ -119,11 +135,12 @@ func (e *Engine) diffServers(desired []domain.ServerSpec, current []domain.Serve
 
 	for _, c := range current {
 		if !desiredMap[c.Name] {
+			cMap := structToMap(c)
 			changes = append(changes, domain.IaCChange{
 				ResourceType: domain.ResourceTypeServer,
 				ResourceName: c.Name,
 				Action:       domain.ActionDelete,
-				Before:       structToMap(c),
+				Before:       cMap,
 				Reason:       fmt.Sprintf("Server '%s' is removed from desired manifest and will be terminated", c.Name),
 			})
 		}

@@ -225,9 +225,11 @@ func main() {
 		Config:     cfg,
 		JWTManager: jwtManager,
 		AuditRepo:  auditRepo,
+		ServerRepo: serverRepo,
+		PgxPool:    client.Pool,
 		Logger:     logger.Get(),
 		Handlers: deliveryHttp.Handlers{
-			AuthHandler:       v1.NewAuthHandler(authUc),
+			AuthHandler:       v1.NewAuthHandler(authUc, auditRepo),
 			ServerHandler:     v1.NewServerHandler(serverUc),
 			ProviderHandler:   v1.NewProviderHandler(credUc),
 			CredentialHandler: v1.NewCredentialHandler(credUc, factory),

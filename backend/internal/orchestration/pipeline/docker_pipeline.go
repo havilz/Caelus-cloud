@@ -147,6 +147,17 @@ func (p *DockerPipeline) runPipeline(ctx context.Context, dep *domain.Deployment
 	}
 
 	for _, vb := range dep.VolumeBindings {
+		// Validasi ganda di pipeline layer sebelum diteruskan ke Docker CLI (C-2 defense-in-depth)
+		hostPath := vb.HostPath
+		if hostPath == "" || hostPath == "/" || strings.HasPrefix(hostPath, "/etc") ||
+			strings.HasPrefix(hostPath, "/root") || strings.HasPrefix(hostPath, "/sys") ||
+			strings.HasPrefix(hostPath, "/proc") || strings.HasPrefix(hostPath, "/dev") ||
+			strings.Contains(hostPath, "docker.sock") {
+			p.log(ctx, dep.ID, "stderr", fmt.Sprintf("Pipeline menolak bind-mount tidak aman: %s (C-2 host escape prevention)", hostPath))
+			_ = p.deploymentRepo.UpdateDeploymentStatus(ctx, dep.ID, domain.DeploymentStatusFailed,
+				fmt.Sprintf("bind-mount path tidak aman ditolak: %s", hostPath), nil)
+			return
+		}
 		p.log(ctx, dep.ID, "system", fmt.Sprintf("Mounting volume: %s -> %s (%s)", vb.HostPath, vb.ContainerPath, vb.Mode))
 		runArgs = append(runArgs, "-v", fmt.Sprintf("%s:%s", vb.HostPath, vb.ContainerPath))
 	}

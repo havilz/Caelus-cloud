@@ -18,6 +18,9 @@ var (
 	ErrDecryptionFailed   = errors.New("gagal mendekripsi data atau otentikasi tag gagal")
 )
 
+// DeriveKey menghasilkan kunci 32-byte (256-bit) yang valid untuk AES-256-GCM.
+// Kunci idealnya berupa 32-byte raw binary atau 64-char hex string (hasil dari `openssl rand -hex 32`).
+// Jika panjang kunci tidak 32-byte atau 64-char hex, SHA-256 hash KDF digunakan sebagai penyesuai.
 func deriveKey(key []byte) []byte {
 	if len(key) == 32 {
 		return key
@@ -29,6 +32,24 @@ func deriveKey(key []byte) []byte {
 	}
 	h := sha256.Sum256(key)
 	return h[:]
+}
+
+// GenerateRandomKey menghasilkan string base64 32-byte yang aman dengan entropi kriptografis tinggi.
+// Dapat digunakan untuk mengatur ENCRYPTION_KEY pada file .env (`openssl rand -base64 32`).
+func GenerateRandomKey() (string, error) {
+	key := make([]byte, 32)
+	if _, err := io.ReadFull(rand.Reader, key); err != nil {
+		return "", fmt.Errorf("gagal menghasilkan kunci acak: %w", err)
+	}
+	return base64.StdEncoding.EncodeToString(key), nil
+}
+
+// ValidateKeyEntropy memvalidasi apakah kunci memenuhi standar minimal 32 byte (256 bit) entropi (L-2).
+func ValidateKeyEntropy(key []byte) error {
+	if len(key) < 32 {
+		return ErrInvalidKeySize
+	}
+	return nil
 }
 
 // Encrypt mengenkripsi teks mentah menggunakan algoritma AES-256-GCM dengan nonce acak 12-byte.

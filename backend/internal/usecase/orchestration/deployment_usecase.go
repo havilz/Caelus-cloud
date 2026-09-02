@@ -4,6 +4,9 @@ import (
 	"context"
 	"fmt"
 	"os/exec"
+	"path/filepath"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -28,18 +31,43 @@ func (u *UseCase) CreateDeployment(ctx context.Context, orgID uuid.UUID, req dom
 	if req.AppName == "" {
 		return nil, fmt.Errorf("app_name is required")
 	}
+	if err := validateDockerName(req.AppName, "app_name"); err != nil {
+		return nil, err
+	}
 	if req.ImageTag == "" {
 		return nil, fmt.Errorf("image_tag is required")
+	}
+	if err := validateImageTag(req.ImageTag); err != nil {
+		return nil, err
 	}
 
 	containerName := req.ContainerName
 	if containerName == "" {
 		containerName = fmt.Sprintf("caelus-%s", req.AppName)
 	}
+	if err := validateDockerName(containerName, "container_name"); err != nil {
+		return nil, err
+	}
+
+	if req.NetworkName != "" {
+		if err := validateNetworkName(req.NetworkName); err != nil {
+			return nil, err
+		}
+	}
 
 	restartPolicy := req.RestartPolicy
 	if restartPolicy == "" {
 		restartPolicy = "unless-stopped"
+	}
+	if err := validateRestartPolicy(restartPolicy); err != nil {
+		return nil, err
+	}
+
+	// Validasi dan sanitasi seluruh bind-mount path host (C-2: Container Escape Mitigation)
+	for _, vb := range req.VolumeBindings {
+		if err := validateHostPath(vb.HostPath); err != nil {
+			return nil, fmt.Errorf("volume binding tidak aman: %w", err)
+		}
 	}
 
 	dep := &domain.Deployment{
@@ -68,6 +96,70 @@ func (u *UseCase) CreateDeployment(ctx context.Context, orgID uuid.UUID, req dom
 	}
 
 	return dep, nil
+}
+
+// validateHostPath memvalidasi path host bind-mount untuk mencegah teknik container escape (C-2).
+// Menolak path root, direktori sistem sensitif, dan socket Docker daemon.
+func validateHostPath(hostPath string) error {
+	if hostPath == "" {
+		return fmt.Errorf("host_path tidak boleh kosong")
+	}
+
+	// Bersihkan path untuk mencegah traversal (../../etc)
+	clean := filepath.Clean(hostPath)
+
+	// Daftar path yang secara absolut dilarang
+	blockedPaths := []string{
+		"/",
+		"/etc",
+		"/root",
+		"/bin",
+		"/sbin",
+		"/usr",
+		"/lib",
+		"/lib64",
+		"/boot",
+		"/sys",
+		"/proc",
+		"/dev",
+		"/run",
+		"/var/run",
+		"/var/run/docker.sock",
+		"/var/lib/docker",
+		"/home/docker-data",
+	}
+
+	for _, blocked := range blockedPaths {
+		if clean == blocked {
+			return fmt.Errorf("host_path '%s' adalah direktori sistem yang dilarang", hostPath)
+		}
+	}
+
+	// Blokir path yang merupakan sub-direktori dari path sensitif
+	sensitivePrefixes := []string{
+		"/etc/",
+		"/root/",
+		"/bin/",
+		"/sbin/",
+		"/usr/",
+		"/lib/",
+		"/lib64/",
+		"/boot/",
+		"/sys/",
+		"/proc/",
+		"/dev/",
+		"/var/run/",
+		"/var/lib/docker/",
+		"/home/docker-data/",
+	}
+
+	for _, prefix := range sensitivePrefixes {
+		if strings.HasPrefix(clean+"/", prefix) {
+			return fmt.Errorf("host_path '%s' berada dalam direktori sistem yang dilarang", hostPath)
+		}
+	}
+
+	return nil
 }
 
 func (u *UseCase) GetDeployment(ctx context.Context, id uuid.UUID) (*domain.Deployment, error) {
@@ -151,4 +243,44 @@ func (u *UseCase) RollbackDeployment(ctx context.Context, id uuid.UUID) (*domain
 	_ = u.repo.UpdateDeploymentStatus(ctx, oldDep.ID, domain.DeploymentStatusRolledBack, fmt.Sprintf("Rolled back to %s", newDep.ID), &now)
 
 	return newDep, nil
+}
+
+var (
+	validDockerNameRegex  = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,127}$`)
+	validImageTagRegex    = regexp.MustCompile(`^[a-zA-Z0-9_.:/\-@]{1,255}$`)
+	validNetworkNameRegex = regexp.MustCompile(`^[a-zA-Z0-9_.-]{1,128}$`)
+)
+
+// validateDockerName memvalidasi nama container atau aplikasi berbasis aturan penamaan standar Docker (M-1).
+func validateDockerName(name, fieldName string) error {
+	if !validDockerNameRegex.MatchString(name) {
+		return fmt.Errorf("%s '%s' mengandung karakter tidak diizinkan atau melebihi batas panjang", fieldName, name)
+	}
+	return nil
+}
+
+// validateImageTag memvalidasi format tag image Docker untuk mencegah flag injection (M-1).
+func validateImageTag(tag string) error {
+	if !validImageTagRegex.MatchString(tag) {
+		return fmt.Errorf("image_tag '%s' tidak valid atau mengandung karakter berbahaya", tag)
+	}
+	return nil
+}
+
+// validateNetworkName memvalidasi nama network Docker (M-1).
+func validateNetworkName(netName string) error {
+	if !validNetworkNameRegex.MatchString(netName) {
+		return fmt.Errorf("network_name '%s' tidak valid", netName)
+	}
+	return nil
+}
+
+// validateRestartPolicy memvalidasi nilai restart policy yang diperbolehkan oleh Docker CLI (M-1).
+func validateRestartPolicy(policy string) error {
+	switch policy {
+	case "no", "always", "unless-stopped", "on-failure":
+		return nil
+	default:
+		return fmt.Errorf("restart_policy '%s' tidak valid (diizinkan: no, always, unless-stopped, on-failure)", policy)
+	}
 }

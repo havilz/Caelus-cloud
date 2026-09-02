@@ -32,7 +32,12 @@ func main() {
 		"api_endpoint", cfg.APIEndpoint,
 		"interval_sec", cfg.CollectionIntervalSec,
 		"docker_socket", cfg.DockerSocketPath,
+		"tls_skip_verify", cfg.TLSSkipVerify,
 	)
+
+	if cfg.TLSSkipVerify {
+		slog.Warn("SECURITY WARNING: TLS verification is disabled (TLSSkipVerify=true). HTTPS transport is vulnerable to Man-In-The-Middle (MITM) attacks!")
+	}
 
 	sysCollector := collector.NewCollector()
 	dockerInspector := docker.NewInspector(cfg.DockerSocketPath)

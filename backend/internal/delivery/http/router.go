@@ -5,9 +5,11 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
+	"github.com/jackc/pgx/v5/pgxpool"
 	customMiddleware "github.com/havilz/caelus-cloud/backend/internal/delivery/http/middleware"
 	"github.com/havilz/caelus-cloud/backend/internal/delivery/http/response"
 	v1 "github.com/havilz/caelus-cloud/backend/internal/delivery/http/v1"
@@ -41,6 +43,9 @@ type RouterConfig struct {
 	Config     *config.Config
 	JWTManager jwt.Manager
 	AuditRepo  domain.AuditLogRepository
+	ServerRepo domain.ServerRepository
+	// PgxPool digunakan oleh middleware InjectOrgContext untuk menyuntikkan app.current_org_id ke sesi DB (C-3).
+	PgxPool    *pgxpool.Pool
 	Logger     *slog.Logger
 	Handlers   Handlers
 }
@@ -201,8 +206,10 @@ echo "=== Caelus Cloud Agent Berhasil Diinstal dan Berjalan! ==="
 func registerAPIRoutes(r *chi.Mux, rc RouterConfig) {
 	r.Route("/api/v1", func(apiRouter chi.Router) {
 		if rc.Handlers.AuthHandler != nil {
-			apiRouter.Post("/auth/register", rc.Handlers.AuthHandler.Register)
-			apiRouter.Post("/auth/login", rc.Handlers.AuthHandler.Login)
+			// AuthRateLimiter: Batas maksimum 5 percoban per menit per IP/email (H-1)
+			authLimiter := customMiddleware.NewAuthRateLimiter(5, 1*time.Minute)
+			apiRouter.With(authLimiter.Limit()).Post("/auth/register", rc.Handlers.AuthHandler.Register)
+			apiRouter.With(authLimiter.Limit()).Post("/auth/login", rc.Handlers.AuthHandler.Login)
 			apiRouter.Post("/auth/refresh", rc.Handlers.AuthHandler.RefreshToken)
 		}
 
@@ -211,8 +218,12 @@ func registerAPIRoutes(r *chi.Mux, rc RouterConfig) {
 		}
 
 		if rc.Handlers.TelemetryHandler != nil {
-			apiRouter.Post("/telemetry/report", rc.Handlers.TelemetryHandler.IngestReport)
-			apiRouter.Get("/telemetry/stream/{server_id}", rc.Handlers.WSHandler.HandleSSE)
+			// POST /telemetry/report dilindungi RequireAgentAuth: validasi Bearer token secret agen (C-1)
+			if rc.ServerRepo != nil {
+				apiRouter.With(customMiddleware.RequireAgentAuth(rc.ServerRepo)).Post("/telemetry/report", rc.Handlers.TelemetryHandler.IngestReport)
+			} else {
+				apiRouter.Post("/telemetry/report", rc.Handlers.TelemetryHandler.IngestReport)
+			}
 		}
 
 		if rc.Handlers.WSHandler != nil {
@@ -222,12 +233,21 @@ func registerAPIRoutes(r *chi.Mux, rc RouterConfig) {
 		if rc.JWTManager != nil {
 			apiRouter.Group(func(protectedRouter chi.Router) {
 				protectedRouter.Use(customMiddleware.Authenticate(rc.JWTManager))
+				// InjectOrgContext: injeksi SET LOCAL app.current_org_id ke sesi PostgreSQL per request (C-3)
+				if rc.PgxPool != nil {
+					protectedRouter.Use(customMiddleware.InjectOrgContext(rc.PgxPool))
+				}
 				if rc.AuditRepo != nil {
 					protectedRouter.Use(customMiddleware.AuditLogInterceptor(rc.AuditRepo, rc.Logger))
 				}
 
 				if rc.Handlers.ServerHandler != nil || rc.Handlers.TelemetryHandler != nil {
 					registerServerRoutes(protectedRouter, rc.Handlers.ServerHandler, rc.Handlers.TelemetryHandler)
+				}
+
+				// GET /telemetry/stream/{server_id} dipindahkan ke dalam grup terautentikasi JWT (C-1)
+				if rc.Handlers.WSHandler != nil {
+					protectedRouter.Get("/telemetry/stream/{server_id}", rc.Handlers.WSHandler.HandleSSE)
 				}
 
 				if rc.Handlers.CredentialHandler != nil {
