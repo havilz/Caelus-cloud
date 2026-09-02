@@ -1,0 +1,112 @@
+name: Build and Push Docker Images to GHCR
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_OWNER: havilz
+
+jobs:
+  test:
+    name: Run Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          cache-dependency-path: |
+            backend/go.sum
+            agent/go.sum
+
+      - name: Run Backend Unit Tests
+        run: |
+          cd backend
+          go test -v ./tests/...
+
+      - name: Run Agent Unit Tests
+        run: |
+          cd agent
+          go test -v ./tests/...
+
+  build-and-push:
+    name: Build & Push Images (:latest)
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Go (for agent cross-compilation)
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Cross-compile Static Caelus Agent Binary for API Image
+        run: |
+          cd agent
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o ../backend/caelus-agent-linux ./cmd/main.go
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push caelus-api Image (:latest)
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./deploy/docker/Dockerfile.api
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/caelus-api:latest
+
+      - name: Build and Push caelus-worker Image (:latest)
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./deploy/docker/Dockerfile.worker
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/caelus-worker:latest
+
+      - name: Build and Push caelus-migrate Image (:latest)
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./deploy/docker/Dockerfile.migrate
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/caelus-migrate:latest
+
+      - name: Build and Push caelus-agent Image (:latest)
+        uses: docker/build-push-action@v5
+        with:
+          context: ./agent
+          file: ./deploy/docker/Dockerfile.agent
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/caelus-agent:latest
+
+      - name: Build and Push caelus-frontend Image (:latest)
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          file: ./deploy/docker/Dockerfile.ui
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/caelus-frontend:latest

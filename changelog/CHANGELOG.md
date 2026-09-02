@@ -10,6 +10,10 @@ Format penulisan mengacu pada standar formal dengan pencatatan stempel tanggal d
 
 ### [2026-09-02 20:12:00] - Security Audit Remediation Phase 7.4: Medium & Low Priority Hardening
 
+- **Otomasi Pipeline CI/CD GitHub Actions (`.github/workflows/docker-publish.yml`)**:
+  - Mengimplementasikan alur CI/CD otomatis untuk menjalankan unit test backend & agent pada setiap push ke branch `main` atau git tag versi (`v*`).
+  - Mengompilasi biner statis `caelus-agent-linux` secara otomatis.
+  - Membangun dan mengunggah (push) kelima Docker image Caelus Cloud ke GitHub Container Registry (`ghcr.io/havilz/caelus-api`, `caelus-worker`, `caelus-migrate`, `caelus-agent`, `caelus-frontend`) tanpa perlu build/push manual.
 - **Sanitasi Argumen Docker CLI — M-1 (`usecase/orchestration/deployment_usecase.go`)**:
   - Mengimplementasikan fungsi validasi regex ketat untuk `AppName`, `ContainerName`, `ImageTag`, `NetworkName`, dan `RestartPolicy` untuk mencegah command & flag injection pada Docker CLI execution.
 - **Deteksi Kerentanan & Audit Sentinel — M-2 (`sentinel/scanner/port_scanner.go`, `sentinel/scanner/vuln_scanner.go`)**:
