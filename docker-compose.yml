@@ -108,7 +108,7 @@ services:
   # Caelus Database Migration Runner (berjalan sekali, lalu berhenti)
   # ----------------------------------------------------------------------------
   migrate:
-    image: caelus-migrate:latest
+    image: ghcr.io/havilz/caelus-migrate:latest
     build:
       context: ./backend
       dockerfile: ../deploy/docker/Dockerfile.migrate
@@ -131,7 +131,7 @@ services:
   # Caelus Backend API Service
   # ----------------------------------------------------------------------------
   api:
-    image: caelus-api:latest
+    image: ghcr.io/havilz/caelus-api:latest
     build:
       context: ./backend
       dockerfile: ../deploy/docker/Dockerfile.api
@@ -175,7 +175,7 @@ services:
   # Caelus Background Worker Service
   # ----------------------------------------------------------------------------
   worker:
-    image: caelus-worker:latest
+    image: ghcr.io/havilz/caelus-worker:latest
     build:
       context: ./backend
       dockerfile: ../deploy/docker/Dockerfile.worker
@@ -212,7 +212,7 @@ services:
   # Caelus Frontend UI Service
   # ----------------------------------------------------------------------------
   frontend:
-    image: caelus-frontend:latest
+    image: ghcr.io/havilz/caelus-frontend:latest
     build:
       context: ./frontend
       dockerfile: ../deploy/docker/Dockerfile.ui

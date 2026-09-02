@@ -30,6 +30,8 @@ CREATE INDEX IF NOT EXISTS idx_domains_status ON domains(status);
 -- Enable RLS
 ALTER TABLE domains ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS domains_org_isolation ON domains;
 CREATE POLICY domains_org_isolation ON domains
     FOR ALL
     USING (organization_id = NULLIF(current_setting('app.current_org_id', true), '')::uuid);
+

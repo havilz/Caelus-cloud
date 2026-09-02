@@ -4,7 +4,6 @@
 
 DROP POLICY IF EXISTS servers_org_isolation           ON servers;
 DROP POLICY IF EXISTS credentials_org_isolation       ON credentials;
-DROP POLICY IF EXISTS providers_org_isolation         ON providers;
 DROP POLICY IF EXISTS org_members_isolation           ON organization_members;
 DROP POLICY IF EXISTS audit_logs_org_isolation        ON audit_logs;
 DROP POLICY IF EXISTS networks_org_isolation          ON networks;
@@ -21,7 +20,6 @@ DROP POLICY IF EXISTS iac_configurations_org_isolation ON iac_configurations;
 -- Kembalikan ke NO FORCE (tidak memaksa RLS untuk superuser/table owner)
 ALTER TABLE servers               NO FORCE ROW LEVEL SECURITY;
 ALTER TABLE credentials           NO FORCE ROW LEVEL SECURITY;
-ALTER TABLE providers             NO FORCE ROW LEVEL SECURITY;
 ALTER TABLE organization_members  NO FORCE ROW LEVEL SECURITY;
 ALTER TABLE audit_logs            NO FORCE ROW LEVEL SECURITY;
 ALTER TABLE networks              NO FORCE ROW LEVEL SECURITY;
