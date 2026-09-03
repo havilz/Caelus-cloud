@@ -41,7 +41,7 @@ export const AlertDrawer: React.FC<AlertDrawerProps> = ({
       );
       setAlerts(res.data || []);
     } catch {
-      // Abaikan error saat fetch
+      
     } finally {
       setIsLoading(false);
     }
@@ -102,7 +102,7 @@ export const AlertDrawer: React.FC<AlertDrawerProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 overflow-hidden">
-      {/* Backdrop */}
+      {}
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-xs transition-opacity animate-in fade-in"
         onClick={onClose}
@@ -110,7 +110,7 @@ export const AlertDrawer: React.FC<AlertDrawerProps> = ({
 
       <div className="fixed inset-y-0 right-0 max-w-full flex pl-10">
         <div className="w-screen max-w-md bg-[#121212] border-l border-[#262626] shadow-2xl flex flex-col animate-in slide-in-from-right duration-200">
-          {/* Header */}
+          {}
           <div className="p-4 border-b border-[#262626] flex items-center justify-between bg-[#171717]">
             <div className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-500/10 text-rose-400 border border-rose-500/20">
@@ -141,7 +141,7 @@ export const AlertDrawer: React.FC<AlertDrawerProps> = ({
             </div>
           </div>
 
-          {/* Filter Tabs */}
+          {}
           <div className="p-3 border-b border-[#262626] bg-[#141414] flex gap-1">
             {[
               { id: "active", label: "Aktif" },
@@ -164,7 +164,7 @@ export const AlertDrawer: React.FC<AlertDrawerProps> = ({
             ))}
           </div>
 
-          {/* Alerts List */}
+          {}
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
             {isLoading && alerts.length === 0 ? (
               <div className="flex h-64 items-center justify-center text-xs text-[#a1a1a1]">
@@ -203,7 +203,7 @@ export const AlertDrawer: React.FC<AlertDrawerProps> = ({
 
                   <p className="text-[11px] text-[#a1a1a1] leading-relaxed">{alert.message}</p>
 
-                  {/* Values pill */}
+                  {}
                   {alert.current_value !== undefined && alert.threshold_value !== undefined && (
                     <div className="flex items-center gap-2 text-[11px] font-mono p-2 rounded-lg bg-[#111111] border border-[#222222]">
                       <span className="text-[#888888]">Nilai Terukur:</span>
@@ -214,7 +214,7 @@ export const AlertDrawer: React.FC<AlertDrawerProps> = ({
                     </div>
                   )}
 
-                  {/* Action Buttons */}
+                  {}
                   <div className="flex items-center justify-between pt-1 border-t border-[#222222] text-xs">
                     <span className="text-[10px] uppercase font-bold tracking-wider text-[#666666]">
                       Status: <span className="text-[#a1a1a1]">{alert.status}</span>

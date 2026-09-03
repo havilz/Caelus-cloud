@@ -10,12 +10,10 @@ import (
 	"github.com/havilz/caelus-cloud/backend/internal/domain"
 )
 
-// TLSScanner memvalidasi masa berlaku sertifikat TLS/SSL, algoritma enkripsi, dan versi protokol HTTPS.
 type TLSScanner struct {
 	timeout time.Duration
 }
 
-// NewTLSScanner membuat instance baru TLSScanner.
 func NewTLSScanner(timeout time.Duration) *TLSScanner {
 	if timeout <= 0 {
 		timeout = 3 * time.Second
@@ -23,15 +21,10 @@ func NewTLSScanner(timeout time.Duration) *TLSScanner {
 	return &TLSScanner{timeout: timeout}
 }
 
-// Type mengembalikan tipe pemindaian domain.ScanTypeTLS.
 func (s *TLSScanner) Type() domain.ScanType {
 	return domain.ScanTypeTLS
 }
 
-// Scan melakukan inspeksi handshake TLS terhadap port 443 target server.
-// Parameter ctx merupakan konteks eksekusi.
-// Parameter target memuat metadata target pemindaian.
-// Mengembalikan slice []domain.NormalizedFinding.
 func (s *TLSScanner) Scan(ctx context.Context, target domain.ScanTarget) ([]domain.NormalizedFinding, error) {
 	ipOrHost := target.IPAddress
 	if ipOrHost == "" || ipOrHost == "0.0.0.0" {
@@ -45,11 +38,11 @@ func (s *TLSScanner) Scan(ctx context.Context, target domain.ScanTarget) ([]doma
 	dialer := &net.Dialer{Timeout: s.timeout}
 
 	conn, err := tls.DialWithDialer(dialer, "tcp", targetAddr, &tls.Config{
-		InsecureSkipVerify: true, // skip verify untuk menginspeksi sertifikat kadaluwarsa/self-signed
+		InsecureSkipVerify: true,
 		ServerName:         target.Hostname,
 	})
 	if err != nil {
-		// Jika port 443 tidak aktif atau tidak melayani TLS, tidak menghasilkan temuan TLS kritis
+
 		return []domain.NormalizedFinding{}, nil
 	}
 	defer conn.Close()
@@ -64,7 +57,6 @@ func (s *TLSScanner) Scan(ctx context.Context, target domain.ScanTarget) ([]doma
 	leaf := certs[0]
 	now := time.Now().UTC()
 
-	// 1. Cek masa kedaluwarsa sertifikat
 	if now.After(leaf.NotAfter) {
 		findings = append(findings, domain.NormalizedFinding{
 			CheckID:     "tls-cert-expired",
@@ -82,7 +74,7 @@ func (s *TLSScanner) Scan(ctx context.Context, target domain.ScanTarget) ([]doma
 			RemediationCommand: "sudo certbot renew --force-renewal",
 		})
 	} else if leaf.NotAfter.Sub(now) < 14*24*time.Hour {
-		// Sertifikat akan kedaluwarsa dalam < 14 hari
+
 		findings = append(findings, domain.NormalizedFinding{
 			CheckID:     "tls-cert-expiring-soon",
 			Category:    domain.CategoryTLS,
@@ -90,17 +82,16 @@ func (s *TLSScanner) Scan(ctx context.Context, target domain.ScanTarget) ([]doma
 			Title:       "Sertifikat TLS/SSL Akan Segera Kedaluwarsa",
 			Description: fmt.Sprintf("Sertifikat SSL untuk subject '%s' akan kedaluwarsa dalam %d hari.", leaf.Subject.CommonName, int(leaf.NotAfter.Sub(now).Hours()/24)),
 			Evidence: map[string]any{
-				"subject":         leaf.Subject.CommonName,
-				"issuer":          leaf.Issuer.CommonName,
-				"not_after":       leaf.NotAfter,
-				"days_remaining":  int(leaf.NotAfter.Sub(now).Hours() / 24),
+				"subject":        leaf.Subject.CommonName,
+				"issuer":         leaf.Issuer.CommonName,
+				"not_after":      leaf.NotAfter,
+				"days_remaining": int(leaf.NotAfter.Sub(now).Hours() / 24),
 			},
 			Recommendation:     "Jadwalkan atau jalankan perpanjangan otomatis sertifikat SSL sebelum tanggal kedaluwarsa.",
 			RemediationCommand: "sudo certbot renew",
 		})
 	}
 
-	// 2. Cek versi TLS yang dinegosiasikan
 	if state.Version < tls.VersionTLS12 {
 		findings = append(findings, domain.NormalizedFinding{
 			CheckID:     "tls-weak-version",
@@ -110,7 +101,7 @@ func (s *TLSScanner) Scan(ctx context.Context, target domain.ScanTarget) ([]doma
 			Description: "Server web masih mengizinkan negosiasi koneksi dengan protokol TLS 1.0 atau 1.1 yang rentan terhadap serangan downgrade.",
 			Evidence: map[string]any{
 				"negotiated_version": state.Version,
-				"min_recommended":   "TLSv1.2 / TLSv1.3",
+				"min_recommended":    "TLSv1.2 / TLSv1.3",
 			},
 			Recommendation:     "Nonaktifkan dukungan TLS 1.0 dan TLS 1.1 pada konfigurasi web server (Nginx/Apache/Caddy) dan wajibkan minimal TLSv1.2.",
 			RemediationCommand: "ssl_protocols TLSv1.2 TLSv1.3; # Tambahkan pada file konfigurasi Nginx",

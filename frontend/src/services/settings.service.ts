@@ -12,7 +12,7 @@ import {
 } from "@/types/settings";
 
 export const settingsService = {
-  // Profile & Security
+  
   async getProfile(): Promise<UserProfile> {
     const response = await apiClient.get<APIResponse<UserProfile>>("/settings/profile");
     return response.data.data;
@@ -27,7 +27,6 @@ export const settingsService = {
     await apiClient.post("/settings/change-password", data);
   },
 
-  // Organization
   async getOrganization(): Promise<Organization> {
     const response = await apiClient.get<APIResponse<Organization>>("/settings/organization");
     return response.data.data;
@@ -38,7 +37,6 @@ export const settingsService = {
     return response.data.data;
   },
 
-  // Members & Invitations
   async listMembers(): Promise<{ members: OrganizationMember[]; invitations: OrganizationInvitation[] }> {
     const response = await apiClient.get<APIResponse<{ members: OrganizationMember[]; invitations: OrganizationInvitation[] }>>(
       "/settings/members"
@@ -63,7 +61,6 @@ export const settingsService = {
     await apiClient.delete(`/settings/invitations/${invitationId}`);
   },
 
-  // API Keys
   async listAPIKeys(): Promise<APIKey[]> {
     const response = await apiClient.get<APIResponse<APIKey[]>>("/settings/api-keys");
     return response.data.data || [];
@@ -78,7 +75,6 @@ export const settingsService = {
     await apiClient.delete(`/settings/api-keys/${id}`);
   },
 
-  // Webhooks
   async listWebhooks(): Promise<Webhook[]> {
     const response = await apiClient.get<APIResponse<Webhook[]>>("/settings/webhooks");
     return response.data.data || [];
@@ -106,7 +102,6 @@ export const settingsService = {
     await apiClient.delete(`/settings/webhooks/${id}`);
   },
 
-  // Audit Logs
   async listAuditLogs(page = 1, limit = 20): Promise<{ data: AuditLog[]; total: number; page: number; limit: number }> {
     const response = await apiClient.get<PaginatedResponse<AuditLog>>(`/settings/audit-logs?page=${page}&limit=${limit}`);
     return {

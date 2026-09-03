@@ -20,7 +20,6 @@ func NewVolumeHandler(uc *volumeUsecase.UseCase) *VolumeHandler {
 	return &VolumeHandler{volUsecase: uc}
 }
 
-// GetStoragePoolStats menangani GET /api/v1/volumes/stats untuk mengambil kapasitas disk fisik host
 func (h *VolumeHandler) GetStoragePoolStats(w http.ResponseWriter, r *http.Request) {
 	stats, err := h.volUsecase.GetStoragePoolStats(r.Context())
 	if err != nil {
@@ -30,7 +29,6 @@ func (h *VolumeHandler) GetStoragePoolStats(w http.ResponseWriter, r *http.Reque
 	response.Success(w, http.StatusOK, "Statistik storage pool berhasil diambil", stats)
 }
 
-// CreateVolume menangani POST /api/v1/volumes
 func (h *VolumeHandler) CreateVolume(w http.ResponseWriter, r *http.Request) {
 	orgID, ok := middleware.GetOrganizationIDFromContext(r.Context())
 	if !ok {
@@ -53,7 +51,6 @@ func (h *VolumeHandler) CreateVolume(w http.ResponseWriter, r *http.Request) {
 	response.Success(w, http.StatusCreated, "Volume berhasil dibuat", vol)
 }
 
-// ListVolumes menangani GET /api/v1/volumes
 func (h *VolumeHandler) ListVolumes(w http.ResponseWriter, r *http.Request) {
 	orgID, ok := middleware.GetOrganizationIDFromContext(r.Context())
 	if !ok {
@@ -74,7 +71,6 @@ func (h *VolumeHandler) ListVolumes(w http.ResponseWriter, r *http.Request) {
 	response.Success(w, http.StatusOK, "Daftar volume berhasil diambil", list)
 }
 
-// DeleteVolume menangani DELETE /api/v1/volumes/{id}
 func (h *VolumeHandler) DeleteVolume(w http.ResponseWriter, r *http.Request) {
 	orgID, ok := middleware.GetOrganizationIDFromContext(r.Context())
 	if !ok {

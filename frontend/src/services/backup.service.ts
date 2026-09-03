@@ -8,7 +8,7 @@ import {
 } from '@/types/backup';
 
 export const backupService = {
-  // 1. Policies
+  
   async listPolicies(): Promise<BackupPolicy[]> {
     const res = await apiClient.get<APIResponse<BackupPolicy[]>>('/backups/policies');
     return res.data.data || [];
@@ -23,7 +23,6 @@ export const backupService = {
     await apiClient.delete(`/backups/policies/${id}`);
   },
 
-  // 2. Records & Execution
   async triggerBackup(serverId: string, input?: TriggerBackupInput): Promise<BackupRecord> {
     const res = await apiClient.post<APIResponse<BackupRecord>>(
       `/backups/trigger/${serverId}`,

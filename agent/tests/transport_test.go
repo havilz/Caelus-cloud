@@ -13,7 +13,6 @@ import (
 	"github.com/havilz/caelus-cloud/agent/internal/transport"
 )
 
-// TestTransport_SendReportSuccess memverifikasi keberhasilan pengiriman payload metrik dan validitas header.
 func TestTransport_SendReportSuccess(t *testing.T) {
 	serverID := uuid.New()
 	secret := "test-agent-secret"
@@ -59,7 +58,6 @@ func TestTransport_SendReportSuccess(t *testing.T) {
 	}
 }
 
-// TestTransport_SendReportUnauthorized memverifikasi penanganan error 401 Unauthorized dari server.
 func TestTransport_SendReportUnauthorized(t *testing.T) {
 	serverID := uuid.New()
 	secret := "wrong-secret"
@@ -84,7 +82,6 @@ func TestTransport_SendReportUnauthorized(t *testing.T) {
 	}
 }
 
-// TestTransport_SendReportRetrySuccess memverifikasi mekanisme retry hingga berhasil ketika server sempat mengalami error sementara.
 func TestTransport_SendReportRetrySuccess(t *testing.T) {
 	serverID := uuid.New()
 	secret := "test-secret"

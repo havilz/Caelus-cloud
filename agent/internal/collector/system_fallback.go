@@ -11,15 +11,12 @@ import (
 	"github.com/havilz/caelus-cloud/agent/internal/transport"
 )
 
-// FallbackCollector menyediakan pengumpulan metrik fallback pada lingkungan non-Linux.
 type FallbackCollector struct{}
 
-// NewCollector membuat instance baru pengumpul metrik fallback.
 func NewCollector() Collector {
 	return &FallbackCollector{}
 }
 
-// Collect mengembalikan metrik dasar sistem operasi untuk lingkungan non-Linux.
 func (c *FallbackCollector) Collect(_ context.Context) (*transport.HostMetrics, error) {
 	hostname, _ := os.Hostname()
 

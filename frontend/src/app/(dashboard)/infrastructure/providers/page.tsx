@@ -96,7 +96,6 @@ export default function CloudProvidersPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProviderSlug, setSelectedProviderSlug] = useState<string>("aws");
   const [credName, setCredName] = useState("");
@@ -107,7 +106,6 @@ export default function CloudProvidersPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
-  // Test Connection State map (credentialId -> { status, count, testing })
   const [testResults, setTestResults] = useState<Record<string, { status: string; count?: number; testing?: boolean }>>({});
 
   const loadData = async () => {
@@ -173,7 +171,7 @@ export default function CloudProvidersPage() {
       if (res.includes(":")) {
         res = res.split(":").pop()?.trim() || res;
       }
-      res = res.replace(/^https?:\/\//i, "");
+      res = res.replace(/^https?:\/\//, "");
       if (res.includes(".")) {
         res = res.split(".")[0].trim();
       }
@@ -243,7 +241,7 @@ export default function CloudProvidersPage() {
 
   return (
     <div className={AppTheme.containers.pageWrapper}>
-      {/* Page Header */}
+      {}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
@@ -281,7 +279,7 @@ export default function CloudProvidersPage() {
         </div>
       </div>
 
-      {/* Security Banner */}
+      {}
       <div className={`p-4 rounded-xl ${AppTheme.colors.brand.primaryLight} flex flex-col sm:flex-row sm:items-center justify-between gap-3`}>
         <div className="flex items-start sm:items-center gap-3">
           <div className={AppTheme.controls.iconBoxEmerald}>
@@ -300,7 +298,7 @@ export default function CloudProvidersPage() {
         </div>
       </div>
 
-      {/* Metrics Row */}
+      {}
       <div className={AppTheme.containers.metricsGrid}>
         <div className={`${AppTheme.containers.card} ${AppTheme.containers.cardHover} ${AppTheme.containers.cardContent} flex items-center justify-between`}>
           <div>
@@ -349,7 +347,7 @@ export default function CloudProvidersPage() {
         </div>
       </div>
 
-      {/* Provider Catalog Cards */}
+      {}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <h3 className={AppTheme.text.h3}>Katalog Cloud Provider yang Didukung</h3>
@@ -404,7 +402,7 @@ export default function CloudProvidersPage() {
         </div>
       </div>
 
-      {/* Configured Credentials List Table */}
+      {}
       <div className={AppTheme.containers.card}>
         <div className={`${AppTheme.containers.cardHeader} flex items-center justify-between`}>
           <div>
@@ -526,7 +524,7 @@ export default function CloudProvidersPage() {
         </div>
       </div>
 
-      {/* Add Credential Modal */}
+      {}
       <Dialog
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -601,7 +599,7 @@ export default function CloudProvidersPage() {
                     className={AppTheme.controls.inputMono}
                   />
                   <p className="text-[11px] text-[#707070]">
-                    Ditemukan di overview R2 / URL S3: https://&lt;ACCOUNT_ID&gt;.r2.cloudflarestorage.com
+                    Ditemukan di overview R2 / URL S3: https:
                   </p>
                 </div>
                 <div className="space-y-1.5">

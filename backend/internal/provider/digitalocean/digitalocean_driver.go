@@ -19,9 +19,6 @@ type DigitalOceanDriver struct {
 	servers       map[string]*domain.ProviderServer
 }
 
-// NewDigitalOceanDriver menginisialisasi driver provider DigitalOcean dengan enkripsi personal access token.
-// Parameter encryptionKey merupakan byte slice 32-byte kunci enkripsi AES-256.
-// Mengembalikan implementasi interface domain.ProviderDriver.
 func NewDigitalOceanDriver(encryptionKey []byte) domain.ProviderDriver {
 	return &DigitalOceanDriver{
 		encryptionKey: encryptionKey,
@@ -30,7 +27,6 @@ func NewDigitalOceanDriver(encryptionKey []byte) domain.ProviderDriver {
 	}
 }
 
-// CreateServer membuat Droplet baru pada platform DigitalOcean.
 func (d *DigitalOceanDriver) CreateServer(ctx context.Context, cred *domain.Credential, req domain.CreateServerRequest) (*domain.ProviderServer, error) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
@@ -73,7 +69,6 @@ func (d *DigitalOceanDriver) CreateServer(ctx context.Context, cred *domain.Cred
 	return server, nil
 }
 
-// GetServer mengambil detail Droplet DigitalOcean berdasarkan externalID.
 func (d *DigitalOceanDriver) GetServer(ctx context.Context, cred *domain.Credential, externalID string) (*domain.ProviderServer, error) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
@@ -96,7 +91,6 @@ func (d *DigitalOceanDriver) GetServer(ctx context.Context, cred *domain.Credent
 	return server, nil
 }
 
-// ListServers mengambil seluruh daftar Droplet yang terdaftar pada token API DigitalOcean.
 func (d *DigitalOceanDriver) ListServers(ctx context.Context, cred *domain.Credential) ([]domain.ProviderServer, error) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
@@ -108,7 +102,6 @@ func (d *DigitalOceanDriver) ListServers(ctx context.Context, cred *domain.Crede
 	return list, nil
 }
 
-// RebootServer mengirim perintah reboot (action reboot) ke Droplet DigitalOcean.
 func (d *DigitalOceanDriver) RebootServer(ctx context.Context, cred *domain.Credential, externalID string) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
@@ -119,7 +112,6 @@ func (d *DigitalOceanDriver) RebootServer(ctx context.Context, cred *domain.Cred
 	return nil
 }
 
-// ShutdownServer mengirim perintah shutdown ke Droplet DigitalOcean.
 func (d *DigitalOceanDriver) ShutdownServer(ctx context.Context, cred *domain.Credential, externalID string) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
@@ -130,7 +122,6 @@ func (d *DigitalOceanDriver) ShutdownServer(ctx context.Context, cred *domain.Cr
 	return nil
 }
 
-// StartServer mengirim perintah power_on ke Droplet DigitalOcean.
 func (d *DigitalOceanDriver) StartServer(ctx context.Context, cred *domain.Credential, externalID string) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
@@ -141,7 +132,6 @@ func (d *DigitalOceanDriver) StartServer(ctx context.Context, cred *domain.Crede
 	return nil
 }
 
-// ResizeServer mengubah kapasitas droplet (resize) pada DigitalOcean.
 func (d *DigitalOceanDriver) ResizeServer(ctx context.Context, cred *domain.Credential, req domain.ResizeServerRequest) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
@@ -160,7 +150,6 @@ func (d *DigitalOceanDriver) ResizeServer(ctx context.Context, cred *domain.Cred
 	return nil
 }
 
-// DeleteServer menghapus Droplet dari DigitalOcean.
 func (d *DigitalOceanDriver) DeleteServer(ctx context.Context, cred *domain.Credential, externalID string) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()

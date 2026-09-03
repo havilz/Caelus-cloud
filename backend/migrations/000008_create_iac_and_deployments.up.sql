@@ -1,7 +1,7 @@
 -- Migration: 000008_create_iac_and_deployments.up.sql
 -- Subsystem: Phase 6 Declarative IaC & Container Orchestration
 
--- 1. Tabel iac_configurations
+-- 1. IaC Configurations Table
 CREATE TABLE IF NOT EXISTS iac_configurations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS iac_configurations (
 CREATE INDEX IF NOT EXISTS idx_iac_configs_org ON iac_configurations(organization_id);
 CREATE INDEX IF NOT EXISTS idx_iac_configs_status ON iac_configurations(status);
 
--- 2. Tabel iac_states
+-- 2. IaC States Table
 CREATE TABLE IF NOT EXISTS iac_states (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     configuration_id UUID NOT NULL REFERENCES iac_configurations(id) ON DELETE CASCADE,
@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS iac_states (
 CREATE INDEX IF NOT EXISTS idx_iac_states_config ON iac_states(configuration_id);
 CREATE INDEX IF NOT EXISTS idx_iac_states_version ON iac_states(configuration_id, version DESC);
 
--- 3. Tabel iac_plans
+-- 3. IaC Plans Table
 CREATE TABLE IF NOT EXISTS iac_plans (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     configuration_id UUID NOT NULL REFERENCES iac_configurations(id) ON DELETE CASCADE,
@@ -48,7 +48,7 @@ CREATE TABLE IF NOT EXISTS iac_plans (
 CREATE INDEX IF NOT EXISTS idx_iac_plans_config ON iac_plans(configuration_id);
 CREATE INDEX IF NOT EXISTS idx_iac_plans_status ON iac_plans(status);
 
--- 4. Tabel deployments (Container Orchestration)
+-- 4. Deployments Table (Container Orchestration)
 CREATE TABLE IF NOT EXISTS deployments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
@@ -56,6 +56,8 @@ CREATE TABLE IF NOT EXISTS deployments (
     app_name VARCHAR(255) NOT NULL,
     image_tag VARCHAR(255) NOT NULL,
     container_name VARCHAR(255) NOT NULL,
+    network_name VARCHAR(255),
+    command TEXT,
     environment_variables JSONB DEFAULT '{}'::jsonb,
     port_bindings JSONB DEFAULT '[]'::jsonb,
     volume_bindings JSONB DEFAULT '[]'::jsonb,
@@ -71,7 +73,7 @@ CREATE INDEX IF NOT EXISTS idx_deployments_org ON deployments(organization_id);
 CREATE INDEX IF NOT EXISTS idx_deployments_server ON deployments(server_id);
 CREATE INDEX IF NOT EXISTS idx_deployments_status ON deployments(status);
 
--- 5. Tabel deployment_logs
+-- 5. Deployment Logs Table
 CREATE TABLE IF NOT EXISTS deployment_logs (
     id BIGSERIAL PRIMARY KEY,
     deployment_id UUID NOT NULL REFERENCES deployments(id) ON DELETE CASCADE,

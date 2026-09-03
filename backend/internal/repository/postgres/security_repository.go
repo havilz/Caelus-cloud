@@ -12,17 +12,14 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// SecurityRepository mengimplementasikan domain.SecurityRepository dengan PostgreSQL connection pool.
 type SecurityRepository struct {
 	pool *pgxpool.Pool
 }
 
-// NewSecurityRepository membuat instance baru SecurityRepository.
 func NewSecurityRepository(pool *pgxpool.Pool) *SecurityRepository {
 	return &SecurityRepository{pool: pool}
 }
 
-// CreateScan menyimpan entitas sesi pemindaian baru ke tabel security_scans.
 func (r *SecurityRepository) CreateScan(ctx context.Context, scan *domain.SecurityScan) error {
 	query := `
 		INSERT INTO security_scans (id, organization_id, server_id, scan_type, status, started_at, completed_at, total_findings, critical_count, high_count, medium_count, low_count, score, error_message, created_at, updated_at)
@@ -58,7 +55,6 @@ func (r *SecurityRepository) CreateScan(ctx context.Context, scan *domain.Securi
 	).Scan(&scan.ID, &scan.CreatedAt, &scan.UpdatedAt)
 }
 
-// UpdateScan memperbarui hasil pemindaian dan status selesai pada tabel security_scans.
 func (r *SecurityRepository) UpdateScan(ctx context.Context, scan *domain.SecurityScan) error {
 	query := `
 		UPDATE security_scans
@@ -92,7 +88,6 @@ func (r *SecurityRepository) UpdateScan(ctx context.Context, scan *domain.Securi
 	return nil
 }
 
-// GetScanByID mengambil satu sesi scan berdasarkan ID dan ID organisasi.
 func (r *SecurityRepository) GetScanByID(ctx context.Context, orgID, scanID uuid.UUID) (*domain.SecurityScan, error) {
 	query := `
 		SELECT s.id, s.organization_id, s.server_id, COALESCE(srv.name, 'All Servers'),
@@ -132,7 +127,6 @@ func (r *SecurityRepository) GetScanByID(ctx context.Context, orgID, scanID uuid
 	return &scan, nil
 }
 
-// ListScans mengambil riwayat pemindaian terpaginasi untuk organisasi.
 func (r *SecurityRepository) ListScans(ctx context.Context, orgID uuid.UUID, serverID *uuid.UUID, page, limit int) ([]domain.SecurityScan, int, error) {
 	offset := (page - 1) * limit
 
@@ -188,7 +182,6 @@ func (r *SecurityRepository) ListScans(ctx context.Context, orgID uuid.UUID, ser
 	return scans, total, nil
 }
 
-// UpsertFinding menyimpan temuan baru atau memperbarui temuan lama berdasarkan fingerprint unik.
 func (r *SecurityRepository) UpsertFinding(ctx context.Context, f *domain.SecurityFinding) error {
 	query := `
 		INSERT INTO security_findings (
@@ -242,7 +235,6 @@ func (r *SecurityRepository) UpsertFinding(ctx context.Context, f *domain.Securi
 	return nil
 }
 
-// GetFindingByID mengambil satu temuan keamanan berdasarkan ID.
 func (r *SecurityRepository) GetFindingByID(ctx context.Context, orgID, findingID uuid.UUID) (*domain.SecurityFinding, error) {
 	query := `
 		SELECT f.id, f.organization_id, f.server_id, COALESCE(srv.name, 'N/A'), f.scan_id,
@@ -282,7 +274,6 @@ func (r *SecurityRepository) GetFindingByID(ctx context.Context, orgID, findingI
 	return &f, nil
 }
 
-// ListFindings mengambil daftar temuan keamanan terfilter.
 func (r *SecurityRepository) ListFindings(
 	ctx context.Context,
 	orgID uuid.UUID,
@@ -366,7 +357,6 @@ func (r *SecurityRepository) ListFindings(
 	return findings, total, nil
 }
 
-// UpdateFindingStatus memperbarui status remediasi temuan.
 func (r *SecurityRepository) UpdateFindingStatus(ctx context.Context, orgID, findingID uuid.UUID, status domain.FindingStatus) error {
 	var resolvedAt *time.Time
 	if status == domain.FindingStatusResolved {
@@ -389,7 +379,6 @@ func (r *SecurityRepository) UpdateFindingStatus(ctx context.Context, orgID, fin
 	return nil
 }
 
-// GetPostureOverview menghitung agregasi postur keamanan, skor keseluruhan, dan distribusi temuan.
 func (r *SecurityRepository) GetPostureOverview(ctx context.Context, orgID uuid.UUID) (*domain.SecurityPostureOverview, error) {
 	overview := &domain.SecurityPostureOverview{
 		OverallScore:    100,
@@ -397,11 +386,9 @@ func (r *SecurityRepository) GetPostureOverview(ctx context.Context, orgID uuid.
 		CategorySummary: make(map[domain.FindingCategory]int),
 	}
 
-	// 1. Hitung total scan
 	_ = r.pool.QueryRow(ctx, `SELECT COUNT(*), MAX(created_at) FROM security_scans WHERE organization_id = $1`, orgID).
 		Scan(&overview.TotalScans, &overview.LastScanAt)
 
-	// 2. Hitung distribusi keparahan temuan terbuka (open & acknowledged)
 	query := `
 		SELECT severity, COUNT(*)
 		FROM security_findings
@@ -455,11 +442,9 @@ func (r *SecurityRepository) GetPostureOverview(ctx context.Context, orgID uuid.
 		overview.Grade = "F"
 	}
 
-	// 3. Hitung jumlah resolved
 	_ = r.pool.QueryRow(ctx, `SELECT COUNT(*) FROM security_findings WHERE organization_id = $1 AND status = 'resolved'`, orgID).
 		Scan(&overview.ResolvedCount)
 
-	// 4. Kategori breakdown
 	catRows, err := r.pool.Query(ctx, `SELECT category, COUNT(*) FROM security_findings WHERE organization_id = $1 AND status IN ('open', 'acknowledged') GROUP BY category`, orgID)
 	if err == nil {
 		defer catRows.Close()
@@ -475,7 +460,6 @@ func (r *SecurityRepository) GetPostureOverview(ctx context.Context, orgID uuid.
 	return overview, nil
 }
 
-// CreateIncident membuat rekaman insiden keamanan baru.
 func (r *SecurityRepository) CreateIncident(ctx context.Context, inc *domain.SecurityIncident) error {
 	query := `
 		INSERT INTO security_incidents (id, organization_id, title, severity, status, finding_ids, summary, mitigation_notes, created_at, updated_at)
@@ -505,7 +489,6 @@ func (r *SecurityRepository) CreateIncident(ctx context.Context, inc *domain.Sec
 	).Scan(&inc.ID, &inc.CreatedAt, &inc.UpdatedAt)
 }
 
-// ListIncidents mengambil daftar insiden keamanan.
 func (r *SecurityRepository) ListIncidents(ctx context.Context, orgID uuid.UUID, status *domain.IncidentStatus, page, limit int) ([]domain.SecurityIncident, int, error) {
 	offset := (page - 1) * limit
 	countQuery := `SELECT COUNT(*) FROM security_incidents WHERE organization_id = $1 AND ($2::varchar IS NULL OR status = $2);`
@@ -549,7 +532,6 @@ func (r *SecurityRepository) ListIncidents(ctx context.Context, orgID uuid.UUID,
 	return incidents, total, nil
 }
 
-// UpdateIncidentStatus memperbarui status insiden dan catatan mitigasi.
 func (r *SecurityRepository) UpdateIncidentStatus(ctx context.Context, orgID, incidentID uuid.UUID, status domain.IncidentStatus, notes string) error {
 	query := `
 		UPDATE security_incidents

@@ -7,7 +7,6 @@ import (
 	"github.com/havilz/caelus-cloud/backend/internal/storage/s3"
 )
 
-// Config merepresentasikan parameter koneksi ke Cloudflare R2 Object Storage.
 type Config struct {
 	AccountID       string
 	AccessKeyID     string
@@ -15,7 +14,6 @@ type Config struct {
 	Region          string
 }
 
-// NewAdapter menginisialisasi instance ObjectStorageAdapter khusus Cloudflare R2.
 func NewAdapter(cfg Config) (domain.ObjectStorageAdapter, error) {
 	if cfg.AccountID == "" {
 		return nil, fmt.Errorf("%w: cloudflare account ID is required for R2", domain.ErrValidation)

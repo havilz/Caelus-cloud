@@ -4,7 +4,6 @@ import (
 	"github.com/havilz/caelus-cloud/backend/internal/domain"
 )
 
-// RiskEngine bertanggung jawab untuk menghitung skor risiko keamanan (Security Score 0 - 100) dan menentukan predikat postur keamanan.
 type RiskEngine struct {
 	criticalPenalty int
 	highPenalty     int
@@ -12,7 +11,6 @@ type RiskEngine struct {
 	lowPenalty      int
 }
 
-// NewRiskEngine membuat instance baru RiskEngine dengan bobot penalti terstandarisasi.
 func NewRiskEngine() *RiskEngine {
 	return &RiskEngine{
 		criticalPenalty: 20,
@@ -22,9 +20,6 @@ func NewRiskEngine() *RiskEngine {
 	}
 }
 
-// CalculateScore menghitung skor keamanan dari daftar temuan aktif (0 - 100).
-// Parameter findings memuat slice temuan keamanan.
-// Mengembalikan nilai integer skor dan jumlah temuan per tingkat keparahan.
 func (e *RiskEngine) CalculateScore(findings []domain.SecurityFinding) (score int, critical, high, medium, low int) {
 	score = 100
 
@@ -55,9 +50,6 @@ func (e *RiskEngine) CalculateScore(findings []domain.SecurityFinding) (score in
 	return score, critical, high, medium, low
 }
 
-// CalculateGrade menentukan predikat huruf (Grade A/B/C/D/F) berdasarkan skor 0 - 100.
-// Parameter score merupakan nilai skor keamanan.
-// Mengembalikan string grade huruf ("A", "B", "C", "D", "F").
 func (e *RiskEngine) CalculateGrade(score int) string {
 	switch {
 	case score >= 90:

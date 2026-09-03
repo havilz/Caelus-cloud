@@ -32,7 +32,6 @@ export default function StorageBackupsPage() {
   const [servers, setServers] = useState<Server[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Modals & Action states
   const [isCreatePolicyOpen, setIsCreatePolicyOpen] = useState(false);
   const [triggeringServerId, setTriggeringServerId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -120,7 +119,7 @@ export default function StorageBackupsPage() {
 
   return (
     <div className={AppContainers.pageWrapper}>
-      {/* Top Header */}
+      {}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center space-x-3">
           <Link
@@ -156,7 +155,7 @@ export default function StorageBackupsPage() {
         </div>
       </div>
 
-      {/* Metric Cards Grid */}
+      {}
       <div className={AppContainers.metricsGrid}>
         <div className={`${AppContainers.card} ${AppContainers.cardContent}`}>
           <div className="flex items-center justify-between">
@@ -203,9 +202,9 @@ export default function StorageBackupsPage() {
         </div>
       </div>
 
-      {/* Tabs & Content */}
+      {}
       <div className={AppContainers.card}>
-        {/* Tab Selector */}
+        {}
         <div className="p-2 border-b border-[#262626] flex items-center space-x-2">
           <button
             onClick={() => setActiveTab('policies')}
@@ -232,7 +231,7 @@ export default function StorageBackupsPage() {
           </button>
         </div>
 
-        {/* Tab 1: Policies */}
+        {}
         {activeTab === 'policies' && (
           <div>
             {loading ? (
@@ -349,7 +348,7 @@ export default function StorageBackupsPage() {
           </div>
         )}
 
-        {/* Tab 2: Records */}
+        {}
         {activeTab === 'records' && (
           <div>
             {loading ? (
@@ -466,7 +465,7 @@ export default function StorageBackupsPage() {
         )}
       </div>
 
-      {/* Create Backup Policy Modal */}
+      {}
       <CreateBackupPolicyModal
         isOpen={isCreatePolicyOpen}
         onClose={() => setIsCreatePolicyOpen(false)}

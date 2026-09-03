@@ -34,7 +34,6 @@ func TestMultiProviderDrivers(t *testing.T) {
 	t.Run("AWS EC2 Driver Full Lifecycle", func(t *testing.T) {
 		driver := aws.NewEC2Driver(encKey)
 
-		// Create
 		srv, err := driver.CreateServer(ctx, cred, domain.CreateServerRequest{
 			Name:     "aws-web-node",
 			Region:   "us-east-1",
@@ -49,19 +48,16 @@ func TestMultiProviderDrivers(t *testing.T) {
 			t.Errorf("expected running status, got %s", srv.Status)
 		}
 
-		// Get
 		got, err := driver.GetServer(ctx, cred, srv.ExternalID)
 		if err != nil || got.ExternalID != srv.ExternalID {
 			t.Fatalf("expected get server to succeed, got %v", err)
 		}
 
-		// List
 		list, err := driver.ListServers(ctx, cred)
 		if err != nil || len(list) != 1 {
 			t.Fatalf("expected list of 1 server, got %d, err: %v", len(list), err)
 		}
 
-		// Power Actions
 		if err := driver.ShutdownServer(ctx, cred, srv.ExternalID); err != nil {
 			t.Fatalf("expected shutdown to succeed, got %v", err)
 		}
@@ -72,7 +68,6 @@ func TestMultiProviderDrivers(t *testing.T) {
 			t.Fatalf("expected reboot to succeed, got %v", err)
 		}
 
-		// Resize
 		if err := driver.ResizeServer(ctx, cred, domain.ResizeServerRequest{
 			ExternalID: srv.ExternalID,
 			CPUCores:   4,
@@ -81,7 +76,6 @@ func TestMultiProviderDrivers(t *testing.T) {
 			t.Fatalf("expected resize to succeed, got %v", err)
 		}
 
-		// Delete
 		if err := driver.DeleteServer(ctx, cred, srv.ExternalID); err != nil {
 			t.Fatalf("expected delete to succeed, got %v", err)
 		}

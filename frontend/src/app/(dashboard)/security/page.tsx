@@ -36,20 +36,16 @@ export default function SecurityPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isScanning, setIsScanning] = useState(false);
 
-  // Tab State
   const [activeTab, setActiveTab] = useState<"findings" | "scans">("findings");
 
-  // Scan Launcher State
   const [selectedServerId, setSelectedServerId] = useState<string>("all");
   const [selectedScanType, setSelectedScanType] = useState<ScanType>("full");
 
-  // Filters
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<FindingCategory | "all">("all");
   const [severityFilter, setSeverityFilter] = useState<FindingSeverity | "all">("all");
   const [statusFilter, setStatusFilter] = useState<FindingStatus | "all">("open");
 
-  // Selected Finding for Modal
   const [selectedFinding, setSelectedFinding] = useState<SecurityFinding | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -92,7 +88,7 @@ export default function SecurityPage() {
         server_id: selectedServerId !== "all" ? selectedServerId : undefined,
         scan_type: selectedScanType,
       });
-      // Refresh setelah jeda
+      
       setTimeout(() => {
         loadData();
         setIsScanning(false);
@@ -131,7 +127,7 @@ export default function SecurityPage() {
 
   return (
     <div className={AppTheme.containers.pageWrapper}>
-      {/* Page Header */}
+      {}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className={AppTheme.text.h1}>Sentinel Security Hub</h1>
@@ -149,7 +145,7 @@ export default function SecurityPage() {
         </button>
       </div>
 
-      {/* Posture Score Badge */}
+      {}
       {posture && (
         <SecurityScoreBadge
           score={posture.overall_score}
@@ -160,7 +156,7 @@ export default function SecurityPage() {
         />
       )}
 
-      {/* Quick Scan Launcher Card */}
+      {}
       <div className={AppTheme.containers.card}>
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1">
@@ -174,7 +170,7 @@ export default function SecurityPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            {/* Target Server Select */}
+            {}
             <select
               value={selectedServerId}
               onChange={(e) => setSelectedServerId(e.target.value)}
@@ -188,7 +184,7 @@ export default function SecurityPage() {
               ))}
             </select>
 
-            {/* Scan Type Select */}
+            {}
             <select
               value={selectedScanType}
               onChange={(e) => setSelectedScanType(e.target.value as ScanType)}
@@ -202,7 +198,7 @@ export default function SecurityPage() {
               <option value="vuln">System CVE Vulnerabilities</option>
             </select>
 
-            {/* Trigger Button */}
+            {}
             <button
               onClick={handleTriggerScan}
               disabled={isScanning}
@@ -215,7 +211,7 @@ export default function SecurityPage() {
         </div>
       </div>
 
-      {/* Tab Navigation */}
+      {}
       <div className="flex items-center gap-2 border-b border-[#262626] pb-3">
         <button
           onClick={() => setActiveTab("findings")}
@@ -241,10 +237,10 @@ export default function SecurityPage() {
         </button>
       </div>
 
-      {/* Tab Content: Findings */}
+      {}
       {activeTab === "findings" && (
         <div className="space-y-4">
-          {/* Filters Bar */}
+          {}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-[#111111] p-3 rounded-xl border border-[#222222]">
             <div className="relative w-full sm:w-72">
               <Search className="w-4 h-4 absolute left-3 top-2.5 text-zinc-500" />
@@ -297,7 +293,7 @@ export default function SecurityPage() {
             </div>
           </div>
 
-          {/* Findings Table */}
+          {}
           <div className={AppTheme.containers.card}>
             {filteredFindings.length === 0 ? (
               <div className="text-center py-12 space-y-3">
@@ -380,7 +376,7 @@ export default function SecurityPage() {
         </div>
       )}
 
-      {/* Tab Content: Scans History */}
+      {}
       {activeTab === "scans" && (
         <div className={AppTheme.containers.card}>
           {scans.length === 0 ? (
@@ -449,7 +445,7 @@ export default function SecurityPage() {
         </div>
       )}
 
-      {/* Finding Detail Modal */}
+      {}
       <FindingDetailModal
         finding={selectedFinding}
         isOpen={isModalOpen}

@@ -6,7 +6,6 @@ import (
 	"strings"
 )
 
-// NewLogger menginisialisasi structured logger baru berbasis log/slog dengan level yang ditentukan.
 func NewLogger(levelStr string) *slog.Logger {
 	var level slog.Level
 	switch strings.ToLower(levelStr) {

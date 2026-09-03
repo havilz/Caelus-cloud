@@ -7,21 +7,19 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/havilz/caelus-cloud/backend/internal/domain"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/havilz/caelus-cloud/backend/internal/domain"
 )
 
 type MetricRepository struct {
 	pool *pgxpool.Pool
 }
 
-// NewMetricRepository menginisialisasi repository metrik berbasis database PostgreSQL.
 func NewMetricRepository(pool *pgxpool.Pool) *MetricRepository {
 	return &MetricRepository{pool: pool}
 }
 
-// Create menyimpan rekaman metrik telemetri baru ke dalam tabel server_metrics.
 func (r *MetricRepository) Create(ctx context.Context, metric *domain.ServerMetric) error {
 	query := `
 		INSERT INTO server_metrics (
@@ -66,7 +64,6 @@ func (r *MetricRepository) Create(ctx context.Context, metric *domain.ServerMetr
 	).Scan(&metric.ID)
 }
 
-// GetLatestByServerID mengambil satu rekaman telemetri metrik paling mutakhir untuk server tertentu.
 func (r *MetricRepository) GetLatestByServerID(ctx context.Context, serverID uuid.UUID) (*domain.ServerMetric, error) {
 	query := `
 		SELECT
@@ -112,7 +109,6 @@ func (r *MetricRepository) GetLatestByServerID(ctx context.Context, serverID uui
 	return &m, nil
 }
 
-// GetHistoryByServerID mengambil riwayat metrik telemetri server dalam rentang waktu tertentu.
 func (r *MetricRepository) GetHistoryByServerID(ctx context.Context, serverID uuid.UUID, from, to time.Time, limit int) ([]domain.ServerMetric, error) {
 	if limit <= 0 || limit > 500 {
 		limit = 100

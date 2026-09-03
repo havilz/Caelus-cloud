@@ -20,7 +20,6 @@ func NewNetworkHandler(uc *network.UseCase) *NetworkHandler {
 	return &NetworkHandler{netUsecase: uc}
 }
 
-// CreateNetwork menangani HTTP POST /api/v1/networks untuk membuat VPC / Network baru.
 func (h *NetworkHandler) CreateNetwork(w http.ResponseWriter, r *http.Request) {
 	orgID, ok := middleware.GetOrganizationIDFromContext(r.Context())
 	if !ok {
@@ -43,7 +42,6 @@ func (h *NetworkHandler) CreateNetwork(w http.ResponseWriter, r *http.Request) {
 	response.Success(w, http.StatusCreated, "Network created successfully", net)
 }
 
-// ListNetworks menangani HTTP GET /api/v1/networks.
 func (h *NetworkHandler) ListNetworks(w http.ResponseWriter, r *http.Request) {
 	orgID, ok := middleware.GetOrganizationIDFromContext(r.Context())
 	if !ok {
@@ -64,7 +62,6 @@ func (h *NetworkHandler) ListNetworks(w http.ResponseWriter, r *http.Request) {
 	response.Success(w, http.StatusOK, "Networks retrieved successfully", list)
 }
 
-// DeleteNetwork menangani HTTP DELETE /api/v1/networks/{id}.
 func (h *NetworkHandler) DeleteNetwork(w http.ResponseWriter, r *http.Request) {
 	orgID, ok := middleware.GetOrganizationIDFromContext(r.Context())
 	if !ok {
@@ -87,7 +84,6 @@ func (h *NetworkHandler) DeleteNetwork(w http.ResponseWriter, r *http.Request) {
 	response.Success(w, http.StatusOK, "Network deleted successfully", nil)
 }
 
-// CreateFirewallRule menangani HTTP POST /api/v1/firewall-rules.
 func (h *NetworkHandler) CreateFirewallRule(w http.ResponseWriter, r *http.Request) {
 	orgID, ok := middleware.GetOrganizationIDFromContext(r.Context())
 	if !ok {
@@ -110,7 +106,6 @@ func (h *NetworkHandler) CreateFirewallRule(w http.ResponseWriter, r *http.Reque
 	response.Success(w, http.StatusCreated, "Firewall rule created successfully", rule)
 }
 
-// ListFirewallRules menangani HTTP GET /api/v1/firewall-rules.
 func (h *NetworkHandler) ListFirewallRules(w http.ResponseWriter, r *http.Request) {
 	orgID, ok := middleware.GetOrganizationIDFromContext(r.Context())
 	if !ok {
@@ -131,7 +126,6 @@ func (h *NetworkHandler) ListFirewallRules(w http.ResponseWriter, r *http.Reques
 	response.Success(w, http.StatusOK, "Firewall rules retrieved successfully", list)
 }
 
-// DeleteFirewallRule menangani HTTP DELETE /api/v1/firewall-rules/{id}.
 func (h *NetworkHandler) DeleteFirewallRule(w http.ResponseWriter, r *http.Request) {
 	orgID, ok := middleware.GetOrganizationIDFromContext(r.Context())
 	if !ok {

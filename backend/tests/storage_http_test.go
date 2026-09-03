@@ -68,7 +68,6 @@ func TestStorageAndBackupHTTP_Endpoints(t *testing.T) {
 	}
 	router := deliveryHttp.NewRouter(routerConfig)
 
-	// 1. POST /api/v1/storage/buckets (Create Bucket)
 	createBucketBody, _ := json.Marshal(map[string]any{
 		"name":          "tenant-media-bucket",
 		"provider_type": "minio",
@@ -85,7 +84,6 @@ func TestStorageAndBackupHTTP_Endpoints(t *testing.T) {
 		t.Fatalf("expected status 201 for bucket creation, got %d. Body: %s", w.Code, w.Body.String())
 	}
 
-	// 2. GET /api/v1/storage/buckets (List Buckets)
 	req, _ = http.NewRequest(http.MethodGet, "/api/v1/storage/buckets", nil)
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 	w = httptest.NewRecorder()
@@ -95,7 +93,6 @@ func TestStorageAndBackupHTTP_Endpoints(t *testing.T) {
 		t.Fatalf("expected status 200 for list buckets, got %d", w.Code)
 	}
 
-	// 3. POST /api/v1/storage/buckets/tenant-media-bucket/objects/signed-url (Presigned URL)
 	signedURLBody, _ := json.Marshal(map[string]any{
 		"key":            "avatars/user1.png",
 		"operation":      "upload",
@@ -111,7 +108,6 @@ func TestStorageAndBackupHTTP_Endpoints(t *testing.T) {
 		t.Fatalf("expected status 200 for signed URL generation, got %d. Body: %s", w.Code, w.Body.String())
 	}
 
-	// 4. POST /api/v1/backups/policies (Create Policy)
 	createPolicyBody, _ := json.Marshal(map[string]any{
 		"server_id":       server.ID,
 		"name":            "Weekly Snapshot",
@@ -129,7 +125,6 @@ func TestStorageAndBackupHTTP_Endpoints(t *testing.T) {
 		t.Fatalf("expected status 201 for backup policy creation, got %d. Body: %s", w.Code, w.Body.String())
 	}
 
-	// 5. POST /api/v1/backups/trigger/{server_id} (Trigger Backup)
 	req, _ = http.NewRequest(http.MethodPost, fmt.Sprintf("/api/v1/backups/trigger/%s", server.ID), nil)
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 	w = httptest.NewRecorder()
@@ -139,7 +134,6 @@ func TestStorageAndBackupHTTP_Endpoints(t *testing.T) {
 		t.Fatalf("expected status 201 for backup trigger, got %d. Body: %s", w.Code, w.Body.String())
 	}
 
-	// 6. GET /api/v1/backups/records (List Records)
 	req, _ = http.NewRequest(http.MethodGet, "/api/v1/backups/records", nil)
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 	w = httptest.NewRecorder()

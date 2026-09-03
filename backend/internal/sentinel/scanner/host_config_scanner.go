@@ -7,27 +7,19 @@ import (
 	"github.com/havilz/caelus-cloud/backend/internal/domain"
 )
 
-// HostConfigScanner mengevaluasi konfigurasi hardening host Linux dan runtime Docker berdasarkan laporan inspeksi telemetri.
 type HostConfigScanner struct{}
 
-// NewHostConfigScanner membuat instance baru HostConfigScanner.
 func NewHostConfigScanner() *HostConfigScanner {
 	return &HostConfigScanner{}
 }
 
-// Type mengembalikan tipe pemindaian domain.ScanTypeHostConfig.
 func (s *HostConfigScanner) Type() domain.ScanType {
 	return domain.ScanTypeHostConfig
 }
 
-// Scan mengevaluasi profil keamanan host dan container target.
-// Parameter ctx merupakan konteks eksekusi.
-// Parameter target memuat metadata target dan data telemetri host.
-// Mengembalikan slice []domain.NormalizedFinding.
 func (s *HostConfigScanner) Scan(ctx context.Context, target domain.ScanTarget) ([]domain.NormalizedFinding, error) {
 	var findings []domain.NormalizedFinding
 
-	// 1. Audit Uptime Server (Deteksi apakah kernel reboot pending / uptime terlalu lama tanpa security patch)
 	if target.TelemetryData != nil {
 		uptimeDays := target.TelemetryData.UptimeSeconds / 86400
 		if uptimeDays > 180 {
@@ -47,7 +39,6 @@ func (s *HostConfigScanner) Scan(ctx context.Context, target domain.ScanTarget) 
 			})
 		}
 
-		// 2. Audit Penggunaan Swap / Memory Limit Exhaustion
 		if target.TelemetryData.MemoryTotalMB > 0 {
 			usedPct := target.TelemetryData.MemoryUsagePct
 			if usedPct > 95.0 {
@@ -68,7 +59,6 @@ func (s *HostConfigScanner) Scan(ctx context.Context, target domain.ScanTarget) 
 			}
 		}
 
-		// 3. Audit Penggunaan Storage Root Partition
 		if target.TelemetryData.DiskUsagePct > 90.0 {
 			findings = append(findings, domain.NormalizedFinding{
 				CheckID:     "host-disk-space-critical",
@@ -87,7 +77,6 @@ func (s *HostConfigScanner) Scan(ctx context.Context, target domain.ScanTarget) 
 		}
 	}
 
-	// 4. Default Host CIS Check: SSH Root Login & Password Auth Hardening
 	findings = append(findings, domain.NormalizedFinding{
 		CheckID:     "host-ssh-hardening-check",
 		Category:    domain.CategoryHostConfig,

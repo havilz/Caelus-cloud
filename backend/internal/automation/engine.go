@@ -17,49 +17,28 @@ import (
 	"github.com/havilz/caelus-cloud/backend/pkg/logger"
 )
 
-// RuleEngine mendefinisikan kontrak mesin evaluasi dan eksekusi aturan otomasi.
 type RuleEngine interface {
-	// EvaluateEvent memproses satu event sistem terhadap seluruh aturan otomasi yang relevan.
-	// Parameter ctx merupakan context pemanggilan.
-	// Parameter event merupakan payload kejadian sistem.
-	// Mengembalikan error jika terjadi kesalahan fatal pada evaluasi.
 	EvaluateEvent(ctx context.Context, event domain.SystemEvent) error
 
-	// ExecuteRuleAction mengeksekusi satu aksi spesifik dari aturan otomasi.
-	// Parameter ctx merupakan context pemanggilan.
-	// Parameter rule merupakan entitas aturan yang sedang dieksekusi.
-	// Parameter action merupakan aksi yang akan dijalankan.
-	// Parameter eventData merupakan data kejadian pemicu.
-	// Mengembalikan pointer domain.ActionResultItem.
 	ExecuteRuleAction(ctx context.Context, rule *domain.AutomationRule, action domain.RuleAction, eventData map[string]any) domain.ActionResultItem
 }
 
-// ServerExecutor mendefinisikan operasi eksekusi kontrol server untuk rule engine.
 type ServerExecutor interface {
 	RebootServer(ctx context.Context, orgID, serverID uuid.UUID) error
 }
 
-// BackupExecutor mendefinisikan operasi eksekusi backup untuk rule engine.
 type BackupExecutor interface {
 	TriggerBackup(ctx context.Context, orgID, serverID uuid.UUID, policyID *uuid.UUID, backupName string) (*domain.BackupRecord, error)
 }
 
-// Engine mengimplementasikan RuleEngine dengan evaluasi logika kondisi dan eksekusi asinkron via TaskQueue.
 type Engine struct {
-	repo         domain.AutomationRepository
-	queue        queue.QueueEngine
-	notifier     notification.Dispatcher
-	serverExec   ServerExecutor
-	backupExec   BackupExecutor
+	repo       domain.AutomationRepository
+	queue      queue.QueueEngine
+	notifier   notification.Dispatcher
+	serverExec ServerExecutor
+	backupExec BackupExecutor
 }
 
-// NewEngine membuat dan menginisialisasi instance Engine baru.
-// Parameter repo merupakan repositori PostgreSQL otomasi.
-// Parameter q merupakan engine antrean pekerjaan asinkron.
-// Parameter notifier merupakan dispatcher pengirim notifikasi email dan webhook.
-// Parameter serverExec merupakan eksekutor manajemen server (opsional).
-// Parameter backupExec merupakan eksekutor otomatisasi backup (opsional).
-// Mengembalikan pointer *Engine.
 func NewEngine(
 	repo domain.AutomationRepository,
 	q queue.QueueEngine,
@@ -76,7 +55,6 @@ func NewEngine(
 	}
 }
 
-// EvaluateEvent mengevaluasi seluruh aturan otomasi yang relevan dengan tipe kejadian sistem.
 func (e *Engine) EvaluateEvent(ctx context.Context, event domain.SystemEvent) error {
 	triggerType := mapEventTypeToTriggerType(event.Type)
 	rules, err := e.repo.ListActiveRulesByTriggerType(ctx, triggerType)
@@ -85,7 +63,7 @@ func (e *Engine) EvaluateEvent(ctx context.Context, event domain.SystemEvent) er
 	}
 
 	for _, rule := range rules {
-		// Pastikan organisasi event cocok dengan organisasi rule
+
 		if event.OrganizationID != uuid.Nil && rule.OrganizationID != event.OrganizationID {
 			continue
 		}
@@ -100,22 +78,18 @@ func (e *Engine) EvaluateEvent(ctx context.Context, event domain.SystemEvent) er
 	return nil
 }
 
-// evaluateSingleRule mengevaluasi satu aturan spesifik: Trigger Match -> Condition Match -> Cooldown Check -> Action Execution.
 func (e *Engine) evaluateSingleRule(ctx context.Context, rule *domain.AutomationRule, event domain.SystemEvent) {
 	startTime := time.Now()
 
-	// 1. Trigger Config Filter Match (misal filter server_id tertentu jika dikonfigurasi)
 	if !e.matchTriggerConfig(rule.TriggerConfig, event) {
 		return
 	}
 
-	// 2. Evaluasi Kondisi Logika
 	allConditionsMet, evaluatedConds := e.evaluateConditions(rule.Conditions, event.Data)
 	if !allConditionsMet {
 		return
 	}
 
-	// 3. Cooldown Check (Mencegah Flapping / Spamming Aksi)
 	now := time.Now().UTC()
 	if rule.LastTriggeredAt != nil && rule.CooldownSeconds > 0 {
 		cooldownExpiry := rule.LastTriggeredAt.Add(time.Duration(rule.CooldownSeconds) * time.Second)
@@ -131,10 +105,8 @@ func (e *Engine) evaluateSingleRule(ctx context.Context, rule *domain.Automation
 		}
 	}
 
-	// 4. Perbarui status LastTriggeredAt
 	_ = e.repo.UpdateLastTriggered(ctx, rule.ID, now)
 
-	// 5. Eksekusi Seluruh Aksi Aturan
 	actionResults := make([]domain.ActionResultItem, 0, len(rule.Actions))
 	hasFailure := false
 	hasSuccess := false
@@ -149,7 +121,6 @@ func (e *Engine) evaluateSingleRule(ctx context.Context, rule *domain.Automation
 		}
 	}
 
-	// 6. Tentukan Status Akhir Log Eksekusi
 	status := domain.ExecutionStatusSuccess
 	var errMessage string
 	if hasFailure && hasSuccess {
@@ -163,7 +134,6 @@ func (e *Engine) evaluateSingleRule(ctx context.Context, rule *domain.Automation
 	_ = e.recordLog(ctx, rule, event.Type, status, evaluatedConds, actionResults, errMessage, time.Since(startTime))
 }
 
-// ExecuteRuleAction mengeksekusi satu aksi otomasi.
 func (e *Engine) ExecuteRuleAction(ctx context.Context, rule *domain.AutomationRule, action domain.RuleAction, eventData map[string]any) domain.ActionResultItem {
 	res := domain.ActionResultItem{
 		ActionType: action.Type,
@@ -259,7 +229,6 @@ func (e *Engine) ExecuteRuleAction(ctx context.Context, rule *domain.AutomationR
 	return res
 }
 
-// matchTriggerConfig memverifikasi kecocokan konfigurasi trigger (misal filter server_id).
 func (e *Engine) matchTriggerConfig(configJSON json.RawMessage, event domain.SystemEvent) bool {
 	if len(configJSON) == 0 || string(configJSON) == "{}" {
 		return true
@@ -280,7 +249,6 @@ func (e *Engine) matchTriggerConfig(configJSON json.RawMessage, event domain.Sys
 	return true
 }
 
-// evaluateConditions mengevaluasi seluruh klausa kondisi terhadap data kejadian sistem.
 func (e *Engine) evaluateConditions(conditions []domain.RuleCondition, eventData map[string]any) (bool, map[string]any) {
 	if len(conditions) == 0 {
 		return true, map[string]any{"evaluation": "no conditions specified, automatic match"}
@@ -317,7 +285,6 @@ func (e *Engine) evaluateConditions(conditions []domain.RuleCondition, eventData
 	return true, evalReport
 }
 
-// compareValues membandingkan nilai aktual dengan nilai target berdasarkan operator logika.
 func compareValues(actual any, op domain.ConditionOperator, expected any) bool {
 	actNum, isActNum := toFloat64(actual)
 	expNum, isExpNum := toFloat64(expected)
@@ -341,7 +308,6 @@ func compareValues(actual any, op domain.ConditionOperator, expected any) bool {
 		}
 	}
 
-	// String / Boolean Comparison
 	actStr := fmt.Sprintf("%v", actual)
 	expStr := fmt.Sprintf("%v", expected)
 
@@ -357,7 +323,6 @@ func compareValues(actual any, op domain.ConditionOperator, expected any) bool {
 	}
 }
 
-// toFloat64 mengonversi berbagai jenis tipe numerik interface{} menjadi float64.
 func toFloat64(val any) (float64, bool) {
 	switch v := val.(type) {
 	case float64:
@@ -378,7 +343,6 @@ func toFloat64(val any) (float64, bool) {
 	}
 }
 
-// mapEventTypeToTriggerType memetakan string event type ke RuleTriggerType.
 func mapEventTypeToTriggerType(eventType string) domain.RuleTriggerType {
 	if strings.HasPrefix(eventType, "metric.") {
 		return domain.TriggerTypeMetricThreshold
@@ -392,7 +356,6 @@ func mapEventTypeToTriggerType(eventType string) domain.RuleTriggerType {
 	return domain.TriggerTypeScheduledCron
 }
 
-// recordLog mencatat hasil eksekusi ke database.
 func (e *Engine) recordLog(
 	ctx context.Context,
 	rule *domain.AutomationRule,

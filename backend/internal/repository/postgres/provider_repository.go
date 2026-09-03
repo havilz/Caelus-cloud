@@ -6,26 +6,19 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/havilz/caelus-cloud/backend/internal/domain"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/havilz/caelus-cloud/backend/internal/domain"
 )
 
 type ProviderRepository struct {
 	pool *pgxpool.Pool
 }
 
-// NewProviderRepository menginisialisasi repository Provider berbasis database PostgreSQL.
-// Parameter pool merupakan instance koneksi pool *pgxpool.Pool.
-// Mengembalikan pointer *ProviderRepository yang mengimplementasikan domain.ProviderRepository.
 func NewProviderRepository(pool *pgxpool.Pool) *ProviderRepository {
 	return &ProviderRepository{pool: pool}
 }
 
-// GetByID mengambil data provider berdasarkan identifier UUID.
-// Parameter ctx merupakan konteks eksekusi query database.
-// Parameter id merupakan UUID provider yang dicari.
-// Mengembalikan pointer *domain.Provider jika ditemukan dan domain.ErrNotFound jika data tidak ada.
 func (r *ProviderRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Provider, error) {
 	query := `
 		SELECT id, name, slug, is_active, created_at
@@ -52,10 +45,6 @@ func (r *ProviderRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain
 	return &p, nil
 }
 
-// GetBySlug mengambil data provider berdasarkan identifier slug unik (misal: "mock", "aws", "hetzner").
-// Parameter ctx merupakan konteks eksekusi query database.
-// Parameter slug merupakan slug unik provider.
-// Mengembalikan pointer *domain.Provider jika ditemukan dan domain.ErrNotFound jika data tidak ada.
 func (r *ProviderRepository) GetBySlug(ctx context.Context, slug string) (*domain.Provider, error) {
 	query := `
 		SELECT id, name, slug, is_active, created_at
@@ -82,9 +71,6 @@ func (r *ProviderRepository) GetBySlug(ctx context.Context, slug string) (*domai
 	return &p, nil
 }
 
-// List mengambil seluruh daftar provider cloud yang aktif dan didukung sistem.
-// Parameter ctx merupakan konteks eksekusi query database.
-// Mengembalikan slice []domain.Provider dan error jika terjadi kegagalan query.
 func (r *ProviderRepository) List(ctx context.Context) ([]domain.Provider, error) {
 	query := `
 		SELECT id, name, slug, is_active, created_at

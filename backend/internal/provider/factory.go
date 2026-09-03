@@ -24,13 +24,10 @@ type driverFactory struct {
 	drivers map[string]domain.ProviderDriver
 }
 
-// NewDriverFactory menginisialisasi factory registri driver provider cloud dengan seluruh driver bawaan.
-// Mengembalikan implementasi interface Factory.
 func NewDriverFactory() Factory {
 	return NewDriverFactoryWithKey(nil)
 }
 
-// NewDriverFactoryWithKey menginisialisasi factory registri driver dengan kunci enkripsi kredensial.
 func NewDriverFactoryWithKey(encryptionKey []byte) Factory {
 	f := &driverFactory{
 		drivers: make(map[string]domain.ProviderDriver),
@@ -45,9 +42,6 @@ func NewDriverFactoryWithKey(encryptionKey []byte) Factory {
 	return f
 }
 
-// GetDriver mengambil instance ProviderDriver berdasarkan slug unik penyedia cloud.
-// Parameter providerSlug merupakan identifier slug provider (misal: "mock", "aws", "hetzner").
-// Mengembalikan domain.ProviderDriver atau domain.ErrNotFound jika driver untuk provider tersebut belum terdaftar.
 func (f *driverFactory) GetDriver(providerSlug string) (domain.ProviderDriver, error) {
 	f.mu.RLock()
 	defer f.mu.RUnlock()
@@ -61,9 +55,6 @@ func (f *driverFactory) GetDriver(providerSlug string) (domain.ProviderDriver, e
 	return driver, nil
 }
 
-// RegisterDriver mendaftarkan implementasi ProviderDriver baru ke dalam factory secara dinamis.
-// Parameter providerSlug merupakan identifier slug unik provider.
-// Parameter driver merupakan implementasi domain.ProviderDriver.
 func (f *driverFactory) RegisterDriver(providerSlug string, driver domain.ProviderDriver) {
 	f.mu.Lock()
 	defer f.mu.Unlock()

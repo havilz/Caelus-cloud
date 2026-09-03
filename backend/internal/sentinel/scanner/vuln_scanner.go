@@ -8,7 +8,6 @@ import (
 	"github.com/havilz/caelus-cloud/backend/internal/domain"
 )
 
-// KnownVulnRule mendefinisikan aturan deteksi kerentanan berbasis profil sistem operasi atau pustaka.
 type KnownVulnRule struct {
 	CheckID        string
 	OSTypePattern  string
@@ -58,23 +57,16 @@ var knownVulnRules = []KnownVulnRule{
 	},
 }
 
-// VulnScanner memeriksa kerentanan CVE yang diketahui pada sistem operasi dan pustaka sistem.
 type VulnScanner struct{}
 
-// NewVulnScanner membuat instance baru VulnScanner.
 func NewVulnScanner() *VulnScanner {
 	return &VulnScanner{}
 }
 
-// Type mengembalikan tipe pemindaian domain.ScanTypeVuln.
 func (s *VulnScanner) Type() domain.ScanType {
 	return domain.ScanTypeVuln
 }
 
-// Scan mengevaluasi profil OS target terhadap aturan basis data kerentanan Sentinel.
-// Parameter ctx merupakan konteks eksekusi.
-// Parameter target memuat metadata target.
-// Mengembalikan slice []domain.NormalizedFinding.
 func (s *VulnScanner) Scan(ctx context.Context, target domain.ScanTarget) ([]domain.NormalizedFinding, error) {
 	var findings []domain.NormalizedFinding
 	osLower := strings.ToLower(target.OSType)
@@ -101,7 +93,6 @@ func (s *VulnScanner) Scan(ctx context.Context, target domain.ScanTarget) ([]dom
 		}
 	}
 
-	// Deteksi format kernel versi lama jika ada
 	if target.TelemetryData != nil && target.TelemetryData.OS != "" {
 		findings = append(findings, domain.NormalizedFinding{
 			CheckID:     "vuln-kernel-security-advisory",

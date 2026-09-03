@@ -7,7 +7,6 @@ import (
 	"github.com/google/uuid"
 )
 
-// ServerMetric merepresentasikan entitas rekaman metrik telemetri performa server time-series.
 type ServerMetric struct {
 	ID                 int64     `json:"id"`
 	ServerID           uuid.UUID `json:"server_id"`
@@ -29,7 +28,6 @@ type ServerMetric struct {
 	RecordedAt         time.Time `json:"recorded_at"`
 }
 
-// HostMetricsPayload merepresentasikan payload data metrik host dari agent.
 type HostMetricsPayload struct {
 	CPUUsagePct        float64 `json:"cpu_usage_pct"`
 	CPUCores           int     `json:"cpu_cores"`
@@ -55,7 +53,6 @@ type HostMetricsPayload struct {
 	Hostname           string  `json:"hostname"`
 }
 
-// PortBindingPayload mendefinisikan pemetaan port container ke host.
 type PortBindingPayload struct {
 	HostPort      int    `json:"host_port"`
 	ContainerPort int    `json:"container_port"`
@@ -63,7 +60,6 @@ type PortBindingPayload struct {
 	HostIP        string `json:"host_ip,omitempty"`
 }
 
-// VolumeMountPayload mendefinisikan volume atau folder mount container.
 type VolumeMountPayload struct {
 	Name        string `json:"name,omitempty"`
 	Source      string `json:"source"`
@@ -72,7 +68,6 @@ type VolumeMountPayload struct {
 	Type        string `json:"type"`
 }
 
-// ContainerMetricPayload merepresentasikan metrik container dan konfigurasi lengkapnya.
 type ContainerMetricPayload struct {
 	ID                   string               `json:"id"`
 	Names                []string             `json:"names"`
@@ -92,7 +87,6 @@ type ContainerMetricPayload struct {
 	Logs                 []string             `json:"logs,omitempty"`
 }
 
-// DiscoveredNetworkPayload merepresentasikan VPC / Docker bridge yang ditemukan pada host.
 type DiscoveredNetworkPayload struct {
 	ID         string `json:"id"`
 	Name       string `json:"name"`
@@ -103,7 +97,6 @@ type DiscoveredNetworkPayload struct {
 	Internal   bool   `json:"internal"`
 }
 
-// DiscoveredVolumePayload merepresentasikan persistent volume yang ditemukan pada host.
 type DiscoveredVolumePayload struct {
 	Name       string  `json:"name"`
 	Driver     string  `json:"driver"`
@@ -113,7 +106,6 @@ type DiscoveredVolumePayload struct {
 	InUse      bool    `json:"in_use"`
 }
 
-// TelemetryReportPayload merepresentasikan DTO payload lengkap yang dikirim oleh daemon caelus-agent.
 type TelemetryReportPayload struct {
 	ServerID        uuid.UUID                  `json:"server_id"`
 	Timestamp       time.Time                  `json:"timestamp"`
@@ -124,14 +116,12 @@ type TelemetryReportPayload struct {
 	DockerAvailable bool                       `json:"docker_available"`
 }
 
-// MetricRepository mendefinisikan kontrak persistensi data time-series metrik server.
 type MetricRepository interface {
 	Create(ctx context.Context, metric *ServerMetric) error
 	GetLatestByServerID(ctx context.Context, serverID uuid.UUID) (*ServerMetric, error)
 	GetHistoryByServerID(ctx context.Context, serverID uuid.UUID, from, to time.Time, limit int) ([]ServerMetric, error)
 }
 
-// TelemetryBroadcaster mendefinisikan kontrak pengiriman data telemetri dan status server secara realtime ke client.
 type TelemetryBroadcaster interface {
 	BroadcastToServer(serverID uuid.UUID, event string, data any)
 	BroadcastToOrg(orgID uuid.UUID, event string, data any)

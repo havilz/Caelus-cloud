@@ -93,7 +93,6 @@ func (m *mockAlertRepo) DeleteRule(_ context.Context, id uuid.UUID) error {
 	return domain.ErrNotFound
 }
 
-// TestAlertEvaluator_TriggerOnThresholdExceeded memverifikasi pembuatan alert ketika metrik melampaui batas threshold.
 func TestAlertEvaluator_TriggerOnThresholdExceeded(t *testing.T) {
 	orgID := uuid.New()
 	serverID := uuid.New()
@@ -123,7 +122,6 @@ func TestAlertEvaluator_TriggerOnThresholdExceeded(t *testing.T) {
 		Name:           "web-prod-1",
 	}
 
-	// Kasus 1: CPU di bawah ambang batas (75% <= 80%) -> Tidak ada alert
 	m1 := &domain.ServerMetric{
 		ServerID:    serverID,
 		CPUUsagePct: 75.0,
@@ -135,7 +133,6 @@ func TestAlertEvaluator_TriggerOnThresholdExceeded(t *testing.T) {
 		t.Errorf("expected 0 alerts, got %d", len(mockRepo.alerts))
 	}
 
-	// Kasus 2: CPU melampaui batas (92% > 80%) -> Memicu alert baru
 	m2 := &domain.ServerMetric{
 		ServerID:    serverID,
 		CPUUsagePct: 92.0,
@@ -155,7 +152,6 @@ func TestAlertEvaluator_TriggerOnThresholdExceeded(t *testing.T) {
 		t.Errorf("expected status active, got %s", createdAlert.Status)
 	}
 
-	// Kasus 3: Evaluasi ulang dengan CPU masih tinggi -> Tidak membuat alert ganda
 	m3 := &domain.ServerMetric{
 		ServerID:    serverID,
 		CPUUsagePct: 95.0,
@@ -168,7 +164,6 @@ func TestAlertEvaluator_TriggerOnThresholdExceeded(t *testing.T) {
 	}
 }
 
-// TestAlertEvaluator_MemoryAndDiskRules memverifikasi evaluasi aturan memori dan disk.
 func TestAlertEvaluator_MemoryAndDiskRules(t *testing.T) {
 	orgID := uuid.New()
 	serverID := uuid.New()

@@ -19,9 +19,6 @@ const (
 	orgIDKey  contextKey = "auth_org_id"
 )
 
-// Authenticate mengembalikan middleware HTTP yang memvalidasi Access Token JWT dari header Authorization.
-// Parameter jwtManager merupakan instance interface jwt.Manager untuk memvalidasi tanda tangan dan klaim token.
-// Mengembalikan fungsi middleware func(http.Handler) http.Handler.
 func Authenticate(jwtManager jwt.Manager) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -49,33 +46,21 @@ func Authenticate(jwtManager jwt.Manager) func(http.Handler) http.Handler {
 	}
 }
 
-// GetClaimsFromContext mengambil data *jwt.UserClaims dari konteks request HTTP.
-// Parameter ctx merupakan konteks request HTTP.
-// Mengembalikan pointer *jwt.UserClaims dan boolean bernilai true jika klaim ditemukan.
 func GetClaimsFromContext(ctx context.Context) (*jwt.UserClaims, bool) {
 	claims, ok := ctx.Value(claimsKey).(*jwt.UserClaims)
 	return claims, ok
 }
 
-// GetUserIDFromContext mengambil UUID pengguna terautentikasi dari konteks request HTTP.
-// Parameter ctx merupakan konteks request HTTP.
-// Mengembalikan uuid.UUID dan boolean bernilai true jika ID pengguna ditemukan.
 func GetUserIDFromContext(ctx context.Context) (uuid.UUID, bool) {
 	id, ok := ctx.Value(userIDKey).(uuid.UUID)
 	return id, ok
 }
 
-// GetOrganizationIDFromContext mengambil UUID organisasi aktif dari konteks request HTTP.
-// Parameter ctx merupakan konteks request HTTP.
-// Mengembalikan uuid.UUID dan boolean bernilai true jika identifier organisasi ditemukan.
 func GetOrganizationIDFromContext(ctx context.Context) (uuid.UUID, bool) {
 	id, ok := ctx.Value(orgIDKey).(uuid.UUID)
 	return id, ok
 }
 
-// extractBearerToken memisahkan skema "Bearer" dan mengekstrak string token mentah dari header Authorization.
-// Parameter authHeader merupakan nilai string header Authorization.
-// Mengembalikan string token mentah atau domain.ErrUnauthorized jika format tidak sah.
 func extractBearerToken(authHeader string) (string, error) {
 	authHeader = strings.TrimSpace(authHeader)
 	if authHeader == "" {

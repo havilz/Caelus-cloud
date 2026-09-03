@@ -8,7 +8,6 @@ import (
 	"github.com/havilz/caelus-cloud/agent/internal/config"
 )
 
-// TestLoadConfig_MissingServerID memverifikasi error ketika SERVER_ID tidak didefinisikan.
 func TestLoadConfig_MissingServerID(t *testing.T) {
 	os.Clearenv()
 
@@ -18,7 +17,6 @@ func TestLoadConfig_MissingServerID(t *testing.T) {
 	}
 }
 
-// TestLoadConfig_InvalidServerID memverifikasi error ketika format SERVER_ID bukan UUID valid.
 func TestLoadConfig_InvalidServerID(t *testing.T) {
 	os.Clearenv()
 	t.Setenv("SERVER_ID", "invalid-uuid-string")
@@ -29,7 +27,6 @@ func TestLoadConfig_InvalidServerID(t *testing.T) {
 	}
 }
 
-// TestLoadConfig_MissingAgentSecret memverifikasi error ketika AGENT_SECRET kosong.
 func TestLoadConfig_MissingAgentSecret(t *testing.T) {
 	os.Clearenv()
 	validUUID := uuid.New().String()
@@ -41,7 +38,6 @@ func TestLoadConfig_MissingAgentSecret(t *testing.T) {
 	}
 }
 
-// TestLoadConfig_SuccessWithDefaults memverifikasi pembacaan konfigurasi valid beserta nilai default.
 func TestLoadConfig_SuccessWithDefaults(t *testing.T) {
 	os.Clearenv()
 	validUUID := uuid.New()
@@ -73,7 +69,6 @@ func TestLoadConfig_SuccessWithDefaults(t *testing.T) {
 	}
 }
 
-// TestLoadConfig_CustomValues memverifikasi parsing variabel lingkungan kustom.
 func TestLoadConfig_CustomValues(t *testing.T) {
 	os.Clearenv()
 	validUUID := uuid.New()

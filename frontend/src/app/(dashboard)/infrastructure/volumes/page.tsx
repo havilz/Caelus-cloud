@@ -37,7 +37,6 @@ export default function VolumesManagementPage() {
   const [isResizeModalOpen, setIsResizeModalOpen] = useState<boolean>(false);
   const [selectedVolume, setSelectedVolume] = useState<StorageVolume | null>(null);
 
-  // New Volume Form State
   const [volServerId, setVolServerId] = useState<string>("");
   const [volName, setVolName] = useState<string>("");
   const [volType, setVolType] = useState<"nvme" | "ssd" | "docker-volume">("nvme");
@@ -88,7 +87,6 @@ export default function VolumesManagementPage() {
       maxAllowedGB = Math.floor(stats.free_gb);
     }
 
-    // Hard-cap validation against remaining free disk space
     if (!selectedTargetServer && stats && volSize > stats.free_gb) {
       setErrorMsg(`Kapasitas (${volSize} GB) melebihi ruang bebas disk fisik host lokal (${stats.free_gb.toFixed(1)} GB tersedia).`);
       return;
@@ -139,7 +137,6 @@ export default function VolumesManagementPage() {
 
   const [selectedVolumeDetail, setSelectedVolumeDetail] = useState<StorageVolume | null>(null);
 
-  // Filter volumes based on selected server filter and search query
   const serverScopedVolumes = volumes.filter((v) => {
     if (selectedServerFilter === "all") return true;
     if (selectedServerFilter === "local") return !v.server_id;
@@ -155,7 +152,6 @@ export default function VolumesManagementPage() {
   const activeServer = servers.find((s: any) => s.id === selectedServerFilter);
   const currentAllocatedGB = serverScopedVolumes.reduce((acc, v) => acc + (v.size_gb || v.sizeGB || 0), 0);
   
-  // Hitung kapasitas fisik disk aktif
   const activePhysicalDiskGB = activeServer
     ? (activeServer.disk_gb || activeServer.diskGb || 25)
     : (stats ? stats.total_gb : 85);
@@ -174,7 +170,7 @@ export default function VolumesManagementPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header & Server Filter */}
+      {}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-100 flex items-center gap-2.5">
@@ -186,7 +182,7 @@ export default function VolumesManagementPage() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2.5">
-          {/* Server Node Scope Selector */}
+          {}
           <div className="flex items-center gap-2 bg-[#11141a] border border-[#22272e] rounded-lg px-3 py-1.5">
             <Server className="w-3.5 h-3.5 text-emerald-400" />
             <select
@@ -222,7 +218,7 @@ export default function VolumesManagementPage() {
         </div>
       </div>
 
-      {/* Notifications */}
+      {}
       {errorMsg && (
         <div className="p-3.5 bg-rose-500/10 border border-rose-500/30 rounded-xl flex items-center justify-between text-xs text-rose-300">
           <div className="flex items-center gap-2">
@@ -243,24 +239,25 @@ export default function VolumesManagementPage() {
         </div>
       )}
 
-      {/* Storage Pool Telemetry Cards (Scoped by Selected Server) */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-[#11141a] border border-[#22272e] rounded-xl p-4">
+      {}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-[#141414] border border-[#262626] rounded-xl p-4 flex flex-col justify-between shadow-sm">
           <div className="flex items-center justify-between">
-            <span className="text-xs text-slate-400 font-medium truncate">
+            <span className="text-xs text-[#a1a1a1] font-medium truncate">
               {activeServer ? `Disk ${activeServer.name}` : (selectedServerFilter === "local" ? "Host Lokal SSD" : "Physical Storage Pool")}
             </span>
-            <HardDrive className="w-4 h-4 text-emerald-400" />
+            <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400">
+              <HardDrive className="w-4 h-4" />
+            </div>
           </div>
-          <p className="text-2xl font-bold text-slate-100 font-mono mt-2">
+          <p className="text-xl font-bold text-[#ededed] font-mono mt-2">
             {activePhysicalDiskGB.toFixed(1)} GB
           </p>
-          <div className="mt-2 text-[11px] text-slate-400 flex items-center justify-between">
+          <div className="mt-2 text-[11px] text-[#a1a1a1] flex items-center justify-between">
             <span>Free: <strong className="text-emerald-400">{activeFreeDiskGB.toFixed(1)} GB</strong></span>
             <span>Used: {activeUsedDiskGB.toFixed(1)} GB</span>
           </div>
-          {/* Visual Progress Bar */}
-          <div className="w-full bg-slate-800 rounded-full h-1.5 mt-2.5 overflow-hidden">
+          <div className="w-full bg-[#222222] rounded-full h-1.5 mt-2.5 overflow-hidden">
             <div
               className="bg-emerald-400 h-1.5 rounded-full transition-all"
               style={{ width: `${Math.min(100, Math.max(5, activeUsagePercent))}%` }}
@@ -268,47 +265,53 @@ export default function VolumesManagementPage() {
           </div>
         </div>
 
-        <div className="bg-[#11141a] border border-[#22272e] rounded-xl p-4">
+        <div className="bg-[#141414] border border-[#262626] rounded-xl p-4 flex flex-col justify-between shadow-sm">
           <div className="flex items-center justify-between">
-            <span className="text-xs text-slate-400 font-medium">Total Volumes</span>
-            <Database className="w-4 h-4 text-purple-400" />
+            <span className="text-xs text-[#a1a1a1] font-medium">Total Volumes</span>
+            <div className="p-1.5 rounded-lg bg-purple-500/10 text-purple-400">
+              <Database className="w-4 h-4" />
+            </div>
           </div>
-          <p className="text-2xl font-bold text-slate-100 font-mono mt-2">
+          <p className="text-xl font-bold text-[#ededed] font-mono mt-2">
             {serverScopedVolumes.length}
           </p>
-          <p className="text-[11px] text-slate-400 mt-2">
+          <p className="text-[11px] text-[#a1a1a1] mt-2">
             {serverScopedVolumes.filter((v) => v.status === "in-use").length} in-use / attached
           </p>
         </div>
 
-        <div className="bg-[#11141a] border border-[#22272e] rounded-xl p-4">
+        <div className="bg-[#141414] border border-[#262626] rounded-xl p-4 flex flex-col justify-between shadow-sm">
           <div className="flex items-center justify-between">
-            <span className="text-xs text-slate-400 font-medium">Allocated Storage</span>
-            <Layers className="w-4 h-4 text-cyan-400" />
+            <span className="text-xs text-[#a1a1a1] font-medium">Allocated Storage</span>
+            <div className="p-1.5 rounded-lg bg-cyan-500/10 text-cyan-400">
+              <Layers className="w-4 h-4" />
+            </div>
           </div>
-          <p className="text-2xl font-bold text-slate-100 font-mono mt-2">
+          <p className="text-xl font-bold text-[#ededed] font-mono mt-2">
             {currentAllocatedGB} GB
           </p>
-          <p className="text-[11px] text-slate-400 mt-2">
+          <p className="text-[11px] text-[#a1a1a1] mt-2">
             Across {serverScopedVolumes.length} persistent block drives
           </p>
         </div>
 
-        <div className="bg-[#11141a] border border-[#22272e] rounded-xl p-4">
+        <div className="bg-[#141414] border border-[#262626] rounded-xl p-4 flex flex-col justify-between shadow-sm">
           <div className="flex items-center justify-between">
-            <span className="text-xs text-slate-400 font-medium">I/O Performance</span>
-            <Activity className="w-4 h-4 text-amber-400" />
+            <span className="text-xs text-[#a1a1a1] font-medium">I/O Performance</span>
+            <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-400">
+              <Activity className="w-4 h-4" />
+            </div>
           </div>
-          <p className="text-2xl font-bold text-slate-100 font-mono mt-2">
+          <p className="text-xl font-bold text-[#ededed] font-mono mt-2">
             3,000 - 5,000
           </p>
-          <p className="text-[11px] text-slate-400 mt-2">
+          <p className="text-[11px] text-[#a1a1a1] mt-2">
             IOPS NVMe Direct Attached
           </p>
         </div>
       </div>
 
-      {/* Main Content Table & Search Bar */}
+      {}
       <div className="bg-[#11141a] border border-[#22272e] rounded-xl overflow-hidden shadow-sm">
         <div className="p-4 border-b border-[#22272e] flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="relative w-full sm:w-72">
@@ -331,7 +334,7 @@ export default function VolumesManagementPage() {
           </div>
         </div>
 
-        {/* Volume Table */}
+        {}
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
@@ -444,54 +447,60 @@ export default function VolumesManagementPage() {
         </div>
       </div>
 
-      {/* Modal Detail Volume */}
+      {}
       {selectedVolumeDetail && (
         <Dialog
           isOpen={!!selectedVolumeDetail}
           onClose={() => setSelectedVolumeDetail(null)}
-          title={`Detail Volume: ${selectedVolumeDetail.name}`}
+          title={`Detail Volume: ${selectedVolumeDetail.name.length > 24 ? selectedVolumeDetail.name.slice(0, 12) + "..." + selectedVolumeDetail.name.slice(-8) : selectedVolumeDetail.name}`}
           description="Informasi spesifikasi partisi fisik, server kepemilikan, dan status keterikatan kontainer."
-          maxWidth="md"
+          maxWidth="lg"
         >
-          <div className="space-y-4 text-xs">
-            <div className="p-3 bg-slate-900/90 border border-slate-800 rounded-xl space-y-2">
-              <div className="flex justify-between items-center py-1 border-b border-slate-800">
-                <span className="text-slate-400">Volume ID / UUID:</span>
-                <span className="text-slate-200 font-mono text-[11px] select-all">{selectedVolumeDetail.id}</span>
+          <div className="space-y-4 text-xs py-1">
+            <div className="p-4 bg-[#141414] border border-[#262626] rounded-xl space-y-2.5">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-1.5 border-b border-[#262626] gap-1">
+                <span className="text-[#a1a1a1] shrink-0 font-medium">Volume ID</span>
+                <span className="text-[#ededed] font-mono text-xs select-all break-all">{selectedVolumeDetail.id}</span>
               </div>
-              <div className="flex justify-between items-center py-1 border-b border-slate-800">
-                <span className="text-slate-400">Server Node:</span>
-                <span className="text-emerald-400 font-mono font-medium">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-1.5 border-b border-[#262626] gap-1">
+                <span className="text-[#a1a1a1] shrink-0 font-medium">Server Node</span>
+                <span className="text-emerald-400 font-medium">
                   {servers.find((s: any) => s.id === selectedVolumeDetail.server_id)?.name || "Local Host (Mesin Utama)"}
                 </span>
               </div>
-              <div className="flex justify-between items-center py-1 border-b border-slate-800">
-                <span className="text-slate-400">Docker Volume Name:</span>
-                <span className="text-slate-200 font-mono text-[11px]">caelus-{selectedVolumeDetail.name}</span>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-1.5 border-b border-[#262626] gap-1">
+                <span className="text-[#a1a1a1] shrink-0 font-medium">Volume Name</span>
+                <span className="text-cyan-400 font-mono text-xs select-all break-all">{selectedVolumeDetail.name}</span>
               </div>
-              <div className="flex justify-between items-center py-1 border-b border-slate-800">
-                <span className="text-slate-400">Kapasitas Alokasi:</span>
-                <span className="text-slate-100 font-semibold font-mono">{selectedVolumeDetail.size_gb || selectedVolumeDetail.sizeGB} GB</span>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-1.5 border-b border-[#262626] gap-1">
+                <span className="text-[#a1a1a1] shrink-0 font-medium">Kapasitas Alokasi</span>
+                <span className="text-[#ededed] font-semibold font-mono text-xs">{selectedVolumeDetail.size_gb || selectedVolumeDetail.sizeGB || 1} GB</span>
               </div>
-              <div className="flex justify-between items-center py-1 border-b border-slate-800">
-                <span className="text-slate-400">Filesystem / Type:</span>
-                <span className="text-slate-200 font-mono uppercase">{selectedVolumeDetail.type} ({selectedVolumeDetail.fs_type || selectedVolumeDetail.fsType || "ext4"})</span>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-1.5 border-b border-[#262626] gap-1">
+                <span className="text-[#a1a1a1] shrink-0 font-medium">Storage Type / FS</span>
+                <span className="text-[#ededed] font-mono uppercase text-xs">
+                  {selectedVolumeDetail.type || "docker-volume"} ({selectedVolumeDetail.fs_type || selectedVolumeDetail.fsType || "ext4"})
+                </span>
               </div>
-              <div className="flex justify-between items-center py-1 border-b border-slate-800">
-                <span className="text-slate-400">Default Mount Target:</span>
-                <span className="text-slate-200 font-mono">{selectedVolumeDetail.mount_path || selectedVolumeDetail.mountPath || "/mnt/data"}</span>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-1.5 border-b border-[#262626] gap-1">
+                <span className="text-[#a1a1a1] shrink-0 font-medium">Mount Target</span>
+                <span className="text-[#ededed] font-mono text-xs break-all select-all">{selectedVolumeDetail.mount_path || selectedVolumeDetail.mountPath || "/mnt/data"}</span>
               </div>
-              <div className="flex justify-between items-center py-1 border-b border-slate-800">
-                <span className="text-slate-400">Performance Rating:</span>
-                <span className="text-amber-400 font-mono">{selectedVolumeDetail.iops || 3000} IOPS</span>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-1.5 border-b border-[#262626] gap-1">
+                <span className="text-[#a1a1a1] shrink-0 font-medium">Performance Rating</span>
+                <span className="text-amber-400 font-mono text-xs font-semibold">{selectedVolumeDetail.iops || 3000} IOPS</span>
               </div>
-              <div className="flex justify-between items-center py-1">
-                <span className="text-slate-400">Attached Container:</span>
-                <span className="font-mono">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-1.5 gap-1">
+                <span className="text-[#a1a1a1] shrink-0 font-medium">Attached Container</span>
+                <span className="font-mono text-xs">
                   {selectedVolumeDetail.attached_container_name || selectedVolumeDetail.attachedServerName ? (
-                    <span className="text-purple-400 font-semibold">{selectedVolumeDetail.attached_container_name || selectedVolumeDetail.attachedServerName}</span>
+                    <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                      {selectedVolumeDetail.attached_container_name || selectedVolumeDetail.attachedServerName}
+                    </span>
                   ) : (
-                    <span className="text-slate-400 italic">Unattached (Available)</span>
+                    <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-zinc-900 text-zinc-400 border border-zinc-800">
+                      Unattached (Available)
+                    </span>
                   )}
                 </span>
               </div>
@@ -501,16 +510,16 @@ export default function VolumesManagementPage() {
               <button
                 type="button"
                 onClick={() => setSelectedVolumeDetail(null)}
-                className="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-medium transition-colors cursor-pointer"
+                className="px-4 py-2 bg-[#1a1a1a] hover:bg-[#222222] border border-[#2e2e2e] text-[#ededed] rounded-lg text-xs font-medium transition-colors cursor-pointer"
               >
-                Close
+                Tutup
               </button>
             </div>
           </div>
         </Dialog>
       )}
 
-      {/* Modal Create Block Volume */}
+      {}
       <Dialog
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}

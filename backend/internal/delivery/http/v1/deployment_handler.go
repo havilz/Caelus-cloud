@@ -23,7 +23,6 @@ func NewDeploymentHandler(uc *orchestration.UseCase) *DeploymentHandler {
 	return &DeploymentHandler{depUsecase: uc}
 }
 
-// CreateDeployment menangani HTTP POST /api/v1/deployments untuk memicu deployment container baru.
 func (h *DeploymentHandler) CreateDeployment(w http.ResponseWriter, r *http.Request) {
 	orgID, ok := middleware.GetOrganizationIDFromContext(r.Context())
 	if !ok {
@@ -46,7 +45,6 @@ func (h *DeploymentHandler) CreateDeployment(w http.ResponseWriter, r *http.Requ
 	response.Success(w, http.StatusCreated, "Container deployment initiated", dep)
 }
 
-// ListDeployments menangani HTTP GET /api/v1/deployments untuk mengambil riwayat deployment container.
 func (h *DeploymentHandler) ListDeployments(w http.ResponseWriter, r *http.Request) {
 	orgID, ok := middleware.GetOrganizationIDFromContext(r.Context())
 	if !ok {
@@ -71,7 +69,6 @@ func (h *DeploymentHandler) ListDeployments(w http.ResponseWriter, r *http.Reque
 	response.Success(w, http.StatusOK, "Deployments retrieved", deployments)
 }
 
-// GetDeployment menangani HTTP GET /api/v1/deployments/{id}.
 func (h *DeploymentHandler) GetDeployment(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, err := uuid.Parse(idStr)
@@ -89,7 +86,6 @@ func (h *DeploymentHandler) GetDeployment(w http.ResponseWriter, r *http.Request
 	response.Success(w, http.StatusOK, "Deployment details retrieved", dep)
 }
 
-// GetLogs menangani HTTP GET /api/v1/deployments/{id}/logs untuk mengambil snapshot baris log deployment.
 func (h *DeploymentHandler) GetLogs(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, err := uuid.Parse(idStr)
@@ -135,7 +131,6 @@ func (h *DeploymentHandler) GetLogs(w http.ResponseWriter, r *http.Request) {
 	response.Success(w, http.StatusOK, "Deployment logs retrieved", logs)
 }
 
-// StreamLogsSSE menangani HTTP GET /api/v1/deployments/{id}/logs/stream via Server-Sent Events (SSE).
 func (h *DeploymentHandler) StreamLogsSSE(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, err := uuid.Parse(idStr)
@@ -153,9 +148,7 @@ func (h *DeploymentHandler) StreamLogsSSE(w http.ResponseWriter, r *http.Request
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")
 	w.Header().Set("Connection", "keep-alive")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
 
-	// Poll new logs periodically for active SSE client
 	ticker := time.NewTicker(500 * time.Millisecond)
 	defer ticker.Stop()
 
@@ -180,7 +173,6 @@ func (h *DeploymentHandler) StreamLogsSSE(w http.ResponseWriter, r *http.Request
 				}
 			}
 
-			// Only close stream if deployment has explicitly failed or stopped
 			dep, err := h.depUsecase.GetDeployment(r.Context(), id)
 			if err == nil && (dep.Status == domain.DeploymentStatusFailed || dep.Status == domain.DeploymentStatusStopped) {
 				fmt.Fprintf(w, "event: complete\ndata: {\"status\": \"%s\"}\n\n", dep.Status)
@@ -191,7 +183,6 @@ func (h *DeploymentHandler) StreamLogsSSE(w http.ResponseWriter, r *http.Request
 	}
 }
 
-// StopDeployment menghentikan container deployment yang sedang berjalan.
 func (h *DeploymentHandler) StopDeployment(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, err := uuid.Parse(idStr)
@@ -208,7 +199,6 @@ func (h *DeploymentHandler) StopDeployment(w http.ResponseWriter, r *http.Reques
 	response.Success(w, http.StatusOK, "Deployment stopped successfully", nil)
 }
 
-// RedeployDeployment memicu ulang eksekusi pipeline deployment yang sudah ada.
 func (h *DeploymentHandler) RedeployDeployment(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, err := uuid.Parse(idStr)
@@ -226,7 +216,6 @@ func (h *DeploymentHandler) RedeployDeployment(w http.ResponseWriter, r *http.Re
 	response.Success(w, http.StatusOK, "Container redeployed successfully", dep)
 }
 
-// RollbackDeployment memicu pembuatan instance deployment baru berdasarkan konfigurasi sebelumnya.
 func (h *DeploymentHandler) RollbackDeployment(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, err := uuid.Parse(idStr)
@@ -244,7 +233,6 @@ func (h *DeploymentHandler) RollbackDeployment(w http.ResponseWriter, r *http.Re
 	response.Success(w, http.StatusOK, "Rollback deployment triggered successfully", newDep)
 }
 
-// DeleteDeployment menghapus deployment dan kontainer fisik dari host.
 func (h *DeploymentHandler) DeleteDeployment(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, err := uuid.Parse(idStr)

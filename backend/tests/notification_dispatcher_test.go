@@ -13,7 +13,6 @@ import (
 	"github.com/havilz/caelus-cloud/backend/internal/notification/webhook"
 )
 
-// TestWebhook_DeliveryAndSignature menguji pengiriman payload HTTP POST webhook beserta verifikasi header signature.
 func TestWebhook_DeliveryAndSignature(t *testing.T) {
 	var receivedSignature string
 	var receivedPayload webhook.WebhookPayload
@@ -50,7 +49,6 @@ func TestWebhook_DeliveryAndSignature(t *testing.T) {
 	}
 }
 
-// TestEmail_HTMLTemplate menguji pembuatan HTML template email notifikasi.
 func TestEmail_HTMLTemplate(t *testing.T) {
 	html := email.BuildAlertHTMLTemplate("Critical Alert", "Auto-Heal DB Server", "server_status_changed", "Server stopped responding")
 	if len(html) == 0 {
@@ -58,7 +56,6 @@ func TestEmail_HTMLTemplate(t *testing.T) {
 	}
 }
 
-// TestUnifiedDispatcher_Delegation menguji delegasi pengiriman via UnifiedDispatcher.
 func TestUnifiedDispatcher_Delegation(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -76,7 +73,6 @@ func TestUnifiedDispatcher_Delegation(t *testing.T) {
 		t.Fatalf("dispatcher failed to send webhook: %v", err)
 	}
 
-	// Email tanpa host SMTP disimulasikan tanpa error
 	err = dispatcher.SendEmail(context.Background(), email.EmailMessage{
 		To:      "admin@example.com",
 		Subject: "Test Alert",

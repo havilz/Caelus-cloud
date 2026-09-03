@@ -36,7 +36,7 @@ func TestPortScanner_ScanLocalhost(t *testing.T) {
 }
 
 func TestHeadersScanner_AuditsHeaders(t *testing.T) {
-	// Buat mock HTTP server tanpa security headers
+
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte("Hello Secure World"))
@@ -87,9 +87,9 @@ func TestHostConfigScanner_EvaluatesTelemetry(t *testing.T) {
 	target := domain.ScanTarget{
 		TelemetryData: &domain.HostMetricsPayload{
 			CPUUsagePct:    50.0,
-			MemoryUsagePct: 98.5, // Kritis > 95%
-			DiskUsagePct:   94.0, // Kritis > 90%
-			UptimeSeconds:  200 * 86400, // > 180 hari
+			MemoryUsagePct: 98.5,
+			DiskUsagePct:   94.0,
+			UptimeSeconds:  200 * 86400,
 			Platform:       "ubuntu",
 		},
 	}
@@ -153,7 +153,6 @@ func TestFindingNormalizer_GeneratesFingerprint(t *testing.T) {
 		t.Fatalf("fingerprint tidak boleh kosong")
 	}
 
-	// Fingerprint harus deterministik
 	f2, _ := norm.Normalize(orgID, &serverID, &scanID, raw)
 	if f1.Fingerprint != f2.Fingerprint {
 		t.Fatalf("fingerprint harus konsisten untuk checkID dan serverID yang sama")

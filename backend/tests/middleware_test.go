@@ -36,7 +36,6 @@ func setupMiddlewareTest() (jwt.Manager, *mockOrgRepo, *domain.User, uuid.UUID) 
 	return jwtManager, orgRepo, user, orgID
 }
 
-// TestAuthenticateMiddleware_MissingHeader menguji penolakan request apabila header Authorization tidak disertakan.
 func TestAuthenticateMiddleware_MissingHeader(t *testing.T) {
 	jwtManager, _, _, _ := setupMiddlewareTest()
 	authMiddleware := middleware.Authenticate(jwtManager)
@@ -55,7 +54,6 @@ func TestAuthenticateMiddleware_MissingHeader(t *testing.T) {
 	}
 }
 
-// TestAuthenticateMiddleware_InvalidFormat menguji penolakan request dengan format header Authorization yang tidak sesuai skema Bearer.
 func TestAuthenticateMiddleware_InvalidFormat(t *testing.T) {
 	jwtManager, _, _, _ := setupMiddlewareTest()
 	authMiddleware := middleware.Authenticate(jwtManager)
@@ -75,7 +73,6 @@ func TestAuthenticateMiddleware_InvalidFormat(t *testing.T) {
 	}
 }
 
-// TestAuthenticateMiddleware_InvalidToken menguji penolakan request dengan token JWT yang tidak valid atau ditandatangani dengan kunci yang salah.
 func TestAuthenticateMiddleware_InvalidToken(t *testing.T) {
 	jwtManager, _, _, _ := setupMiddlewareTest()
 	authMiddleware := middleware.Authenticate(jwtManager)
@@ -95,7 +92,6 @@ func TestAuthenticateMiddleware_InvalidToken(t *testing.T) {
 	}
 }
 
-// TestAuthenticateMiddleware_Success menguji keberhasilan validasi token JWT yang sah dan penyisipan data identitas ke dalam konteks request.
 func TestAuthenticateMiddleware_Success(t *testing.T) {
 	jwtManager, _, user, orgID := setupMiddlewareTest()
 	authMiddleware := middleware.Authenticate(jwtManager)
@@ -134,7 +130,6 @@ func TestAuthenticateMiddleware_Success(t *testing.T) {
 	}
 }
 
-// TestRequireOrganizationRole_NotMember menguji penolakan akses jika pengguna terautentikasi bukan anggota dari organisasi target.
 func TestRequireOrganizationRole_NotMember(t *testing.T) {
 	jwtManager, orgRepo, user, orgID := setupMiddlewareTest()
 	authMiddleware := middleware.Authenticate(jwtManager)
@@ -158,7 +153,6 @@ func TestRequireOrganizationRole_NotMember(t *testing.T) {
 	}
 }
 
-// TestRequireOrganizationRole_InsufficientRole menguji penolakan akses jika peran anggota lebih rendah daripada peran yang disyaratkan rute.
 func TestRequireOrganizationRole_InsufficientRole(t *testing.T) {
 	jwtManager, orgRepo, user, orgID := setupMiddlewareTest()
 	authMiddleware := middleware.Authenticate(jwtManager)
@@ -191,7 +185,6 @@ func TestRequireOrganizationRole_InsufficientRole(t *testing.T) {
 	}
 }
 
-// TestRequireOrganizationRole_AuthorizedRole menguji pemberian izin akses jika peran anggota mencukupi atau berada pada hierarki yang lebih tinggi.
 func TestRequireOrganizationRole_AuthorizedRole(t *testing.T) {
 	jwtManager, orgRepo, user, orgID := setupMiddlewareTest()
 	authMiddleware := middleware.Authenticate(jwtManager)

@@ -3,7 +3,7 @@ package mock
 import (
 	"bytes"
 	"context"
-	"crypto/md5" //nolint:gosec
+	"crypto/md5"
 	"encoding/hex"
 	"fmt"
 	"io"
@@ -37,20 +37,17 @@ type mockBucket struct {
 	mu        sync.RWMutex
 }
 
-// MockStorageAdapter menyediakan implementasi in-memory thread-safe dari domain.ObjectStorageAdapter untuk unit test.
 type MockStorageAdapter struct {
 	buckets map[string]*mockBucket
 	mu      sync.RWMutex
 }
 
-// NewMockStorageAdapter membuat instance baru MockStorageAdapter in-memory.
 func NewMockStorageAdapter() *MockStorageAdapter {
 	return &MockStorageAdapter{
 		buckets: make(map[string]*mockBucket),
 	}
 }
 
-// CreateBucket membuat bucket baru di dalam memori.
 func (m *MockStorageAdapter) CreateBucket(_ context.Context, bucketName, region string) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -73,7 +70,6 @@ func (m *MockStorageAdapter) CreateBucket(_ context.Context, bucketName, region 
 	return nil
 }
 
-// ListBuckets mengembalikan seluruh daftar bucket in-memory.
 func (m *MockStorageAdapter) ListBuckets(_ context.Context) ([]domain.Bucket, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -97,7 +93,6 @@ func (m *MockStorageAdapter) ListBuckets(_ context.Context) ([]domain.Bucket, er
 	return result, nil
 }
 
-// DeleteBucket menghapus bucket dari memori jika bucket dalam kondisi kosong.
 func (m *MockStorageAdapter) DeleteBucket(_ context.Context, bucketName string) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -119,7 +114,6 @@ func (m *MockStorageAdapter) DeleteBucket(_ context.Context, bucketName string) 
 	return nil
 }
 
-// BucketExists memeriksa keberadaan bucket di dalam memori.
 func (m *MockStorageAdapter) BucketExists(_ context.Context, bucketName string) (bool, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -128,7 +122,6 @@ func (m *MockStorageAdapter) BucketExists(_ context.Context, bucketName string) 
 	return exists, nil
 }
 
-// ListObjects mengambil objek dan direktori virtual berdasarkan filter prefix dan delimiter.
 func (m *MockStorageAdapter) ListObjects(_ context.Context, bucketName, prefix, delimiter string, maxKeys int32) ([]domain.ObjectItem, []string, error) {
 	m.mu.RLock()
 	b, exists := m.buckets[bucketName]
@@ -153,7 +146,6 @@ func (m *MockStorageAdapter) ListObjects(_ context.Context, bucketName, prefix, 
 			continue
 		}
 
-		// Penanganan delimiter direktori folder (misal "/")
 		if delimiter != "" {
 			relativeKey := strings.TrimPrefix(key, prefix)
 			if idx := strings.Index(relativeKey, delimiter); idx >= 0 {
@@ -190,7 +182,6 @@ func (m *MockStorageAdapter) ListObjects(_ context.Context, bucketName, prefix, 
 	return objects, folders, nil
 }
 
-// UploadObject mengunggah objek ke dalam memori bucket.
 func (m *MockStorageAdapter) UploadObject(_ context.Context, input domain.UploadObjectInput) (*domain.ObjectItem, error) {
 	m.mu.RLock()
 	b, exists := m.buckets[input.BucketName]
@@ -205,7 +196,7 @@ func (m *MockStorageAdapter) UploadObject(_ context.Context, input domain.Upload
 		return nil, fmt.Errorf("failed to read object body: %w", err)
 	}
 
-	hash := md5.Sum(data) //nolint:gosec
+	hash := md5.Sum(data)
 	etag := hex.EncodeToString(hash[:])
 
 	contentType := input.ContentType
@@ -242,7 +233,6 @@ func (m *MockStorageAdapter) UploadObject(_ context.Context, input domain.Upload
 	}, nil
 }
 
-// DownloadObject mengunduh konten stream objek dari memori.
 func (m *MockStorageAdapter) DownloadObject(_ context.Context, bucketName, key string) (*domain.ObjectContent, error) {
 	m.mu.RLock()
 	b, exists := m.buckets[bucketName]
@@ -269,7 +259,6 @@ func (m *MockStorageAdapter) DownloadObject(_ context.Context, bucketName, key s
 	}, nil
 }
 
-// DeleteObject menghapus objek dari memori bucket.
 func (m *MockStorageAdapter) DeleteObject(_ context.Context, bucketName, key string) error {
 	m.mu.RLock()
 	b, exists := m.buckets[bucketName]
@@ -286,7 +275,6 @@ func (m *MockStorageAdapter) DeleteObject(_ context.Context, bucketName, key str
 	return nil
 }
 
-// DeleteObjects menghapus beberapa objek secara batch dari memori bucket.
 func (m *MockStorageAdapter) DeleteObjects(_ context.Context, bucketName string, keys []string) error {
 	m.mu.RLock()
 	b, exists := m.buckets[bucketName]
@@ -305,7 +293,6 @@ func (m *MockStorageAdapter) DeleteObjects(_ context.Context, bucketName string,
 	return nil
 }
 
-// GetObjectMetadata mengambil metadata objek tanpa mengunduh konten body-nya.
 func (m *MockStorageAdapter) GetObjectMetadata(_ context.Context, bucketName, key string) (*domain.ObjectItem, error) {
 	m.mu.RLock()
 	b, exists := m.buckets[bucketName]
@@ -334,7 +321,6 @@ func (m *MockStorageAdapter) GetObjectMetadata(_ context.Context, bucketName, ke
 	}, nil
 }
 
-// GenerateSignedURL membuat URL mock presigned untuk pengujian.
 func (m *MockStorageAdapter) GenerateSignedURL(_ context.Context, bucketName, key string, operation domain.SignedURLOperation, expiry time.Duration) (string, error) {
 	if expiry <= 0 {
 		expiry = 15 * time.Minute

@@ -26,7 +26,7 @@ export default function SettingsPage() {
 
   return (
     <div className={AppTheme.containers.pageWrapper}>
-      {/* Page Header */}
+      {}
       <div className="flex flex-col gap-1 pb-6 border-b border-[#262626]">
         <h1 className="text-xl font-bold tracking-tight text-[#ededed]">Pengaturan Sistem & Workspace</h1>
         <p className="text-xs text-[#707070]">
@@ -34,7 +34,7 @@ export default function SettingsPage() {
         </p>
       </div>
 
-      {/* Tabs Navigation Bar */}
+      {}
       <div className="flex items-center gap-1 border-b border-[#262626] overflow-x-auto no-scrollbar py-2">
         {tabs.map((tab) => {
           const Icon = tab.icon;
@@ -57,7 +57,7 @@ export default function SettingsPage() {
         })}
       </div>
 
-      {/* Tab Content Body */}
+      {}
       <div className="pt-2">
         {activeTab === "profile" && <ProfileTab />}
         {activeTab === "organization" && <OrganizationTab />}

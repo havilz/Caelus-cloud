@@ -13,7 +13,6 @@ import (
 	"github.com/havilz/caelus-cloud/agent/internal/docker"
 )
 
-// TestDockerInspector_UnavailableSocket memverifikasi perilaku fallback ketika socket Docker tidak ditemukan.
 func TestDockerInspector_UnavailableSocket(t *testing.T) {
 	inspector := docker.NewInspector("/tmp/nonexistent_caelus_test.sock")
 	ctx := context.Background()
@@ -32,7 +31,6 @@ func TestDockerInspector_UnavailableSocket(t *testing.T) {
 	}
 }
 
-// TestDockerInspector_MockUnixSocket memverifikasi parsing API Docker melalui mock unix domain socket.
 func TestDockerInspector_MockUnixSocket(t *testing.T) {
 	socketDir := t.TempDir()
 	socketPath := filepath.Join(socketDir, "docker_mock.sock")
@@ -139,7 +137,6 @@ func TestDockerInspector_MockUnixSocket(t *testing.T) {
 	}
 }
 
-// TestDockerInspector_InvalidJSONResponse memverifikasi penanganan error ketika Docker API mengembalikan JSON tidak valid.
 func TestDockerInspector_InvalidJSONResponse(t *testing.T) {
 	socketDir := t.TempDir()
 	socketPath := filepath.Join(socketDir, "docker_invalid.sock")

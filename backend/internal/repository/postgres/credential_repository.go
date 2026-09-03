@@ -7,27 +7,20 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/havilz/caelus-cloud/backend/internal/domain"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/havilz/caelus-cloud/backend/internal/domain"
 )
 
 type CredentialRepository struct {
 	pool *pgxpool.Pool
 }
 
-// NewCredentialRepository menginisialisasi repository Kredensial Provider berbasis database PostgreSQL.
-// Parameter pool merupakan instance koneksi pool *pgxpool.Pool.
-// Mengembalikan pointer *CredentialRepository yang mengimplementasikan domain.CredentialRepository.
 func NewCredentialRepository(pool *pgxpool.Pool) *CredentialRepository {
 	return &CredentialRepository{pool: pool}
 }
 
-// Create menyimpan kredensial provider baru ke dalam tabel credentials.
-// Parameter ctx merupakan konteks eksekusi query database.
-// Parameter cred merupakan pointer entitas *domain.Credential yang akan disimpan.
-// Mengembalikan error jika terjadi kegagalan query atau pelanggaran integritas constraint.
 func (r *CredentialRepository) Create(ctx context.Context, cred *domain.Credential) error {
 	query := `
 		INSERT INTO credentials (id, organization_id, provider_id, name, encrypted_api_key, encrypted_api_secret, encrypted_ssh_key, metadata, created_at, updated_at)
@@ -74,10 +67,6 @@ func (r *CredentialRepository) Create(ctx context.Context, cred *domain.Credenti
 	return nil
 }
 
-// GetByID mengambil data kredensial provider beserta relasi Provider berdasarkan identifier UUID.
-// Parameter ctx merupakan konteks eksekusi query database.
-// Parameter id merupakan UUID kredensial yang dicari.
-// Mengembalikan pointer *domain.Credential jika ditemukan dan domain.ErrNotFound jika data tidak ada.
 func (r *CredentialRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Credential, error) {
 	query := `
 		SELECT c.id, c.organization_id, c.provider_id, c.name, c.encrypted_api_key, c.encrypted_api_secret, c.encrypted_ssh_key, c.metadata, c.created_at, c.updated_at,
@@ -124,10 +113,6 @@ func (r *CredentialRepository) GetByID(ctx context.Context, id uuid.UUID) (*doma
 	return &c, nil
 }
 
-// ListByOrg mengambil seluruh daftar kredensial provider yang dimiliki oleh suatu organisasi.
-// Parameter ctx merupakan konteks eksekusi query database.
-// Parameter orgID merupakan UUID organisasi pemilik kredensial.
-// Mengembalikan slice []domain.Credential dan error jika query gagal.
 func (r *CredentialRepository) ListByOrg(ctx context.Context, orgID uuid.UUID) ([]domain.Credential, error) {
 	query := `
 		SELECT c.id, c.organization_id, c.provider_id, c.name, c.encrypted_api_key, c.encrypted_api_secret, c.encrypted_ssh_key, c.metadata, c.created_at, c.updated_at,
@@ -180,10 +165,6 @@ func (r *CredentialRepository) ListByOrg(ctx context.Context, orgID uuid.UUID) (
 	return creds, nil
 }
 
-// Update memperbarui data atribut kredensial pada tabel credentials.
-// Parameter ctx merupakan konteks eksekusi query database.
-// Parameter cred merupakan pointer *domain.Credential dengan data terbaru.
-// Mengembalikan error jika terjadi kegagalan query atau kredensial tidak ditemukan.
 func (r *CredentialRepository) Update(ctx context.Context, cred *domain.Credential) error {
 	query := `
 		UPDATE credentials
@@ -216,10 +197,6 @@ func (r *CredentialRepository) Update(ctx context.Context, cred *domain.Credenti
 	return nil
 }
 
-// Delete menghapus data kredensial dari tabel credentials berdasarkan identifier UUID.
-// Parameter ctx merupakan konteks eksekusi query database.
-// Parameter id merupakan UUID kredensial yang akan dihapus.
-// Mengembalikan error jika terjadi kegagalan query atau kredensial tidak ditemukan.
 func (r *CredentialRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	query := `DELETE FROM credentials WHERE id = $1;`
 

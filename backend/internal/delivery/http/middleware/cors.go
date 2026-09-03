@@ -7,8 +7,6 @@ import (
 	"github.com/go-chi/cors"
 )
 
-// CORS mengonfigurasi dan mengembalikan middleware Cross-Origin Resource Sharing (CORS).
-// Mengizinkan origin terdaftar, localhost, IP Tailscale (100.x.y.z), private network, dan cloudflare tunnels secara dinamis.
 func CORS(allowedOrigins []string) func(next http.Handler) http.Handler {
 	opts := cors.Options{
 		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
@@ -37,7 +35,7 @@ func CORS(allowedOrigins []string) func(next http.Handler) http.Handler {
 					return true
 				}
 			}
-			// Izinkan dinamis: localhost, 127.0.0.1, Tailscale CGNAT (100.x), Private Subnets, TryCloudflare
+
 			if strings.Contains(origin, "localhost") ||
 				strings.Contains(origin, "127.0.0.1") ||
 				strings.Contains(origin, "trycloudflare.com") ||

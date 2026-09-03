@@ -11,25 +11,20 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// NameRegex memvalidasi identifier resource agar mematuhi standar penamaan cloud.
 var NameRegex = regexp.MustCompile(`^[a-z0-9]([-a-z0-9]*[a-z0-9])?$`)
 
-// Parser menangani pembacaan, validasi sintaks, dan penguraian dokumen YAML IaC.
 type Parser struct{}
 
-// NewParser membuat instance baru YAML IaC Parser.
 func NewParser() *Parser {
 	return &Parser{}
 }
 
-// ComputeYAMLHash menghitung SHA-256 hash dari dokumen teks YAML.
 func ComputeYAMLHash(rawYAML string) string {
 	hasher := sha256.New()
 	hasher.Write([]byte(strings.TrimSpace(rawYAML)))
 	return hex.EncodeToString(hasher.Sum(nil))
 }
 
-// Parse mengurai teks YAML menjadi domain.DeclarativeManifest terstruktur.
 func (p *Parser) Parse(rawYAML string) (*domain.DeclarativeManifest, []domain.IaCValidationError) {
 	var validationErrors []domain.IaCValidationError
 
@@ -56,7 +51,6 @@ func (p *Parser) Parse(rawYAML string) (*domain.DeclarativeManifest, []domain.Ia
 		return nil, validationErrors
 	}
 
-	// Semantic & schema validation
 	errs := p.ValidateManifest(&manifest)
 	if len(errs) > 0 {
 		return nil, errs
@@ -65,7 +59,6 @@ func (p *Parser) Parse(rawYAML string) (*domain.DeclarativeManifest, []domain.Ia
 	return &manifest, nil
 }
 
-// ValidateManifest memvalidasi integritas atribut dalam manifest deklaratif.
 func (p *Parser) ValidateManifest(manifest *domain.DeclarativeManifest) []domain.IaCValidationError {
 	var errs []domain.IaCValidationError
 

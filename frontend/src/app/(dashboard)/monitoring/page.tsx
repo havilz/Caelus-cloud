@@ -64,7 +64,7 @@ export default function MonitoringPage() {
       setRules(rulesRes || []);
       setServers(serversRes.data || []);
     } catch {
-      // Abaikan error saat fetch
+      
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
@@ -106,7 +106,7 @@ export default function MonitoringPage() {
         await monitoringService.deleteAlertRule(ruleId);
         await fetchData();
       } catch {
-        // Handle error
+        
       }
     }
   };
@@ -140,7 +140,7 @@ export default function MonitoringPage() {
 
   return (
     <div className={AppContainers.pageWrapper}>
-      {/* Top Header */}
+      {}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
@@ -188,7 +188,7 @@ export default function MonitoringPage() {
         </div>
       </div>
 
-      {/* Aggregate Overview Cards */}
+      {}
       <div className={AppContainers.metricsGrid}>
         <Card className={`${AppContainers.card} ${AppContainers.cardHover}`}>
           <CardContent className="p-4 flex items-center justify-between">
@@ -243,9 +243,9 @@ export default function MonitoringPage() {
         </Card>
       </div>
 
-      {/* Main Content Grid: Alerts Incident Table & Threshold Rules */}
+      {}
       <div className={AppContainers.overviewSplitGrid}>
-        {/* Left 2 Cols: Alerts Incident Center */}
+        {}
         <div className="lg:col-span-2 space-y-4">
           <Card className={AppContainers.card}>
             <CardHeader className={`${AppContainers.cardHeader} flex flex-col sm:flex-row sm:items-center justify-between gap-3`}>
@@ -254,7 +254,7 @@ export default function MonitoringPage() {
                 <CardDescription className={AppText.caption}>Daftar peringatan yang terpicu dari anomali metrik</CardDescription>
               </div>
 
-              {/* Status Filter Tabs */}
+              {}
               <div className={`flex items-center gap-1 ${AppColors.bg.surface} p-1 rounded-lg border ${AppColors.border.subtle}`}>
                 {[
                   { id: "active", label: "Aktif" },
@@ -351,7 +351,7 @@ export default function MonitoringPage() {
           </Card>
         </div>
 
-        {/* Right 1 Col: Alert Rules Management */}
+        {}
         <div className="space-y-4">
           <Card className={AppContainers.card}>
             <CardHeader className={`${AppContainers.cardHeader} flex items-center justify-between`}>
@@ -406,7 +406,7 @@ export default function MonitoringPage() {
         </div>
       </div>
 
-      {/* Create Alert Rule Modal */}
+      {}
       <CreateAlertRuleModal
         isOpen={isCreateRuleOpen}
         onClose={() => setIsCreateRuleOpen(false)}

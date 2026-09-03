@@ -10,15 +10,12 @@ import (
 	"github.com/havilz/caelus-cloud/backend/internal/domain"
 )
 
-// Engine bertanggung jawab untuk membandingkan Desired State (manifest YAML) dengan Actual State (snapshot database/provider).
 type Engine struct{}
 
-// NewEngine membuat instance baru IaC Plan Engine.
 func NewEngine() *Engine {
 	return &Engine{}
 }
 
-// GeneratePlan menghasilkan domain.IaCPlan terstruktur berisi daftar diff dan ringkasan aksi.
 func (e *Engine) GeneratePlan(configID uuid.UUID, targetVersion int, desired *domain.DeclarativeManifest, currentState *domain.IaCState) (*domain.IaCPlan, error) {
 	var changes []domain.IaCChange
 	summary := domain.IaCSummary{}
@@ -31,23 +28,18 @@ func (e *Engine) GeneratePlan(configID uuid.UUID, targetVersion int, desired *do
 		}
 	}
 
-	// 1. Evaluate Servers
 	serverChanges := e.diffServers(desired.Servers, currentManifest.Servers)
 	changes = append(changes, serverChanges...)
 
-	// 2. Evaluate Storages
 	storageChanges := e.diffStorages(desired.Storages, currentManifest.Storages)
 	changes = append(changes, storageChanges...)
 
-	// 3. Evaluate Containers
 	containerChanges := e.diffContainers(desired.Containers, currentManifest.Containers)
 	changes = append(changes, containerChanges...)
 
-	// 4. Evaluate Rules
 	ruleChanges := e.diffRules(desired.Rules, currentManifest.Rules)
 	changes = append(changes, ruleChanges...)
 
-	// Compute summary counts
 	for _, c := range changes {
 		summary.Total++
 		switch c.Action {
@@ -86,7 +78,6 @@ func (e *Engine) diffServers(desired []domain.ServerSpec, current []domain.Serve
 		desiredMap[d.Name] = true
 		curr, exists := currentMap[d.Name]
 
-		// Format transparansi status provider (H-2: BYOS / Local Host vs Cloud Provider Driver)
 		providerMode := "Cloud Provider Driver"
 		pLower := strings.ToLower(d.Provider)
 		if pLower == "" || pLower == "custom" || pLower == "custom_vps" || pLower == "byos" || pLower == "local" {

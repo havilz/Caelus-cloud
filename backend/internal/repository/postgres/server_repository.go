@@ -6,26 +6,19 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/havilz/caelus-cloud/backend/internal/domain"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/havilz/caelus-cloud/backend/internal/domain"
 )
 
 type ServerRepository struct {
 	pool *pgxpool.Pool
 }
 
-// NewServerRepository menginisialisasi repository Server berbasis database PostgreSQL.
-// Parameter pool merupakan instance koneksi pool *pgxpool.Pool.
-// Mengembalikan pointer *ServerRepository yang mengimplementasikan domain.ServerRepository.
 func NewServerRepository(pool *pgxpool.Pool) *ServerRepository {
 	return &ServerRepository{pool: pool}
 }
 
-// Create menyimpan entitas server baru ke dalam tabel servers.
-// Parameter ctx merupakan konteks eksekusi query database.
-// Parameter server memuat pointer entitas *domain.Server yang akan disimpan.
-// Mengembalikan error jika terjadi kegagalan eksekusi query.
 func (r *ServerRepository) Create(ctx context.Context, server *domain.Server) error {
 	query := `
 		INSERT INTO servers (id, organization_id, credential_id, provider_id, external_server_id, name, hostname, ip_address, status, os_type, cpu_cores, memory_mb, disk_gb, region, created_at, updated_at)
@@ -59,10 +52,6 @@ func (r *ServerRepository) Create(ctx context.Context, server *domain.Server) er
 	).Scan(&server.ID, &server.CreatedAt, &server.UpdatedAt)
 }
 
-// GetByID mengambil data detail server beserta relasi Provider berdasarkan identifier UUID.
-// Parameter ctx merupakan konteks eksekusi query database.
-// Parameter id merupakan UUID server yang dicari.
-// Mengembalikan pointer *domain.Server jika ditemukan dan domain.ErrNotFound jika data tidak ada.
 func (r *ServerRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Server, error) {
 	query := `
 		SELECT s.id, s.organization_id, s.credential_id, s.provider_id, s.external_server_id, s.name, s.hostname, s.ip_address, s.status, s.os_type, s.cpu_cores, s.memory_mb, s.disk_gb, s.region, s.created_at, s.updated_at,
@@ -110,12 +99,6 @@ func (r *ServerRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.S
 	return &s, nil
 }
 
-// ListByOrg mengambil seluruh daftar server milik suatu organisasi dengan dukungan paginasi terurut tanggal pembuatan terbaru.
-// Parameter ctx merupakan konteks eksekusi query database.
-// Parameter orgID merupakan UUID organisasi pemilik server.
-// Parameter page merupakan nomor halaman data (1-based).
-// Parameter limit merupakan jumlah data per halaman.
-// Mengembalikan slice []domain.Server, total data int64, dan error jika query gagal.
 func (r *ServerRepository) ListByOrg(ctx context.Context, orgID uuid.UUID, page, limit int) ([]domain.Server, int64, error) {
 	if page < 1 {
 		page = 1
@@ -183,10 +166,6 @@ func (r *ServerRepository) ListByOrg(ctx context.Context, orgID uuid.UUID, page,
 	return servers, total, nil
 }
 
-// Update memperbarui data atribut konfigurasi server pada tabel servers.
-// Parameter ctx merupakan konteks eksekusi query database.
-// Parameter server merupakan pointer *domain.Server dengan data terbaru.
-// Mengembalikan error jika server tidak ditemukan atau query gagal.
 func (r *ServerRepository) Update(ctx context.Context, server *domain.Server) error {
 	query := `
 		UPDATE servers
@@ -206,11 +185,6 @@ func (r *ServerRepository) Update(ctx context.Context, server *domain.Server) er
 	return nil
 }
 
-// UpdateStatus memperbarui status operasional server tertentu.
-// Parameter ctx merupakan konteks eksekusi query database.
-// Parameter id merupakan UUID server.
-// Parameter status merupakan nilai ServerStatus baru.
-// Mengembalikan error jika server tidak ditemukan atau query gagal.
 func (r *ServerRepository) UpdateStatus(ctx context.Context, id uuid.UUID, status domain.ServerStatus) error {
 	query := `UPDATE servers SET status = $2 WHERE id = $1;`
 
@@ -226,9 +200,6 @@ func (r *ServerRepository) UpdateStatus(ctx context.Context, id uuid.UUID, statu
 	return nil
 }
 
-// ListAllRunning mengambil seluruh data server yang berstatus running lintas organisasi untuk keperluan evaluasi liveness.
-// Parameter ctx merupakan konteks eksekusi query.
-// Mengembalikan slice []domain.Server.
 func (r *ServerRepository) ListAllRunning(ctx context.Context) ([]domain.Server, error) {
 	query := `
 		SELECT s.id, s.organization_id, s.credential_id, s.provider_id, s.external_server_id, s.name, s.hostname, s.ip_address, s.status, s.os_type, s.cpu_cores, s.memory_mb, s.disk_gb, s.region, s.created_at, s.updated_at
@@ -271,10 +242,6 @@ func (r *ServerRepository) ListAllRunning(ctx context.Context) ([]domain.Server,
 	return servers, nil
 }
 
-// Delete menghapus server dari tabel servers berdasarkan identifier UUID.
-// Parameter ctx merupakan konteks eksekusi query database.
-// Parameter id merupakan UUID server yang akan dihapus.
-// Mengembalikan error jika server tidak ditemukan atau query gagal.
 func (r *ServerRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	query := `DELETE FROM servers WHERE id = $1;`
 
@@ -290,13 +257,6 @@ func (r *ServerRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
-// SetAgentSecret menyimpan hash Argon2id dan prefix plaintext secret agent ke kolom servers.
-// Dipanggil saat server pertama kali didaftarkan atau saat secret agent di-rotate.
-// Parameter ctx merupakan konteks eksekusi query.
-// Parameter serverID merupakan UUID server target.
-// Parameter secretHash merupakan string hash Argon2id dari agent secret.
-// Parameter secretPrefix merupakan 8 karakter pertama dari plaintext secret untuk tampilan di dashboard.
-// Mengembalikan error jika server tidak ditemukan atau query gagal.
 func (r *ServerRepository) SetAgentSecret(ctx context.Context, serverID uuid.UUID, secretHash, secretPrefix string) error {
 	query := `
 		UPDATE servers
@@ -316,11 +276,6 @@ func (r *ServerRepository) SetAgentSecret(ctx context.Context, serverID uuid.UUI
 	return nil
 }
 
-// GetByIDWithSecret mengambil data server beserta kolom agent_secret_hash untuk keperluan validasi middleware telemetri.
-// Berbeda dengan GetByID, method ini menyertakan agent_secret_hash yang tidak diekspos ke handler publik.
-// Parameter ctx merupakan konteks eksekusi query.
-// Parameter id merupakan UUID server yang dicari.
-// Mengembalikan *domain.Server dengan field AgentSecretHash terisi, atau error jika tidak ditemukan.
 func (r *ServerRepository) GetByIDWithSecret(ctx context.Context, id uuid.UUID) (*domain.Server, error) {
 	query := `
 		SELECT id, organization_id, credential_id, provider_id, external_server_id,
@@ -361,4 +316,3 @@ func (r *ServerRepository) GetByIDWithSecret(ctx context.Context, id uuid.UUID) 
 
 	return &s, nil
 }
-

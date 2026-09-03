@@ -18,7 +18,6 @@ import (
 	"github.com/havilz/caelus-cloud/agent/internal/transport"
 )
 
-// LinuxCollector mengumpulkan metrik sistem secara langsung dari Linux procfs dan syscall.
 type LinuxCollector struct {
 	mu          sync.Mutex
 	prevCPUTot  uint64
@@ -28,7 +27,6 @@ type LinuxCollector struct {
 	prevNetTime time.Time
 }
 
-// NewCollector membuat instance baru LinuxCollector.
 func NewCollector() Collector {
 	c := &LinuxCollector{
 		prevNetTime: time.Now(),
@@ -38,7 +36,6 @@ func NewCollector() Collector {
 	return c
 }
 
-// Collect mengumpulkan metrik lengkap dari sistem operasi Linux.
 func (c *LinuxCollector) Collect(_ context.Context) (*transport.HostMetrics, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -77,7 +74,6 @@ func (c *LinuxCollector) Collect(_ context.Context) (*transport.HostMetrics, err
 	}, nil
 }
 
-// initCPUTicks mengambil snapshot awal CPU ticks dari /proc/stat.
 func (c *LinuxCollector) initCPUTicks() error {
 	tot, idle, err := c.parseCPUTicks()
 	if err != nil {
@@ -88,7 +84,6 @@ func (c *LinuxCollector) initCPUTicks() error {
 	return nil
 }
 
-// parseCPUTicks membaca dan menjumlahkan ticks CPU dari /proc/stat.
 func (c *LinuxCollector) parseCPUTicks() (uint64, uint64, error) {
 	file, err := os.Open("/proc/stat")
 	if err != nil {
@@ -105,7 +100,7 @@ func (c *LinuxCollector) parseCPUTicks() (uint64, uint64, error) {
 			for i := 1; i < len(fields); i++ {
 				val, _ := strconv.ParseUint(fields[i], 10, 64)
 				total += val
-				if i == 4 || i == 5 { // idle + iowait
+				if i == 4 || i == 5 {
 					idle += val
 				}
 			}
@@ -118,7 +113,6 @@ func (c *LinuxCollector) parseCPUTicks() (uint64, uint64, error) {
 	return 0, 0, fmt.Errorf("invalid /proc/stat format")
 }
 
-// readCPUUsage menghitung persentase penggunaan CPU berdasarkan selisih ticks.
 func (c *LinuxCollector) readCPUUsage() float64 {
 	tot, idle, err := c.parseCPUTicks()
 	if err != nil || c.prevCPUTot == 0 {
@@ -144,7 +138,6 @@ func (c *LinuxCollector) readCPUUsage() float64 {
 	return usage
 }
 
-// readLoadAvg membaca nilai load average sistem dari /proc/loadavg.
 func (c *LinuxCollector) readLoadAvg() (float64, float64, float64) {
 	data, err := os.ReadFile("/proc/loadavg")
 	if err != nil {
@@ -160,7 +153,6 @@ func (c *LinuxCollector) readLoadAvg() (float64, float64, float64) {
 	return l1, l5, l15
 }
 
-// readMemory membaca dan menghitung alokasi RAM dari /proc/meminfo.
 func (c *LinuxCollector) readMemory() (uint64, uint64, uint64, uint64, float64) {
 	file, err := os.Open("/proc/meminfo")
 	if err != nil {
@@ -212,7 +204,6 @@ func (c *LinuxCollector) readMemory() (uint64, uint64, uint64, uint64, float64) 
 	return memTotal, memUsed, memFree, memAvail, memPct
 }
 
-// readDisk membaca kapasitas dan utilisasi partisi root (/) menggunakan syscall.Statfs.
 func (c *LinuxCollector) readDisk() (float64, float64, float64, float64) {
 	var stat syscall.Statfs_t
 	err := syscall.Statfs("/", &stat)
@@ -239,7 +230,6 @@ func (c *LinuxCollector) readDisk() (float64, float64, float64, float64) {
 	return totalGB, usedGB, freeGB, usagePct
 }
 
-// initNetCounters menginisialisasi nilai awal bytes jaringan dari /proc/net/dev.
 func (c *LinuxCollector) initNetCounters() error {
 	rx, tx, err := c.parseNetDev()
 	if err != nil {
@@ -251,7 +241,6 @@ func (c *LinuxCollector) initNetCounters() error {
 	return nil
 }
 
-// parseNetDev membaca akumulasi bytes RX dan TX dari seluruh interface aktif di /proc/net/dev.
 func (c *LinuxCollector) parseNetDev() (uint64, uint64, error) {
 	file, err := os.Open("/proc/net/dev")
 	if err != nil {
@@ -284,7 +273,6 @@ func (c *LinuxCollector) parseNetDev() (uint64, uint64, error) {
 	return totalRx, totalTx, nil
 }
 
-// readNetwork menghitung total transfer bytes dan laju throughput (KB/s).
 func (c *LinuxCollector) readNetwork() (uint64, uint64, float64, float64) {
 	now := time.Now()
 	rx, tx, err := c.parseNetDev()
@@ -310,7 +298,6 @@ func (c *LinuxCollector) readNetwork() (uint64, uint64, float64, float64) {
 	return rx, tx, rateRx, rateTx
 }
 
-// readUptime membaca total durasi aktif sistem (detik) dari /proc/uptime.
 func (c *LinuxCollector) readUptime() uint64 {
 	data, err := os.ReadFile("/proc/uptime")
 	if err != nil {

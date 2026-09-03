@@ -10,7 +10,7 @@ import {
 } from '@/types/storage';
 
 export const storageService = {
-  // 1. Buckets
+  
   async listBuckets(page = 1, limit = 20): Promise<PaginatedResponse<Bucket>> {
     const res = await apiClient.get<PaginatedResponse<Bucket>>('/storage/buckets', {
       params: { page, limit },
@@ -37,7 +37,6 @@ export const storageService = {
     await apiClient.delete(`/storage/buckets/${name}`);
   },
 
-  // 2. Objects & Explorer
   async listObjects(
     bucketName: string,
     prefix = '',

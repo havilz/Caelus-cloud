@@ -88,7 +88,6 @@ func (m *mockProviderRepo) List(ctx context.Context) ([]domain.Provider, error) 
 	return list, nil
 }
 
-// TestEncryptor_AES256GCM memverifikasi enkripsi simetris AES-256-GCM dan dekripsi data rahasia.
 func TestEncryptor_AES256GCM(t *testing.T) {
 	key := []byte("12345678901234567890123456789012")
 	plainText := "secret_api_key_value_98765"
@@ -114,7 +113,6 @@ func TestEncryptor_AES256GCM(t *testing.T) {
 	}
 }
 
-// TestCredentialUsecase_Create_Success memverifikasi pembuatan kredensial provider dengan enkripsi otomatis field sensitif.
 func TestCredentialUsecase_Create_Success(t *testing.T) {
 	key := []byte("12345678901234567890123456789012")
 	credRepo := newMockCredRepo()
@@ -157,7 +155,6 @@ func TestCredentialUsecase_Create_Success(t *testing.T) {
 	}
 }
 
-// TestCredentialUsecase_GetAndList_Success memverifikasi pengambilan data kredensial berdasarkan ID dan daftar kredensial milik organisasi.
 func TestCredentialUsecase_GetAndList_Success(t *testing.T) {
 	key := []byte("12345678901234567890123456789012")
 	credRepo := newMockCredRepo()
@@ -187,7 +184,6 @@ func TestCredentialUsecase_GetAndList_Success(t *testing.T) {
 	}
 }
 
-// TestCredentialUsecase_Get_ForbiddenOrg memverifikasi bahwa organisasi lain dilarang mengakses kredensial yang bukan miliknya.
 func TestCredentialUsecase_Get_ForbiddenOrg(t *testing.T) {
 	key := []byte("12345678901234567890123456789012")
 	credRepo := newMockCredRepo()
@@ -213,7 +209,6 @@ func TestCredentialUsecase_Get_ForbiddenOrg(t *testing.T) {
 	}
 }
 
-// TestCredentialUsecase_Update_Success memverifikasi pembaruan data kredensial dan enkripsi ulang secret.
 func TestCredentialUsecase_Update_Success(t *testing.T) {
 	key := []byte("12345678901234567890123456789012")
 	credRepo := newMockCredRepo()
@@ -252,7 +247,6 @@ func TestCredentialUsecase_Update_Success(t *testing.T) {
 	}
 }
 
-// TestCredentialUsecase_Delete_Success memverifikasi penghapusan kredensial provider dari sistem.
 func TestCredentialUsecase_Delete_Success(t *testing.T) {
 	key := []byte("12345678901234567890123456789012")
 	credRepo := newMockCredRepo()

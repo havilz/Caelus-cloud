@@ -12,14 +12,12 @@ export const ApiKeysTab: React.FC = () => {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
-  // Create Key Modal
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [keyName, setKeyName] = useState("");
   const [expiresInDays, setExpiresInDays] = useState(30);
   const [isCreating, setIsCreating] = useState(false);
   const [createModalError, setCreateModalError] = useState<string | null>(null);
 
-  // Newly Created Token Display (Shown once)
   const [createdToken, setCreatedToken] = useState<string | null>(null);
   const [hasCopied, setHasCopied] = useState(false);
 
@@ -92,7 +90,7 @@ export const ApiKeysTab: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Banner Token Baru Dibuat */}
+      {}
       {createdToken && (
         <div className="p-4 rounded-xl bg-amber-950/40 border border-amber-500/40 text-amber-200 space-y-3">
           <div className="flex items-center justify-between">
@@ -130,7 +128,7 @@ export const ApiKeysTab: React.FC = () => {
         </div>
       )}
 
-      {/* Header & Aksi */}
+      {}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h3 className="text-sm font-semibold text-zinc-100">Personal Access Tokens & Developer API Keys</h3>
@@ -162,7 +160,7 @@ export const ApiKeysTab: React.FC = () => {
         </div>
       )}
 
-      {/* Daftar Token */}
+      {}
       {apiKeys.length === 0 ? (
         <div className={`${AppTheme.containers.card} text-center py-12 space-y-3`}>
           <div className="mx-auto w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-500">
@@ -214,7 +212,7 @@ export const ApiKeysTab: React.FC = () => {
         </div>
       )}
 
-      {/* Modal Buat Token */}
+      {}
       {isCreateModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-4">
           <div className="bg-[#141414] border border-[#2e2e2e] rounded-xl w-full max-w-md p-6 shadow-2xl space-y-4">

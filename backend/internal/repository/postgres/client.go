@@ -5,19 +5,15 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/havilz/caelus-cloud/backend/pkg/config"
 	"github.com/havilz/caelus-cloud/backend/pkg/logger"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Client struct {
 	Pool *pgxpool.Pool
 }
 
-// NewClient menginisialisasi connection pool PostgreSQL menggunakan pgxpool berdasarkan konfigurasi yang diberikan.
-// Parameter ctx merupakan konteks eksekusi untuk inisialisasi dan ping koneksi awal.
-// Parameter cfg merupakan pointer *config.DatabaseConfig yang memuat kredensial dan parameter pool database.
-// Mengembalikan pointer *Client yang berisi connection pool aktif dan error jika inisialisasi koneksi gagal.
 func NewClient(ctx context.Context, cfg *config.DatabaseConfig) (*Client, error) {
 	connStr := fmt.Sprintf(
 		"postgres://%s:%s@%s:%s/%s?sslmode=%s",
@@ -61,7 +57,6 @@ func NewClient(ctx context.Context, cfg *config.DatabaseConfig) (*Client, error)
 	return &Client{Pool: pool}, nil
 }
 
-// Close menutup seluruh koneksi di dalam connection pool database secara aman.
 func (c *Client) Close() {
 	if c.Pool != nil {
 		c.Pool.Close()
@@ -69,9 +64,6 @@ func (c *Client) Close() {
 	}
 }
 
-// Ping memeriksa ketersediaan dan status kesehatan koneksi database aktif.
-// Parameter ctx merupakan konteks batas waktu pengujian ping.
-// Mengembalikan error jika database tidak dapat dijangkau.
 func (c *Client) Ping(ctx context.Context) error {
 	return c.Pool.Ping(ctx)
 }

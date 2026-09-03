@@ -10,7 +10,6 @@ import (
 	"github.com/havilz/caelus-cloud/backend/internal/usecase/orchestration"
 )
 
-// MockDeploymentRepo implements domain.DeploymentRepository in-memory.
 type MockDeploymentRepo struct {
 	deployments map[uuid.UUID]*domain.Deployment
 	logs        map[uuid.UUID][]domain.DeploymentLog
@@ -106,7 +105,6 @@ func TestDeployment_PipelineExecution(t *testing.T) {
 		t.Fatal("deployment ID is empty")
 	}
 
-	// Wait for pipeline execution to complete asynchronously
 	var updated *domain.Deployment
 	for i := 0; i < 40; i++ {
 		time.Sleep(250 * time.Millisecond)
@@ -133,7 +131,6 @@ func TestDeployment_PipelineExecution(t *testing.T) {
 		t.Error("expected deployment logs to be recorded, got 0 logs")
 	}
 
-	// Test Stop Deployment
 	if err := uc.StopDeployment(ctx, dep.ID); err != nil {
 		t.Fatalf("failed stopping deployment: %v", err)
 	}
@@ -142,7 +139,6 @@ func TestDeployment_PipelineExecution(t *testing.T) {
 		t.Errorf("expected deployment status Stopped, got %s", stopped.Status)
 	}
 
-	// Test Rollback Deployment
 	rolledBackDep, err := uc.RollbackDeployment(ctx, dep.ID)
 	if err != nil {
 		t.Fatalf("failed triggering rollback deployment: %v", err)

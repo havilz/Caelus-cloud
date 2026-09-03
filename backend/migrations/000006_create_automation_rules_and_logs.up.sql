@@ -1,5 +1,5 @@
 -- Migration 000006: Create Automation Rules and Execution Logs Table with RLS
--- Tabel untuk menyimpan aturan otomasi berbasis Event-Condition-Action (ECA)
+-- Automation rules table based on Event-Condition-Action (ECA)
 
 CREATE TABLE IF NOT EXISTS automation_rules (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS automation_rules (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Indeks performa untuk query aturan otomasi berdasarkan organisasi dan status aktif
+-- Performance indexes for querying automation rules by organization and active status
 CREATE INDEX IF NOT EXISTS idx_automation_rules_org ON automation_rules(organization_id);
 CREATE INDEX IF NOT EXISTS idx_automation_rules_active ON automation_rules(organization_id, is_active);
 CREATE INDEX IF NOT EXISTS idx_automation_rules_trigger ON automation_rules(trigger_type);
@@ -29,7 +29,7 @@ CREATE TRIGGER update_automation_rules_updated_at
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
--- Tabel untuk mencatat log riwayat audit eksekusi aturan otomasi
+-- Execution audit log history table for automation rules
 CREATE TABLE IF NOT EXISTS automation_execution_logs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     rule_id UUID NOT NULL REFERENCES automation_rules(id) ON DELETE CASCADE,

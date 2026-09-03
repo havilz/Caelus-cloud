@@ -14,7 +14,6 @@ type storageFactory struct {
 	adapters map[domain.StorageProviderType]domain.ObjectStorageAdapter
 }
 
-// NewStorageFactory menginisialisasi factory penyimpanan multi-provider dengan adapter bawaan MockStorageAdapter.
 func NewStorageFactory() domain.StorageFactory {
 	f := &storageFactory{
 		adapters: make(map[domain.StorageProviderType]domain.ObjectStorageAdapter),
@@ -23,7 +22,6 @@ func NewStorageFactory() domain.StorageFactory {
 	return f
 }
 
-// GetAdapter mengambil implementasi ObjectStorageAdapter berdasarkan tipe penyedia storage.
 func (f *storageFactory) GetAdapter(providerType domain.StorageProviderType) (domain.ObjectStorageAdapter, error) {
 	f.mu.RLock()
 	defer f.mu.RUnlock()
@@ -31,7 +29,7 @@ func (f *storageFactory) GetAdapter(providerType domain.StorageProviderType) (do
 	normalized := domain.StorageProviderType(strings.ToLower(strings.TrimSpace(string(providerType))))
 	adapter, exists := f.adapters[normalized]
 	if !exists {
-		// Fallback ke minio jika ada
+
 		if minioAdapter, hasMinio := f.adapters[domain.StorageProviderMinIO]; hasMinio {
 			return minioAdapter, nil
 		}
@@ -41,7 +39,6 @@ func (f *storageFactory) GetAdapter(providerType domain.StorageProviderType) (do
 	return adapter, nil
 }
 
-// RegisterAdapter mendaftarkan implementasi ObjectStorageAdapter baru ke dalam factory.
 func (f *storageFactory) RegisterAdapter(providerType domain.StorageProviderType, adapter domain.ObjectStorageAdapter) {
 	f.mu.Lock()
 	defer f.mu.Unlock()

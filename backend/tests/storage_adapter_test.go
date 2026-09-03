@@ -19,7 +19,6 @@ import (
 func TestStorageFactory_RegisterAndGetAdapter(t *testing.T) {
 	factory := storage.NewStorageFactory()
 
-	// Default Mock Adapter harus langsung tersedia
 	mockAdapter, err := factory.GetAdapter(domain.StorageProviderMock)
 	if err != nil {
 		t.Fatalf("expected mock adapter to be registered, got error: %v", err)
@@ -28,13 +27,11 @@ func TestStorageFactory_RegisterAndGetAdapter(t *testing.T) {
 		t.Fatal("expected non-nil mock adapter")
 	}
 
-	// Adapter yang belum didaftarkan harus menghasilkan error NotFound
 	_, err = factory.GetAdapter(domain.StorageProviderS3)
 	if err == nil {
 		t.Fatal("expected error for unregistered s3 adapter, got nil")
 	}
 
-	// Daftarkan custom adapter
 	customMock := mock.NewMockStorageAdapter()
 	factory.RegisterAdapter(domain.StorageProviderS3, customMock)
 
@@ -53,7 +50,6 @@ func TestStorageAdapter_BucketLifecycle(t *testing.T) {
 
 	bucketName := "caelus-production-assets"
 
-	// 1. Bucket belum ada
 	exists, err := adapter.BucketExists(ctx, bucketName)
 	if err != nil {
 		t.Fatalf("failed to check bucket exists: %v", err)
@@ -62,12 +58,10 @@ func TestStorageAdapter_BucketLifecycle(t *testing.T) {
 		t.Fatal("expected bucket to not exist initially")
 	}
 
-	// 2. Buat Bucket
 	if err := adapter.CreateBucket(ctx, bucketName, "ap-southeast-1"); err != nil {
 		t.Fatalf("failed to create bucket: %v", err)
 	}
 
-	// 3. Bucket harus ada
 	exists, err = adapter.BucketExists(ctx, bucketName)
 	if err != nil {
 		t.Fatalf("failed to check bucket exists after creation: %v", err)
@@ -76,12 +70,10 @@ func TestStorageAdapter_BucketLifecycle(t *testing.T) {
 		t.Fatal("expected bucket to exist after creation")
 	}
 
-	// 4. Mencegah duplikasi nama bucket
 	if err := adapter.CreateBucket(ctx, bucketName, "ap-southeast-1"); err == nil {
 		t.Fatal("expected conflict error when creating duplicate bucket, got nil")
 	}
 
-	// 5. List Buckets
 	buckets, err := adapter.ListBuckets(ctx)
 	if err != nil {
 		t.Fatalf("failed to list buckets: %v", err)
@@ -90,12 +82,10 @@ func TestStorageAdapter_BucketLifecycle(t *testing.T) {
 		t.Fatalf("expected 1 bucket with name %s, got: %+v", bucketName, buckets)
 	}
 
-	// 6. Hapus Bucket kosong
 	if err := adapter.DeleteBucket(ctx, bucketName); err != nil {
 		t.Fatalf("failed to delete empty bucket: %v", err)
 	}
 
-	// 7. Bucket harus sudah hilang
 	exists, _ = adapter.BucketExists(ctx, bucketName)
 	if exists {
 		t.Fatal("expected bucket to be deleted")
@@ -112,7 +102,6 @@ func TestStorageAdapter_ObjectOperations(t *testing.T) {
 	testContent := "Hello, Caelus Cloud Object Storage! Multi-cloud infrastructure."
 	testKey := "documents/reports/q3_summary.txt"
 
-	// 1. Upload Object
 	uploadRes, err := adapter.UploadObject(ctx, domain.UploadObjectInput{
 		BucketName:  bucketName,
 		Key:         testKey,
@@ -133,12 +122,10 @@ func TestStorageAdapter_ObjectOperations(t *testing.T) {
 		t.Fatal("expected valid ETag for uploaded object")
 	}
 
-	// 2. Mencegah penghapusan bucket yang masih berisi objek
 	if err := adapter.DeleteBucket(ctx, bucketName); err == nil {
 		t.Fatal("expected error when deleting non-empty bucket, got nil")
 	}
 
-	// 3. Get Object Metadata (HeadObject)
 	meta, err := adapter.GetObjectMetadata(ctx, bucketName, testKey)
 	if err != nil {
 		t.Fatalf("failed to get object metadata: %v", err)
@@ -147,7 +134,6 @@ func TestStorageAdapter_ObjectOperations(t *testing.T) {
 		t.Fatalf("unexpected metadata result: %+v", meta)
 	}
 
-	// 4. Download Object
 	content, err := adapter.DownloadObject(ctx, bucketName, testKey)
 	if err != nil {
 		t.Fatalf("failed to download object: %v", err)
@@ -162,7 +148,6 @@ func TestStorageAdapter_ObjectOperations(t *testing.T) {
 		t.Fatalf("downloaded content mismatch. Expected %q, got %q", testContent, string(downloadedBytes))
 	}
 
-	// 5. Upload second object in different folder
 	_, _ = adapter.UploadObject(ctx, domain.UploadObjectInput{
 		BucketName: bucketName,
 		Key:        "images/banner.png",
@@ -170,7 +155,6 @@ func TestStorageAdapter_ObjectOperations(t *testing.T) {
 		Size:       15,
 	})
 
-	// 6. List Objects dengan Delimiter "/" (Virtual Folders)
 	objects, folders, err := adapter.ListObjects(ctx, bucketName, "", "/", 100)
 	if err != nil {
 		t.Fatalf("failed to list objects: %v", err)
@@ -182,7 +166,6 @@ func TestStorageAdapter_ObjectOperations(t *testing.T) {
 		t.Fatalf("expected 0 root objects, got: %+v", objects)
 	}
 
-	// 7. List Objects di dalam subfolder "documents/"
 	subObjects, _, err := adapter.ListObjects(ctx, bucketName, "documents/", "", 100)
 	if err != nil {
 		t.Fatalf("failed to list subfolder objects: %v", err)
@@ -191,7 +174,6 @@ func TestStorageAdapter_ObjectOperations(t *testing.T) {
 		t.Fatalf("expected 1 sub object, got: %+v", subObjects)
 	}
 
-	// 8. Generate Signed URLs (Download & Upload)
 	downloadURL, err := adapter.GenerateSignedURL(ctx, bucketName, testKey, domain.SignedURLOpDownload, 10*time.Minute)
 	if err != nil {
 		t.Fatalf("failed to generate presigned download URL: %v", err)
@@ -208,25 +190,22 @@ func TestStorageAdapter_ObjectOperations(t *testing.T) {
 		t.Fatalf("invalid presigned upload URL: %s", uploadURL)
 	}
 
-	// 9. Batch Delete Objects
 	if err := adapter.DeleteObjects(ctx, bucketName, []string{testKey, "images/banner.png"}); err != nil {
 		t.Fatalf("failed to batch delete objects: %v", err)
 	}
 
-	// 10. Verifikasi objek sudah kosong
 	remainingObjs, _, _ := adapter.ListObjects(ctx, bucketName, "", "", 100)
 	if len(remainingObjs) != 0 {
 		t.Fatalf("expected 0 remaining objects after batch delete, got %d", len(remainingObjs))
 	}
 
-	// 11. Hapus bucket setelah kosong
 	if err := adapter.DeleteBucket(ctx, bucketName); err != nil {
 		t.Fatalf("failed to delete bucket after cleanup: %v", err)
 	}
 }
 
 func TestStorageAdapter_ProviderInitialization(t *testing.T) {
-	// MinIO Adapter initialization
+
 	minioAdapter, err := minio.NewAdapter(minio.Config{
 		Endpoint:        "http://localhost:9000",
 		AccessKeyID:     "minioadmin",
@@ -239,7 +218,6 @@ func TestStorageAdapter_ProviderInitialization(t *testing.T) {
 		t.Fatal("expected non-nil MinIO adapter")
 	}
 
-	// S3 Adapter initialization
 	s3Adapter, err := s3.NewAdapter(s3.Config{
 		Region:          "ap-southeast-1",
 		AccessKeyID:     "AKIAIOSFODNN7EXAMPLE",
@@ -253,9 +231,8 @@ func TestStorageAdapter_ProviderInitialization(t *testing.T) {
 		t.Fatal("expected non-nil S3 adapter")
 	}
 
-	// Cloudflare R2 Adapter initialization validation
 	_, err = r2.NewAdapter(r2.Config{
-		AccountID: "", // Account ID kosong harus gagal
+		AccountID: "",
 	})
 	if err == nil {
 		t.Fatal("expected validation error for empty Cloudflare account ID, got nil")

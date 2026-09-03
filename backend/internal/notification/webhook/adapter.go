@@ -12,7 +12,6 @@ import (
 	"time"
 )
 
-// WebhookPayload merepresentasikan payload JSON yang dikirimkan ke URL Webhook eksternal.
 type WebhookPayload struct {
 	EventID        string         `json:"event_id"`
 	EventType      string         `json:"event_type"`
@@ -23,15 +22,11 @@ type WebhookPayload struct {
 	Data           map[string]any `json:"data"`
 }
 
-// Client mendefinisikan adapter pengirim Webhook HTTP POST.
 type Client struct {
 	httpClient *http.Client
 	secretKey  string
 }
 
-// NewClient membuat instance Webhook Client baru dengan timeout standar 5 detik.
-// Parameter secretKey digunakan untuk menandatangani payload dengan HMAC-SHA256 (opsional).
-// Mengembalikan pointer *Client.
 func NewClient(secretKey string) *Client {
 	return &Client{
 		httpClient: &http.Client{
@@ -41,11 +36,6 @@ func NewClient(secretKey string) *Client {
 	}
 }
 
-// SendWebhook mengirimkan HTTP POST request ke target URL dengan payload JSON dan HMAC header signature.
-// Parameter ctx merupakan context pemanggilan.
-// Parameter targetURL merupakan alamat URL webhook tujuan.
-// Parameter payload merupakan data webhook yang dikirimkan.
-// Mengembalikan error jika pengiriman gagal atau response status code >= 400.
 func (c *Client) SendWebhook(ctx context.Context, targetURL string, payload WebhookPayload) error {
 	if targetURL == "" {
 		return fmt.Errorf("target webhook URL cannot be empty")
@@ -64,7 +54,6 @@ func (c *Client) SendWebhook(ctx context.Context, targetURL string, payload Webh
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("User-Agent", "Caelus-Cloud-Webhook/1.0")
 
-	// Tambahkan HMAC-SHA256 signature jika secretKey dikonfigurasi
 	if c.secretKey != "" {
 		mac := hmac.New(sha256.New, []byte(c.secretKey))
 		mac.Write(bodyBytes)

@@ -14,20 +14,14 @@ import (
 	automationUc "github.com/havilz/caelus-cloud/backend/internal/usecase/automation"
 )
 
-// AutomationHandler menangani permintaan HTTP endpoint manajemen aturan otomasi dan log riwayat eksekusi.
 type AutomationHandler struct {
 	usecase automationUc.AutomationUsecase
 }
 
-// NewAutomationHandler membuat instance baru AutomationHandler.
-// Parameter uc merupakan implementasi AutomationUsecase.
-// Mengembalikan pointer *AutomationHandler.
 func NewAutomationHandler(uc automationUc.AutomationUsecase) *AutomationHandler {
 	return &AutomationHandler{usecase: uc}
 }
 
-// CreateRule menangani pembuatan aturan otomasi baru.
-// POST /api/v1/automation/rules
 func (h *AutomationHandler) CreateRule(w http.ResponseWriter, r *http.Request) {
 	orgID, ok := middleware.GetOrganizationIDFromContext(r.Context())
 	if !ok || orgID == uuid.Nil {
@@ -51,8 +45,6 @@ func (h *AutomationHandler) CreateRule(w http.ResponseWriter, r *http.Request) {
 	response.Success(w, http.StatusCreated, "Automation rule created successfully", rule)
 }
 
-// ListRules mengambil daftar aturan otomasi terpaginasi milik organisasi.
-// GET /api/v1/automation/rules
 func (h *AutomationHandler) ListRules(w http.ResponseWriter, r *http.Request) {
 	orgID, ok := middleware.GetOrganizationIDFromContext(r.Context())
 	if !ok || orgID == uuid.Nil {
@@ -78,8 +70,6 @@ func (h *AutomationHandler) ListRules(w http.ResponseWriter, r *http.Request) {
 	response.Paginated(w, http.StatusOK, "Automation rules retrieved successfully", rules, page, limit, int64(total))
 }
 
-// GetRule mengambil detail satu aturan otomasi berdasarkan ID.
-// GET /api/v1/automation/rules/{id}
 func (h *AutomationHandler) GetRule(w http.ResponseWriter, r *http.Request) {
 	orgID, ok := middleware.GetOrganizationIDFromContext(r.Context())
 	if !ok || orgID == uuid.Nil {
@@ -107,8 +97,6 @@ func (h *AutomationHandler) GetRule(w http.ResponseWriter, r *http.Request) {
 	response.Success(w, http.StatusOK, "Automation rule retrieved successfully", rule)
 }
 
-// UpdateRule memperbarui konfigurasi aturan otomasi.
-// PUT /api/v1/automation/rules/{id}
 func (h *AutomationHandler) UpdateRule(w http.ResponseWriter, r *http.Request) {
 	orgID, ok := middleware.GetOrganizationIDFromContext(r.Context())
 	if !ok || orgID == uuid.Nil {
@@ -142,8 +130,6 @@ func (h *AutomationHandler) UpdateRule(w http.ResponseWriter, r *http.Request) {
 	response.Success(w, http.StatusOK, "Automation rule updated successfully", rule)
 }
 
-// DeleteRule menghapus aturan otomasi.
-// DELETE /api/v1/automation/rules/{id}
 func (h *AutomationHandler) DeleteRule(w http.ResponseWriter, r *http.Request) {
 	orgID, ok := middleware.GetOrganizationIDFromContext(r.Context())
 	if !ok || orgID == uuid.Nil {
@@ -170,8 +156,6 @@ func (h *AutomationHandler) DeleteRule(w http.ResponseWriter, r *http.Request) {
 	response.Success(w, http.StatusOK, "Automation rule deleted successfully", nil)
 }
 
-// TestRule melakukan uji coba eksekusi manual satu aturan otomasi.
-// POST /api/v1/automation/rules/{id}/test
 func (h *AutomationHandler) TestRule(w http.ResponseWriter, r *http.Request) {
 	orgID, ok := middleware.GetOrganizationIDFromContext(r.Context())
 	if !ok || orgID == uuid.Nil {
@@ -204,8 +188,6 @@ func (h *AutomationHandler) TestRule(w http.ResponseWriter, r *http.Request) {
 	response.Success(w, http.StatusOK, "Automation rule test executed successfully", log)
 }
 
-// ListLogs mengambil daftar log riwayat eksekusi otomasi terpaginasi.
-// GET /api/v1/automation/logs
 func (h *AutomationHandler) ListLogs(w http.ResponseWriter, r *http.Request) {
 	orgID, ok := middleware.GetOrganizationIDFromContext(r.Context())
 	if !ok || orgID == uuid.Nil {

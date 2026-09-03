@@ -6,25 +6,18 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/havilz/caelus-cloud/backend/internal/domain"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type AuditRepository struct {
 	pool *pgxpool.Pool
 }
 
-// NewAuditRepository menginisialisasi repository AuditLog berbasis database PostgreSQL.
-// Parameter pool merupakan instance koneksi pool *pgxpool.Pool.
-// Mengembalikan pointer *AuditRepository yang mengimplementasikan domain.AuditLogRepository.
 func NewAuditRepository(pool *pgxpool.Pool) *AuditRepository {
 	return &AuditRepository{pool: pool}
 }
 
-// Create menyimpan rekaman log audit baru ke dalam tabel audit_logs.
-// Parameter ctx merupakan konteks eksekusi query database.
-// Parameter log memuat pointer entitas *domain.AuditLog yang akan disimpan.
-// Mengembalikan error jika terjadi kegagalan eksekusi query atau serialisasi payload.
 func (r *AuditRepository) Create(ctx context.Context, log *domain.AuditLog) error {
 	query := `
 		INSERT INTO audit_logs (id, organization_id, user_id, action, resource_type, resource_id, ip_address, user_agent, payload, created_at)
@@ -61,12 +54,6 @@ func (r *AuditRepository) Create(ctx context.Context, log *domain.AuditLog) erro
 	).Scan(&log.ID, &log.CreatedAt)
 }
 
-// ListByOrg mengambil daftar log audit berdasarkan organisasi dengan dukungan paginasi.
-// Parameter ctx merupakan konteks eksekusi query database.
-// Parameter orgID merupakan UUID organisasi yang diaudit.
-// Parameter page merupakan nomor halaman data (1-based).
-// Parameter limit merupakan jumlah data per halaman.
-// Mengembalikan slice []domain.AuditLog, total data int64, dan error jika query gagal.
 func (r *AuditRepository) ListByOrg(ctx context.Context, orgID uuid.UUID, page, limit int) ([]domain.AuditLog, int64, error) {
 	if page < 1 {
 		page = 1

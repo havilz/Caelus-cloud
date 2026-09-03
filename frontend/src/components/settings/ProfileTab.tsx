@@ -15,7 +15,6 @@ export const ProfileTab: React.FC = () => {
   const [profileError, setProfileError] = useState<string | null>(null);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
 
-  // Password change state
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -103,7 +102,7 @@ export const ProfileTab: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Profil Pribadi */}
+      {}
       <div className={AppTheme.containers.card}>
         <div className="border-b border-[#262626] pb-4 mb-5 flex items-center gap-3">
           <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
@@ -175,7 +174,7 @@ export const ProfileTab: React.FC = () => {
         </form>
       </div>
 
-      {/* Keamanan & Ganti Password */}
+      {}
       <div className={AppTheme.containers.card}>
         <div className="border-b border-[#262626] pb-4 mb-5 flex items-center gap-3">
           <div className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400">
@@ -250,7 +249,7 @@ export const ProfileTab: React.FC = () => {
         </form>
       </div>
 
-      {/* Two-Factor Authentication Info */}
+      {}
       <div className={AppTheme.containers.card}>
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">

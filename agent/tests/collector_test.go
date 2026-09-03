@@ -8,7 +8,6 @@ import (
 	"github.com/havilz/caelus-cloud/agent/internal/collector"
 )
 
-// TestCollector_CollectSuccess memverifikasi bahwa pengumpul metrik mengembalikan data host valid.
 func TestCollector_CollectSuccess(t *testing.T) {
 	c := collector.NewCollector()
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -44,7 +43,6 @@ func TestCollector_CollectSuccess(t *testing.T) {
 	}
 }
 
-// TestCollector_ConsecutiveDeltaCalculation memverifikasi bahwa pemanggilan berturut-turut menghitung delta dengan benar.
 func TestCollector_ConsecutiveDeltaCalculation(t *testing.T) {
 	c := collector.NewCollector()
 	ctx := context.Background()

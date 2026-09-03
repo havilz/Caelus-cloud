@@ -36,7 +36,6 @@ export default function StorageExplorerPage({ params }: StorageExplorerPageProps
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Modals
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [signedUrlTarget, setSignedUrlTarget] = useState<string | null>(null);
   const [deletingKey, setDeletingKey] = useState<string | null>(null);
@@ -92,7 +91,6 @@ export default function StorageExplorerPage({ params }: StorageExplorerPageProps
     }
   };
 
-  // Breadcrumbs segments
   const breadcrumbParts = currentPrefix.split('/').filter(Boolean);
 
   const navigateToBreadcrumb = (index: number) => {
@@ -121,7 +119,7 @@ export default function StorageExplorerPage({ params }: StorageExplorerPageProps
 
   return (
     <div className={AppContainers.pageWrapper}>
-      {/* Top Header */}
+      {}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center space-x-3">
           <Link
@@ -158,11 +156,11 @@ export default function StorageExplorerPage({ params }: StorageExplorerPageProps
         </div>
       </div>
 
-      {/* Explorer Container */}
+      {}
       <div className={AppContainers.card}>
-        {/* Navigation Breadcrumbs & Search Toolbar */}
+        {}
         <div className="p-4 border-b border-[#262626] flex flex-col sm:flex-row items-center justify-between gap-3">
-          {/* Breadcrumb Path */}
+          {}
           <div className="flex items-center space-x-1.5 overflow-x-auto w-full sm:w-auto text-xs custom-scrollbar py-1">
             <button
               onClick={() => navigateToBreadcrumb(-1)}
@@ -192,7 +190,7 @@ export default function StorageExplorerPage({ params }: StorageExplorerPageProps
             ))}
           </div>
 
-          {/* Search Key */}
+          {}
           <div className="relative w-full sm:w-72">
             <Search className="w-4 h-4 text-[#707070] absolute left-3 top-1/2 -translate-y-1/2" />
             <input
@@ -205,7 +203,7 @@ export default function StorageExplorerPage({ params }: StorageExplorerPageProps
           </div>
         </div>
 
-        {/* Content Table */}
+        {}
         {loading ? (
           <div className="p-12 flex flex-col items-center justify-center space-y-3">
             <Loader2 className="w-6 h-6 animate-spin text-emerald-400" />
@@ -243,7 +241,7 @@ export default function StorageExplorerPage({ params }: StorageExplorerPageProps
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#262626] text-xs">
-                {/* Folders */}
+                {}
                 {filteredFolders.map((folderPath) => {
                   const folderDisplayName = folderPath.replace(currentPrefix, '');
                   return (
@@ -263,7 +261,7 @@ export default function StorageExplorerPage({ params }: StorageExplorerPageProps
                   );
                 })}
 
-                {/* Objects */}
+                {}
                 {filteredObjects.map((obj) => {
                   const fileName = obj.key.replace(currentPrefix, '');
                   const isDeleting = deletingKey === obj.key;
@@ -298,7 +296,7 @@ export default function StorageExplorerPage({ params }: StorageExplorerPageProps
 
                       <td className="py-3 px-4 text-right">
                         <div className="flex items-center justify-end space-x-1.5">
-                          {/* Presigned URL */}
+                          {}
                           <button
                             onClick={() => setSignedUrlTarget(obj.key)}
                             className="p-1.5 rounded-md text-[#707070] hover:text-cyan-400 hover:bg-cyan-950/30 transition-colors"
@@ -307,7 +305,7 @@ export default function StorageExplorerPage({ params }: StorageExplorerPageProps
                             <KeyRound className="w-3.5 h-3.5" />
                           </button>
 
-                          {/* Direct Download */}
+                          {}
                           <button
                             onClick={() => handleDownload(obj.key)}
                             className="p-1.5 rounded-md text-[#707070] hover:text-emerald-400 hover:bg-emerald-950/30 transition-colors"
@@ -316,7 +314,7 @@ export default function StorageExplorerPage({ params }: StorageExplorerPageProps
                             <Download className="w-3.5 h-3.5" />
                           </button>
 
-                          {/* Delete */}
+                          {}
                           <button
                             onClick={() => handleDelete(obj.key)}
                             disabled={isDeleting}
@@ -340,7 +338,7 @@ export default function StorageExplorerPage({ params }: StorageExplorerPageProps
         )}
       </div>
 
-      {/* Upload Modal */}
+      {}
       <UploadObjectModal
         isOpen={isUploadOpen}
         bucketName={bucketName}
@@ -349,7 +347,7 @@ export default function StorageExplorerPage({ params }: StorageExplorerPageProps
         onSuccess={fetchObjects}
       />
 
-      {/* Presigned URL Modal */}
+      {}
       {signedUrlTarget && (
         <GenerateSignedUrlModal
           isOpen={true}

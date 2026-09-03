@@ -7,21 +7,19 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/havilz/caelus-cloud/backend/internal/domain"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/havilz/caelus-cloud/backend/internal/domain"
 )
 
 type AlertRepository struct {
 	pool *pgxpool.Pool
 }
 
-// NewAlertRepository menginisialisasi repository Alert dan AlertRule berbasis database PostgreSQL.
 func NewAlertRepository(pool *pgxpool.Pool) *AlertRepository {
 	return &AlertRepository{pool: pool}
 }
 
-// CreateAlert menyimpan data insiden alert baru ke dalam database.
 func (r *AlertRepository) CreateAlert(ctx context.Context, alert *domain.Alert) error {
 	query := `
 		INSERT INTO alerts (
@@ -63,7 +61,6 @@ func (r *AlertRepository) CreateAlert(ctx context.Context, alert *domain.Alert) 
 	).Scan(&alert.ID, &alert.CreatedAt)
 }
 
-// GetAlertByID mengambil detail satu entitas alert berdasarkan ID.
 func (r *AlertRepository) GetAlertByID(ctx context.Context, id uuid.UUID) (*domain.Alert, error) {
 	query := `
 		SELECT
@@ -105,7 +102,6 @@ func (r *AlertRepository) GetAlertByID(ctx context.Context, id uuid.UUID) (*doma
 	return &a, nil
 }
 
-// ListAlertsByOrg mengambil daftar alert milik organisasi dengan paginasi dan filter status opsional.
 func (r *AlertRepository) ListAlertsByOrg(ctx context.Context, orgID uuid.UUID, status *domain.AlertStatus, page, limit int) ([]domain.Alert, int64, error) {
 	if page < 1 {
 		page = 1
@@ -195,7 +191,6 @@ func (r *AlertRepository) ListAlertsByOrg(ctx context.Context, orgID uuid.UUID, 
 	return alerts, total, nil
 }
 
-// ListActiveAlertsByServer mengambil seluruh alert berstatus aktif untuk server tertentu.
 func (r *AlertRepository) ListActiveAlertsByServer(ctx context.Context, serverID uuid.UUID) ([]domain.Alert, error) {
 	query := `
 		SELECT
@@ -244,7 +239,6 @@ func (r *AlertRepository) ListActiveAlertsByServer(ctx context.Context, serverID
 	return alerts, nil
 }
 
-// UpdateAlertStatus memperbarui status siklus hidup alert (misal Acknowledged atau Resolved).
 func (r *AlertRepository) UpdateAlertStatus(ctx context.Context, id uuid.UUID, status domain.AlertStatus, userID *uuid.UUID, timestamp *time.Time) error {
 	var query string
 	switch status {
@@ -280,7 +274,6 @@ func (r *AlertRepository) UpdateAlertStatus(ctx context.Context, id uuid.UUID, s
 	return nil
 }
 
-// CreateRule menyimpan aturan evaluasi threshold alert baru.
 func (r *AlertRepository) CreateRule(ctx context.Context, rule *domain.AlertRule) error {
 	query := `
 		INSERT INTO alert_rules (
@@ -318,7 +311,6 @@ func (r *AlertRepository) CreateRule(ctx context.Context, rule *domain.AlertRule
 	).Scan(&rule.ID, &rule.CreatedAt, &rule.UpdatedAt)
 }
 
-// GetRuleByID mengambil satu aturan evaluasi alert berdasarkan ID.
 func (r *AlertRepository) GetRuleByID(ctx context.Context, id uuid.UUID) (*domain.AlertRule, error) {
 	query := `
 		SELECT
@@ -354,7 +346,6 @@ func (r *AlertRepository) GetRuleByID(ctx context.Context, id uuid.UUID) (*domai
 	return &rule, nil
 }
 
-// ListRulesByOrg mengambil seluruh aturan alert milik sebuah organisasi.
 func (r *AlertRepository) ListRulesByOrg(ctx context.Context, orgID uuid.UUID) ([]domain.AlertRule, error) {
 	query := `
 		SELECT
@@ -397,7 +388,6 @@ func (r *AlertRepository) ListRulesByOrg(ctx context.Context, orgID uuid.UUID) (
 	return rules, nil
 }
 
-// ListRulesForServer mengambil aturan alert yang berlaku untuk server tertentu (aturan spesifik server atau aturan global organisasi).
 func (r *AlertRepository) ListRulesForServer(ctx context.Context, orgID, serverID uuid.UUID) ([]domain.AlertRule, error) {
 	query := `
 		SELECT
@@ -440,7 +430,6 @@ func (r *AlertRepository) ListRulesForServer(ctx context.Context, orgID, serverI
 	return rules, nil
 }
 
-// DeleteRule menghapus satu aturan alert berdasarkan ID.
 func (r *AlertRepository) DeleteRule(ctx context.Context, id uuid.UUID) error {
 	query := `DELETE FROM alert_rules WHERE id = $1;`
 	res, err := r.pool.Exec(ctx, query, id)

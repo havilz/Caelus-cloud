@@ -16,13 +16,11 @@ import (
 	"github.com/havilz/caelus-cloud/backend/internal/usecase/actionqueue"
 )
 
-// AppliedAction melacak tindakan yang berhasil dieksekusi untuk keperluan rollback jika terjadi kegagalan berikutnya.
 type AppliedAction struct {
 	Change   domain.IaCChange
 	UndoFunc func(ctx context.Context) error
 }
 
-// Dependencies memuat seluruh repositori dan service yang dibutuhkan untuk provisi nyata sumber daya IaC.
 type Dependencies struct {
 	IaCRepo        domain.IaCRepository
 	ServerRepo     domain.ServerRepository
@@ -34,19 +32,16 @@ type Dependencies struct {
 	ActionQueue    actionqueue.ActionQueue
 }
 
-// Applier mengeksekusi rencana IaC dan mengelola rollback otomatis.
 type Applier struct {
 	deps Dependencies
 }
 
-// NewApplier membuat instance baru IaC Applier.
 func NewApplier(deps Dependencies) *Applier {
 	return &Applier{
 		deps: deps,
 	}
 }
 
-// Apply mengeksekusi rencana IaC secara sekuensial dengan garansi rollback transaksional.
 func (a *Applier) Apply(ctx context.Context, config *domain.IaCConfiguration, plan *domain.IaCPlan, manifest *domain.DeclarativeManifest, userID *uuid.UUID) (*domain.IaCState, error) {
 	if plan.Status == domain.IaCStatusApplied {
 		return nil, fmt.Errorf("plan %s has already been applied", plan.ID)
@@ -56,11 +51,10 @@ func (a *Applier) Apply(ctx context.Context, config *domain.IaCConfiguration, pl
 
 	var rollbackStack []AppliedAction
 
-	// 1. Eksekusi rekonsiliasi seluruh resource deklaratif (idempotent & self-healing)
 	for _, change := range plan.Changes {
 		applied, err := a.executeChange(ctx, config.OrganizationID, change, manifest)
 		if err != nil {
-			// Rollback semua tindakan yang telah berhasil dieksekusi sebelumnya secara LIFO (Last In First Out)
+
 			rollbackErr := a.rollback(ctx, rollbackStack)
 			errMsg := fmt.Sprintf("failed applying change %s (%s): %v", change.ResourceName, change.Action, err)
 			if rollbackErr != nil {
@@ -76,7 +70,6 @@ func (a *Applier) Apply(ctx context.Context, config *domain.IaCConfiguration, pl
 		}
 	}
 
-	// 2. Simpan State Baru
 	now := time.Now().UTC()
 	stateDataMap := structToMap(manifest)
 	dataBytes, _ := json.Marshal(stateDataMap)
@@ -101,7 +94,6 @@ func (a *Applier) Apply(ctx context.Context, config *domain.IaCConfiguration, pl
 		return nil, fmt.Errorf("failed saving state: %w", err)
 	}
 
-	// 3. Update status plan & konfigurasi
 	_ = a.deps.IaCRepo.UpdatePlanStatus(ctx, plan.ID, domain.IaCStatusApplied, "")
 	config.Status = domain.IaCStatusApplied
 	config.CurrentVersion = plan.TargetVersion
@@ -110,7 +102,6 @@ func (a *Applier) Apply(ctx context.Context, config *domain.IaCConfiguration, pl
 	return newState, nil
 }
 
-// RollbackState mengembalikan infrastruktur ke snapshot state versi sebelumnya.
 func (a *Applier) RollbackState(ctx context.Context, config *domain.IaCConfiguration, targetVersion int, userID *uuid.UUID) (*domain.IaCState, error) {
 	targetState, err := a.deps.IaCRepo.GetStateByVersion(ctx, config.ID, targetVersion)
 	if err != nil {
@@ -121,7 +112,6 @@ func (a *Applier) RollbackState(ctx context.Context, config *domain.IaCConfigura
 	dataBytes, _ := json.Marshal(targetState.StateData)
 	_ = json.Unmarshal(dataBytes, &targetManifest)
 
-	// Buat state baru dengan versi inkremental yang meniru target state
 	newVersion := config.CurrentVersion + 1
 	now := time.Now().UTC()
 
@@ -359,7 +349,6 @@ func (a *Applier) executeChange(ctx context.Context, orgID uuid.UUID, change dom
 					}
 				}
 
-				// Resolve target server if specified in spec.Server
 				var targetServerID *uuid.UUID
 				if a.deps.ServerRepo != nil && strings.TrimSpace(spec.Server) != "" {
 					targetServerStr := strings.TrimSpace(spec.Server)
@@ -421,7 +410,6 @@ func (a *Applier) executeChange(ctx context.Context, orgID uuid.UUID, change dom
 					}
 				}
 
-				// Always dispatch physical container creation to remote VPS agent via ActionQueue
 				if targetServerID != nil && a.deps.ActionQueue != nil {
 					deployPayload := map[string]interface{}{
 						"name":           spec.Name,

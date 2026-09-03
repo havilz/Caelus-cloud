@@ -51,7 +51,7 @@ func (u *UseCase) ValidateYAML(rawYAML string) domain.IaCValidationResponse {
 }
 
 func (u *UseCase) CreateConfig(ctx context.Context, orgID uuid.UUID, name, description, rawYAML string) (*domain.IaCConfiguration, error) {
-	// Parse first to ensure basic validity
+
 	_, errs := u.parser.Parse(rawYAML)
 	if len(errs) > 0 {
 		return nil, fmt.Errorf("invalid YAML syntax: %s", errs[0].Message)

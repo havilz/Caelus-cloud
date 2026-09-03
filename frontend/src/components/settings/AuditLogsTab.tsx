@@ -14,7 +14,6 @@ export const AuditLogsTab: React.FC = () => {
   const [total, setTotal] = useState(0);
   const [searchFilter, setSearchFilter] = useState("");
 
-  // Selected Log Detail Modal
   const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
 
   const fetchLogs = async (currentPage = 1) => {
@@ -63,7 +62,7 @@ export const AuditLogsTab: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header & Filter */}
+      {}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h3 className="text-sm font-semibold text-zinc-100">Log Audit Aktivitas Global</h3>
@@ -101,7 +100,7 @@ export const AuditLogsTab: React.FC = () => {
         </div>
       )}
 
-      {/* Tabel Audit Log */}
+      {}
       {isLoading ? (
         <div className="flex items-center justify-center py-16 text-zinc-500">
           <RefreshCw className="h-5 w-5 animate-spin mr-2" />
@@ -150,7 +149,7 @@ export const AuditLogsTab: React.FC = () => {
             </table>
           </div>
 
-          {/* Pagination */}
+          {}
           <div className="p-3 border-t border-[#262626] bg-[#161616] flex items-center justify-between text-xs text-zinc-400">
             <span>
               Halaman {page} dari {totalPages} ({total} total aksi)
@@ -177,7 +176,7 @@ export const AuditLogsTab: React.FC = () => {
         </div>
       )}
 
-      {/* Modal Detail Payload Log */}
+      {}
       {selectedLog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-4">
           <div className="bg-[#141414] border border-[#2e2e2e] rounded-xl w-full max-w-lg p-6 shadow-2xl space-y-4">

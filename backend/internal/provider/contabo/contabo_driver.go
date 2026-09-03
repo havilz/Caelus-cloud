@@ -19,9 +19,6 @@ type ContaboDriver struct {
 	servers       map[string]*domain.ProviderServer
 }
 
-// NewContaboDriver menginisialisasi driver provider Contabo Cloud Compute dengan enkripsi data kredensial.
-// Parameter encryptionKey merupakan byte slice 32-byte kunci enkripsi AES-256.
-// Mengembalikan implementasi interface domain.ProviderDriver.
 func NewContaboDriver(encryptionKey []byte) domain.ProviderDriver {
 	return &ContaboDriver{
 		encryptionKey: encryptionKey,
@@ -30,7 +27,6 @@ func NewContaboDriver(encryptionKey []byte) domain.ProviderDriver {
 	}
 }
 
-// CreateServer membuat instance VPS baru pada infrastruktur Contabo.
 func (d *ContaboDriver) CreateServer(ctx context.Context, cred *domain.Credential, req domain.CreateServerRequest) (*domain.ProviderServer, error) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
@@ -81,7 +77,6 @@ func (d *ContaboDriver) CreateServer(ctx context.Context, cred *domain.Credentia
 	return server, nil
 }
 
-// GetServer mengambil detail status dan konfigurasi server Contabo berdasarkan externalID.
 func (d *ContaboDriver) GetServer(ctx context.Context, cred *domain.Credential, externalID string) (*domain.ProviderServer, error) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
@@ -104,7 +99,6 @@ func (d *ContaboDriver) GetServer(ctx context.Context, cred *domain.Credential, 
 	return server, nil
 }
 
-// ListServers mengambil seluruh daftar instance yang terdaftar pada akun Contabo.
 func (d *ContaboDriver) ListServers(ctx context.Context, cred *domain.Credential) ([]domain.ProviderServer, error) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
@@ -116,7 +110,6 @@ func (d *ContaboDriver) ListServers(ctx context.Context, cred *domain.Credential
 	return list, nil
 }
 
-// RebootServer mengirim perintah restart ke VPS Contabo.
 func (d *ContaboDriver) RebootServer(ctx context.Context, cred *domain.Credential, externalID string) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
@@ -127,7 +120,6 @@ func (d *ContaboDriver) RebootServer(ctx context.Context, cred *domain.Credentia
 	return nil
 }
 
-// ShutdownServer mengirim perintah stop daya ke VPS Contabo.
 func (d *ContaboDriver) ShutdownServer(ctx context.Context, cred *domain.Credential, externalID string) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
@@ -138,7 +130,6 @@ func (d *ContaboDriver) ShutdownServer(ctx context.Context, cred *domain.Credent
 	return nil
 }
 
-// StartServer mengirim perintah start daya ke VPS Contabo.
 func (d *ContaboDriver) StartServer(ctx context.Context, cred *domain.Credential, externalID string) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
@@ -149,7 +140,6 @@ func (d *ContaboDriver) StartServer(ctx context.Context, cred *domain.Credential
 	return nil
 }
 
-// ResizeServer mengubah alokasi paket spesifikasi VPS Contabo.
 func (d *ContaboDriver) ResizeServer(ctx context.Context, cred *domain.Credential, req domain.ResizeServerRequest) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
@@ -168,7 +158,6 @@ func (d *ContaboDriver) ResizeServer(ctx context.Context, cred *domain.Credentia
 	return nil
 }
 
-// DeleteServer menghapus/membatalkan langganan VPS Contabo.
 func (d *ContaboDriver) DeleteServer(ctx context.Context, cred *domain.Credential, externalID string) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()

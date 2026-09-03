@@ -9,7 +9,6 @@ import (
 	"github.com/havilz/caelus-cloud/backend/internal/delivery/ws"
 )
 
-// TestWSHub_RegisterAndBroadcast memverifikasi pengiriman pesan real-time ke subscriber topik server dan organisasi.
 func TestWSHub_RegisterAndBroadcast(t *testing.T) {
 	hub := ws.NewHub()
 	userID := uuid.New()
@@ -23,7 +22,6 @@ func TestWSHub_RegisterAndBroadcast(t *testing.T) {
 
 	time.Sleep(50 * time.Millisecond)
 
-	// Broadcast ke server
 	hub.BroadcastToServer(serverID, "metrics.updated", map[string]any{"cpu": 55.0})
 
 	select {
@@ -39,7 +37,6 @@ func TestWSHub_RegisterAndBroadcast(t *testing.T) {
 		t.Fatal("timed out waiting for server broadcast message")
 	}
 
-	// Broadcast ke organisasi
 	hub.BroadcastToOrg(orgID, "alert.created", map[string]any{"title": "High CPU"})
 
 	select {

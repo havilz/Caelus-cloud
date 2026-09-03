@@ -39,7 +39,6 @@ func (m *mockMetricRepo) GetHistoryByServerID(_ context.Context, serverID uuid.U
 	return result, nil
 }
 
-// TestMonitoringUsecase_IngestTelemetry memverifikasi alur lengkap ingestion telemetri dari agent.
 func TestMonitoringUsecase_IngestTelemetry(t *testing.T) {
 	serverID := uuid.New()
 	orgID := uuid.New()
@@ -114,14 +113,12 @@ func TestMonitoringUsecase_IngestTelemetry(t *testing.T) {
 		t.Errorf("expected 1 container, got %d", recorded.ContainersCount)
 	}
 
-	// Verifikasi server status otomatis berubah menjadi running
 	server, _ := mockServerRepo.GetByID(ctx, serverID)
 	if server.Status != domain.ServerStatusRunning {
 		t.Errorf("expected server status to be running, got %s", server.Status)
 	}
 }
 
-// TestMonitoringUsecase_GetMetricsHistory memverifikasi pembacaan history metrik server.
 func TestMonitoringUsecase_GetMetricsHistory(t *testing.T) {
 	serverID := uuid.New()
 	mockMetricRepo := &mockMetricRepo{
@@ -154,7 +151,6 @@ func TestMonitoringUsecase_GetMetricsHistory(t *testing.T) {
 	}
 }
 
-// TestMonitoringUsecase_AlertLifecycle memverifikasi siklus acknowledge dan resolve alert.
 func TestMonitoringUsecase_AlertLifecycle(t *testing.T) {
 	orgID := uuid.New()
 	serverID := uuid.New()

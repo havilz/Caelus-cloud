@@ -7,7 +7,6 @@ import (
 	"github.com/havilz/caelus-cloud/backend/internal/storage/s3"
 )
 
-// Config merepresentasikan konfigurasi koneksi ke instance MinIO Object Storage.
 type Config struct {
 	Endpoint        string
 	AccessKeyID     string
@@ -15,7 +14,6 @@ type Config struct {
 	Region          string
 }
 
-// NewAdapter menginisialisasi instance ObjectStorageAdapter khusus MinIO (S3-compatible dengan path-style addressing).
 func NewAdapter(cfg Config) (domain.ObjectStorageAdapter, error) {
 	if cfg.Endpoint == "" {
 		cfg.Endpoint = "http://localhost:9000"
@@ -29,7 +27,7 @@ func NewAdapter(cfg Config) (domain.ObjectStorageAdapter, error) {
 		Region:          cfg.Region,
 		AccessKeyID:     cfg.AccessKeyID,
 		SecretAccessKey: cfg.SecretAccessKey,
-		UsePathStyle:    true, // MinIO membutuhkan path-style URL (http://endpoint/bucket/key)
+		UsePathStyle:    true,
 		ProviderType:    domain.StorageProviderMinIO,
 	})
 	if err != nil {

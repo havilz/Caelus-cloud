@@ -51,7 +51,6 @@ export default function ContainersOrchestrationPage() {
   const [autoScroll, setAutoScroll] = useState<boolean>(true);
   const [copied, setCopied] = useState<boolean>(false);
 
-  // Deploy Form States
   const [targetServerId, setTargetServerId] = useState<string>('');
   const [appName, setAppName] = useState<string>('');
   const [imageTag, setImageTag] = useState<string>('nginx:alpine');
@@ -97,11 +96,9 @@ export default function ContainersOrchestrationPage() {
     );
   }, [fetchDeployments]);
 
-  // Load and stream logs for selected deployment
   useEffect(() => {
     if (!selectedDeployment) return;
 
-    // Fetch initial logs immediately
     deploymentService
       .getLogs(selectedDeployment.id, 200)
       .then((data) => {
@@ -109,7 +106,6 @@ export default function ContainersOrchestrationPage() {
       })
       .catch(console.error);
 
-    // Setup SSE streaming
     const sseUrl = `${getApiBaseURL()}/deployments/${selectedDeployment.id}/logs/stream`;
 
     let eventSource: EventSource | null = null;
@@ -141,7 +137,6 @@ export default function ContainersOrchestrationPage() {
       setIsStreaming(false);
     }
 
-    // Polling fallback to ensure live telemetry logs are refreshed continuously
     const pollInterval = setInterval(() => {
       deploymentService
         .getLogs(selectedDeployment.id, 200)
@@ -167,7 +162,6 @@ export default function ContainersOrchestrationPage() {
     };
   }, [selectedDeployment]);
 
-  // Auto-scroll terminal
   useEffect(() => {
     if (autoScroll && terminalEndRef.current) {
       terminalEndRef.current.scrollIntoView({ behavior: 'smooth' });
@@ -237,7 +231,7 @@ export default function ContainersOrchestrationPage() {
       setDeployments((prev) => [created, ...prev]);
       setSelectedDeployment(created);
       setIsModalOpen(false);
-      // Reset form
+      
       setAppName('');
       setImageTag('nginx:alpine');
       setContainerName('');
@@ -351,19 +345,14 @@ export default function ContainersOrchestrationPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#262626] pb-5">
-        <div>
-          <div className="flex items-center gap-2">
+          <div>
             <h1 className="text-xl font-bold tracking-tight text-[#ededed]">Container Orchestration & Deployments</h1>
-            <span className="px-2 py-0.5 text-[10px] font-medium bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded">
-              Phase 6.3 Active
-            </span>
+            <p className="text-xs text-[#a1a1a1] mt-1">
+              Build, pull, deploy, and monitor containerized applications with live streaming log terminals.
+            </p>
           </div>
-          <p className="text-xs text-[#a1a1a1] mt-1">
-            Build, pull, deploy, and monitor containerized applications with live streaming log terminals.
-          </p>
-        </div>
 
         <button
           onClick={() => setIsModalOpen(true)}
@@ -374,15 +363,15 @@ export default function ContainersOrchestrationPage() {
         </button>
       </div>
 
-      {/* Main Grid: Containers List + Live Terminal */}
+      {}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left Column: Container Deployments (5 cols) */}
+        {}
         <div className="lg:col-span-5 space-y-4">
           <div className="bg-[#171717] border border-[#262626] rounded-xl p-4 space-y-3">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <span className="text-xs font-bold text-[#ededed] uppercase tracking-wider">Active Deployments</span>
               
-              {/* Server Filter Selector */}
+              {}
               <div className="flex items-center gap-2">
                 <select
                   value={selectedServerFilter}
@@ -498,12 +487,12 @@ export default function ContainersOrchestrationPage() {
           </div>
         </div>
 
-        {/* Right Column: Web-based Streaming Terminal (7 cols) */}
+        {}
         <div className="lg:col-span-7 space-y-4">
           <div className="bg-[#0f1218] border border-[#22272e] rounded-xl overflow-hidden shadow-lg flex flex-col h-[650px]">
-            {/* Terminal Header & Toolbar (Sleek 2-Tier Layout) */}
+            {}
             <div className="bg-[#13171f] border-b border-[#22272e] flex flex-col">
-              {/* Top Tier: Container Identity & Host Endpoint Link */}
+              {}
               <div className="px-4 py-2.5 flex items-center justify-between border-b border-[#1c2128]">
                 <div className="flex items-center gap-2.5">
                   <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800/80 border border-slate-700/60">
@@ -540,7 +529,7 @@ export default function ContainersOrchestrationPage() {
                 </div>
               </div>
 
-              {/* Bottom Tier: Stream Filters & Terminal Actions */}
+              {}
               <div className="px-4 py-2 flex items-center justify-between bg-[#0d1117]">
                 <div className="flex items-center gap-1">
                   {(['all', 'stdout', 'stderr', 'system'] as const).map((filter) => (
@@ -580,7 +569,7 @@ export default function ContainersOrchestrationPage() {
               </div>
             </div>
 
-            {/* Terminal Body */}
+            {}
             <div className="flex-1 p-4 font-mono text-xs overflow-y-auto bg-[#0a0c10] text-[#c9d1d9] space-y-1">
               {filteredLogs.map((log) => {
                 let colorClass = 'text-zinc-300';
@@ -613,7 +602,7 @@ export default function ContainersOrchestrationPage() {
         </div>
       </div>
 
-      {/* Deploy Container Modal */}
+      {}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-4">
           <div className="bg-[#171717] border border-[#262626] rounded-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto shadow-2xl p-6 space-y-5">
@@ -631,7 +620,7 @@ export default function ContainersOrchestrationPage() {
             </div>
 
             <form onSubmit={handleDeploy} className="space-y-4">
-              {/* Target Server / Host Node */}
+              {}
               <div>
                 <label className="text-[11px] font-medium text-[#a1a1a1]">Target Server / Host Node</label>
                 <select
@@ -653,7 +642,7 @@ export default function ContainersOrchestrationPage() {
                 </select>
               </div>
 
-              {/* Quick Image Selector */}
+              {}
               <div className="space-y-1.5">
                 <label className="text-[11px] font-medium text-[#a1a1a1]">Quick Image Presets</label>
                 <div className="grid grid-cols-2 gap-2">
@@ -675,7 +664,7 @@ export default function ContainersOrchestrationPage() {
                 </div>
               </div>
 
-              {/* App Name & Container Name */}
+              {}
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-[11px] font-medium text-[#a1a1a1]">App Name *</label>
@@ -701,7 +690,7 @@ export default function ContainersOrchestrationPage() {
                 </div>
               </div>
 
-              {/* Command / Arguments */}
+              {}
               <div>
                 <label className="text-[11px] font-medium text-[#a1a1a1]">Command / Arguments (Opsional)</label>
                 <input
@@ -713,7 +702,7 @@ export default function ContainersOrchestrationPage() {
                 />
               </div>
 
-              {/* Port Mappings */}
+              {}
               <div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
@@ -742,7 +731,7 @@ export default function ContainersOrchestrationPage() {
                 </p>
               </div>
 
-              {/* Persistent Volumes & Storage Mounts */}
+              {}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <label className="text-[11px] font-medium text-[#a1a1a1]">Persistent Storage Volumes (Opsional)</label>
@@ -796,7 +785,7 @@ export default function ContainersOrchestrationPage() {
                   </div>
                 </div>
 
-                {/* Mounted Volumes Badges */}
+                {}
                 {volumeMounts.length > 0 && (
                   <div className="flex flex-wrap gap-1.5 pt-1">
                     {volumeMounts.map((vm, idx) => (
@@ -822,7 +811,7 @@ export default function ContainersOrchestrationPage() {
                 )}
               </div>
 
-              {/* VPC Network Selector */}
+              {}
               <div>
                 <label className="text-[11px] font-medium text-[#a1a1a1]">VPC Network / Isolation</label>
                 <select
@@ -839,7 +828,7 @@ export default function ContainersOrchestrationPage() {
                 </select>
               </div>
 
-              {/* Environment Variables */}
+              {}
               <div className="space-y-2">
                 <label className="text-[11px] font-medium text-[#a1a1a1]">Environment Variables</label>
                 <div className="flex gap-2">
@@ -883,7 +872,7 @@ export default function ContainersOrchestrationPage() {
                 )}
               </div>
 
-              {/* Sticky Footer Actions */}
+              {}
               <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#262626] sticky bottom-0 bg-[#171717]/95 backdrop-blur-xs pb-1">
                 <button
                   type="button"

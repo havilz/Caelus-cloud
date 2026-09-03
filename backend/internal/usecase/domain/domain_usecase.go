@@ -122,7 +122,6 @@ func (u *UseCase) VerifyDomain(ctx context.Context, orgID, id uuid.UUID) (*domai
 		SSLStatus:   d.SSLStatus,
 	}
 
-	// 1. Perform DNS IP Resolution (Record A / AAAA)
 	ips, err := net.DefaultResolver.LookupIP(ctx, "ip4", d.DomainName)
 	if err == nil {
 		for _, ip := range ips {
@@ -130,7 +129,6 @@ func (u *UseCase) VerifyDomain(ctx context.Context, orgID, id uuid.UUID) (*domai
 		}
 	}
 
-	// 2. Perform DNS TXT Resolution
 	txtRecords, err := net.DefaultResolver.LookupTXT(ctx, "_caelus-verify."+d.DomainName)
 	if err == nil {
 		resp.ResolvedTXT = append(resp.ResolvedTXT, txtRecords...)

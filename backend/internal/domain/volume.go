@@ -75,10 +75,9 @@ type VolumeRepository interface {
 	DeleteVolume(ctx context.Context, id uuid.UUID) error
 }
 
-// AgentAction merepresentasikan perintah/instruksi yang dikirim control plane ke agent.
 type AgentAction struct {
 	ID      string `json:"id"`
-	Type    string `json:"type"` // CREATE_VOLUME, DELETE_VOLUME, DEPLOY_CONTAINER, dll
+	Type    string `json:"type"`
 	Target  string `json:"target"`
 	Payload string `json:"payload,omitempty"`
 }

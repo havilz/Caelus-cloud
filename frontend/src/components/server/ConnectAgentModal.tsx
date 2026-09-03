@@ -42,7 +42,7 @@ export const ConnectAgentModal: React.FC<ConnectAgentModalProps> = ({
       maxWidth="lg"
     >
       <div className="space-y-4 py-1">
-        {/* Server Identity Header */}
+        {}
         <div className="p-3.5 rounded-xl bg-[#141414] border border-[#262626] flex items-center justify-between">
           <div>
             <span className="text-[10px] text-[#707070] font-semibold uppercase tracking-wider">Server Target</span>
@@ -67,7 +67,7 @@ export const ConnectAgentModal: React.FC<ConnectAgentModalProps> = ({
           </div>
         </div>
 
-        {/* Mode Selector Tabs */}
+        {}
         <div className="flex border-b border-[#262626] gap-2 pt-1">
           <button
             type="button"
@@ -79,7 +79,7 @@ export const ConnectAgentModal: React.FC<ConnectAgentModalProps> = ({
           </button>
         </div>
 
-        {/* Tab Content: 1-Line Script (Recommended for Ubuntu/Linux) */}
+        {}
         <div className="space-y-3 pt-1">
           <div className="flex items-center justify-between">
             <span className="text-xs text-[#a1a1a1]">
@@ -119,7 +119,7 @@ export const ConnectAgentModal: React.FC<ConnectAgentModalProps> = ({
           </div>
         </div>
 
-        {/* Credentials Details Box */}
+        {}
         <div className="grid grid-cols-2 gap-2.5 p-3 rounded-xl bg-[#121212] border border-[#262626] text-[11px]">
           <div>
             <span className="text-[#707070] uppercase tracking-wider block mb-0.5">Server UUID</span>
@@ -131,7 +131,7 @@ export const ConnectAgentModal: React.FC<ConnectAgentModalProps> = ({
           </div>
         </div>
 
-        {/* Footer */}
+        {}
         <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#262626]">
           <Button variant="outline" type="button" onClick={onClose}>
             Tutup

@@ -95,7 +95,7 @@ export default function StorageDashboardPage() {
 
   return (
     <div className={AppContainers.pageWrapper}>
-      {/* Top Header */}
+      {}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className={AppText.h2}>Object Storage & Buckets</h1>
@@ -133,7 +133,7 @@ export default function StorageDashboardPage() {
         </div>
       </div>
 
-      {/* Metric Cards Grid */}
+      {}
       <div className={AppContainers.metricsGrid}>
         <div className={`${AppContainers.card} ${AppContainers.cardContent}`}>
           <div className="flex items-center justify-between">
@@ -180,7 +180,7 @@ export default function StorageDashboardPage() {
         </div>
       </div>
 
-      {/* Buckets Section */}
+      {}
       <div className={AppContainers.card}>
         <div className="p-4 border-b border-[#262626] flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="relative w-full sm:w-80">
@@ -199,7 +199,7 @@ export default function StorageDashboardPage() {
           </div>
         </div>
 
-        {/* Bucket List / Grid */}
+        {}
         {loading ? (
           <div className="p-12 flex flex-col items-center justify-center space-y-3">
             <Loader2 className="w-6 h-6 animate-spin text-emerald-400" />
@@ -331,7 +331,7 @@ export default function StorageDashboardPage() {
         )}
       </div>
 
-      {/* Create Bucket Modal */}
+      {}
       <CreateBucketModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}

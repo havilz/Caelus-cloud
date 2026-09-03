@@ -66,7 +66,7 @@ export default function RegisterPage() {
   return (
     <div className={AppContainers.authWrapper}>
       <div className={AppContainers.authCardWidth}>
-        {/* Brand Header */}
+        {}
         <div className="flex flex-col items-center text-center mb-6">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500 text-zinc-950 font-bold shadow-sm mb-3">
             <Cloud className="h-5 w-5" />
@@ -75,7 +75,7 @@ export default function RegisterPage() {
           <p className={AppText.subtitle}>Inisialisasi Akun & Workspace Baru</p>
         </div>
 
-        {/* Register Card */}
+        {}
         <Card className="shadow-lg">
           <CardHeader className="text-center pb-2">
             <CardTitle className="text-base">Daftar Akun Baru</CardTitle>

@@ -69,7 +69,7 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150">
       <div className="relative w-full max-w-2xl bg-[#111111] border border-[#262626] rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-        {/* Header */}
+        {}
         <div className="p-6 border-b border-[#262626] flex items-start justify-between gap-4">
           <div className="space-y-2">
             <div className="flex items-center gap-2 flex-wrap">
@@ -92,9 +92,9 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
           </button>
         </div>
 
-        {/* Body Content */}
+        {}
         <div className="p-6 space-y-5 overflow-y-auto">
-          {/* Target Metadata */}
+          {}
           <div className="grid grid-cols-2 gap-3 text-xs">
             <div className="p-3 rounded-lg bg-[#161616] border border-[#262626] flex items-center gap-2.5">
               <Server className="w-4 h-4 text-emerald-400 shrink-0" />
@@ -112,7 +112,7 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
             </div>
           </div>
 
-          {/* Description */}
+          {}
           <div className="space-y-1.5">
             <h4 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
               <ShieldAlert className="w-3.5 h-3.5 text-amber-400" />
@@ -123,7 +123,7 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
             </p>
           </div>
 
-          {/* Remediation Command */}
+          {}
           {finding.remediation_command && (
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
@@ -154,7 +154,7 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
             </div>
           )}
 
-          {/* Evidence JSON */}
+          {}
           {finding.evidence && Object.keys(finding.evidence).length > 0 && (
             <div className="space-y-1.5">
               <h4 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
@@ -168,7 +168,7 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
           )}
         </div>
 
-        {/* Footer Actions */}
+        {}
         <div className="p-4 border-t border-[#262626] bg-[#0d0d0d] flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             {finding.status !== "resolved" && (

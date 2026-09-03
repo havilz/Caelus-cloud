@@ -90,7 +90,7 @@ export default function AutomationRulesPage() {
 
   return (
     <div className={AppTheme.containers.pageWrapper}>
-      {/* Header Section */}
+      {}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
@@ -121,7 +121,7 @@ export default function AutomationRulesPage() {
         </div>
       </div>
 
-      {/* Metric Cards Grid */}
+      {}
       <div className={AppTheme.containers.metricsGrid}>
         <div className={`${AppTheme.containers.card} ${AppTheme.containers.cardContent} flex items-center gap-3`}>
           <div className={AppTheme.controls.iconBoxEmerald}>
@@ -164,7 +164,7 @@ export default function AutomationRulesPage() {
         </div>
       </div>
 
-      {/* Rules List */}
+      {}
       <div className={AppTheme.containers.card}>
         <div className={`${AppTheme.containers.cardHeader} flex items-center justify-between`}>
           <div>
@@ -208,7 +208,7 @@ export default function AutomationRulesPage() {
                   key={rule.id}
                   className={AppTheme.controls.cardRowActive}
                 >
-                  {/* Top Bar */}
+                  {}
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
                       <button
@@ -240,7 +240,7 @@ export default function AutomationRulesPage() {
                       </div>
                     </div>
 
-                    {/* Actions Toolbar */}
+                    {}
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => handleTestRule(rule.id)}
@@ -260,7 +260,7 @@ export default function AutomationRulesPage() {
                     </div>
                   </div>
 
-                  {/* Test Result Message */}
+                  {}
                   {testResult && testResult.id === rule.id && (
                     <div
                       className={`p-3 rounded-lg text-xs flex items-center gap-2 ${
@@ -278,9 +278,9 @@ export default function AutomationRulesPage() {
                     </div>
                   )}
 
-                  {/* Conditions & Actions Overview */}
+                  {}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1 border-t border-[#1f1f1f]">
-                    {/* Conditions */}
+                    {}
                     <div className="space-y-1.5">
                       <span className={AppTheme.text.caption}>Trigger Conditions (AND):</span>
                       <div className="flex flex-wrap gap-1.5">
@@ -295,7 +295,7 @@ export default function AutomationRulesPage() {
                       </div>
                     </div>
 
-                    {/* Actions */}
+                    {}
                     <div className="space-y-1.5">
                       <span className={AppTheme.text.caption}>Dispatched Actions:</span>
                       <div className="flex flex-wrap gap-1.5">
@@ -315,7 +315,7 @@ export default function AutomationRulesPage() {
                     </div>
                   </div>
 
-                  {/* Footer Stats */}
+                  {}
                   <div className="flex items-center justify-between text-[11px] text-[#707070] pt-1">
                     <div className="flex items-center gap-1.5">
                       <Clock className="w-3.5 h-3.5" />
@@ -332,7 +332,7 @@ export default function AutomationRulesPage() {
         </div>
       </div>
 
-      {/* Modal */}
+      {}
       <CreateRuleModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}

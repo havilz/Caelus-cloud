@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -12,18 +13,15 @@ import (
 	"github.com/havilz/caelus-cloud/backend/internal/domain"
 )
 
-// LogBroadcaster mendefinisikan interface untuk menyiarkan log realtime ke client (misalnya via WebSocket).
 type LogBroadcaster interface {
 	BroadcastDeploymentLog(deploymentID uuid.UUID, log any)
 }
 
-// DockerPipeline mengelola orkestrasi siklus hidup container deployment nyata dan streaming log.
 type DockerPipeline struct {
 	deploymentRepo domain.DeploymentRepository
 	broadcaster    LogBroadcaster
 }
 
-// NewDockerPipeline membuat instance baru Docker Pipeline.
 func NewDockerPipeline(repo domain.DeploymentRepository, broadcaster LogBroadcaster) *DockerPipeline {
 	return &DockerPipeline{
 		deploymentRepo: repo,
@@ -31,7 +29,6 @@ func NewDockerPipeline(repo domain.DeploymentRepository, broadcaster LogBroadcas
 	}
 }
 
-// Execute menjalankan pipeline container deployment secara asynchronous.
 func (p *DockerPipeline) Execute(ctx context.Context, dep *domain.Deployment) error {
 	go func() {
 		bgCtx := context.Background()
@@ -41,14 +38,14 @@ func (p *DockerPipeline) Execute(ctx context.Context, dep *domain.Deployment) er
 }
 
 func (p *DockerPipeline) runPipeline(ctx context.Context, dep *domain.Deployment) {
-	// Step 1: Queued -> Pulling
+
 	p.log(ctx, dep.ID, "system", fmt.Sprintf("[Pipeline] Inisialisasi deployment container %s (%s)", dep.AppName, dep.ImageTag))
 	_ = p.deploymentRepo.UpdateDeploymentStatus(ctx, dep.ID, domain.DeploymentStatusPulling, "", nil)
 
 	hasDocker := false
 	if !strings.HasPrefix(dep.ImageTag, "mock") && !strings.HasPrefix(dep.ImageTag, "test") {
 		if _, err := exec.LookPath("docker"); err == nil {
-			// Verifikasi bahwa docker daemon aktif dan dapat diakses
+
 			if infoErr := exec.CommandContext(ctx, "docker", "info").Run(); infoErr == nil {
 				hasDocker = true
 			}
@@ -84,7 +81,7 @@ func (p *DockerPipeline) runPipeline(ctx context.Context, dep *domain.Deployment
 		}()
 
 		if err := pullCmd.Wait(); err != nil {
-			// Cek apakah image sudah tersedia di Docker host lokal
+
 			inspectErr := exec.CommandContext(ctx, "docker", "image", "inspect", dep.ImageTag).Run()
 			if inspectErr == nil {
 				p.log(ctx, dep.ID, "stdout", fmt.Sprintf("Image '%s' ditemukan di lokal host. Melanjutkan deployment...", dep.ImageTag))
@@ -96,7 +93,7 @@ func (p *DockerPipeline) runPipeline(ctx context.Context, dep *domain.Deployment
 			}
 		}
 	} else {
-		// Fallback simulasi jika binary docker tidak terdeteksi
+
 		p.log(ctx, dep.ID, "stdout", fmt.Sprintf("Pulling image %s from registry...", dep.ImageTag))
 		time.Sleep(300 * time.Millisecond)
 		p.log(ctx, dep.ID, "stdout", "Layer 1/3: [====================================>] 45.2MB/45.2MB")
@@ -105,7 +102,6 @@ func (p *DockerPipeline) runPipeline(ctx context.Context, dep *domain.Deployment
 		p.log(ctx, dep.ID, "stdout", fmt.Sprintf("Status: Downloaded newer image for %s", dep.ImageTag))
 	}
 
-	// Step 2: Deploying / Configuring Container
 	_ = p.deploymentRepo.UpdateDeploymentStatus(ctx, dep.ID, domain.DeploymentStatusDeploying, "", nil)
 	p.log(ctx, dep.ID, "system", fmt.Sprintf("[Pipeline] Mengonfigurasi container '%s'...", dep.ContainerName))
 
@@ -147,12 +143,26 @@ func (p *DockerPipeline) runPipeline(ctx context.Context, dep *domain.Deployment
 	}
 
 	for _, vb := range dep.VolumeBindings {
-		// Validasi ganda di pipeline layer sebelum diteruskan ke Docker CLI (C-2 defense-in-depth)
+
 		hostPath := vb.HostPath
-		if hostPath == "" || hostPath == "/" || strings.HasPrefix(hostPath, "/etc") ||
-			strings.HasPrefix(hostPath, "/root") || strings.HasPrefix(hostPath, "/sys") ||
-			strings.HasPrefix(hostPath, "/proc") || strings.HasPrefix(hostPath, "/dev") ||
-			strings.Contains(hostPath, "docker.sock") {
+		cleanHost := filepath.Clean(hostPath)
+		cleanHostSlash := cleanHost + "/"
+		lowerHost := strings.ToLower(cleanHost)
+
+		isBlocked := cleanHost == "/" || cleanHost == "/etc" || cleanHost == "/root" || cleanHost == "/home" ||
+			cleanHost == "/opt" || cleanHost == "/tmp" || cleanHost == "/srv" || cleanHost == "/mnt" || cleanHost == "/media" ||
+			cleanHost == "/bin" || cleanHost == "/sbin" || cleanHost == "/usr" || cleanHost == "/lib" || cleanHost == "/sys" ||
+			cleanHost == "/proc" || cleanHost == "/dev" || cleanHost == "/run" || cleanHost == "/var/run" || cleanHost == "/var/lib/docker" ||
+			strings.HasPrefix(cleanHostSlash, "/etc/") || strings.HasPrefix(cleanHostSlash, "/root/") ||
+			strings.HasPrefix(cleanHostSlash, "/sys/") || strings.HasPrefix(cleanHostSlash, "/proc/") ||
+			strings.HasPrefix(cleanHostSlash, "/dev/") || strings.HasPrefix(cleanHostSlash, "/tmp/") ||
+			strings.HasPrefix(cleanHostSlash, "/srv/") || strings.HasPrefix(cleanHostSlash, "/mnt/") ||
+			strings.HasPrefix(cleanHostSlash, "/media/") || strings.HasPrefix(cleanHostSlash, "/run/") ||
+			strings.HasPrefix(cleanHostSlash, "/var/run/") || strings.HasPrefix(cleanHostSlash, "/var/lib/docker/") ||
+			strings.Contains(lowerHost, "docker.sock") || strings.Contains(lowerHost, ".env") ||
+			strings.Contains(lowerHost, "id_rsa") || strings.Contains(lowerHost, "id_ed25519")
+
+		if hostPath == "" || isBlocked {
 			p.log(ctx, dep.ID, "stderr", fmt.Sprintf("Pipeline menolak bind-mount tidak aman: %s (C-2 host escape prevention)", hostPath))
 			_ = p.deploymentRepo.UpdateDeploymentStatus(ctx, dep.ID, domain.DeploymentStatusFailed,
 				fmt.Sprintf("bind-mount path tidak aman ditolak: %s", hostPath), nil)
@@ -175,7 +185,7 @@ func (p *DockerPipeline) runPipeline(ctx context.Context, dep *domain.Deployment
 		cmdParts := strings.Fields(dep.Command)
 		runArgs = append(runArgs, cmdParts...)
 	} else if strings.Contains(dep.ImageTag, "cloudflared") {
-		// Auto-support for cloudflared Quick Tunnel or Token-based tunnel
+
 		if tunnelURL, ok := dep.EnvironmentVariables["TUNNEL_URL"]; ok && tunnelURL != "" {
 			runArgs = append(runArgs, "tunnel", "--no-autoupdate", "--url", tunnelURL)
 		} else if tunnelToken, ok := dep.EnvironmentVariables["TUNNEL_TOKEN"]; ok && tunnelToken != "" {
@@ -183,9 +193,8 @@ func (p *DockerPipeline) runPipeline(ctx context.Context, dep *domain.Deployment
 		}
 	}
 
-	// Step 3: Menjalankan Container Fisik
 	if hasDocker {
-		// Hapus container lama jika ada nama yang bentrok
+
 		_ = exec.CommandContext(ctx, "docker", "rm", "-f", dep.ContainerName).Run()
 
 		runCmd := exec.CommandContext(ctx, "docker", runArgs...)
@@ -201,12 +210,10 @@ func (p *DockerPipeline) runPipeline(ctx context.Context, dep *domain.Deployment
 
 		p.log(ctx, dep.ID, "stdout", fmt.Sprintf("Container %s [ID: %s] berhasil dijalankan.", dep.ContainerName, outStr[:min(12, len(outStr))]))
 
-		// Step 4: Running & Start Log Streamer
 		now := time.Now().UTC()
 		_ = p.deploymentRepo.UpdateDeploymentStatus(ctx, dep.ID, domain.DeploymentStatusRunning, "", &now)
 		p.log(ctx, dep.ID, "system", fmt.Sprintf("Deployment berhasil. Container '%s' aktif pada status RUNNING.", dep.ContainerName))
 
-		// Stream logs langsung dari proses container di background
 		go p.streamContainerLogs(dep.ID, dep.ContainerName)
 	} else {
 		p.log(ctx, dep.ID, "stdout", fmt.Sprintf("Starting container %s [ID: c-%s]...", dep.ContainerName, dep.ID.String()[:8]))

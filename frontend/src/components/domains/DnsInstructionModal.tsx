@@ -78,7 +78,7 @@ export const DnsInstructionModal: React.FC<DnsInstructionModalProps> = ({
             </p>
           </div>
 
-          {/* Record A */}
+          {}
           <div className="rounded-lg border border-[#262626] bg-[#161616] p-4 space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-emerald-400 uppercase tracking-wider">
@@ -119,7 +119,7 @@ export const DnsInstructionModal: React.FC<DnsInstructionModalProps> = ({
             </div>
           </div>
 
-          {/* Record TXT (Optional Verification) */}
+          {}
           <div className="rounded-lg border border-[#262626] bg-[#161616] p-4 space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-sky-400 uppercase tracking-wider">

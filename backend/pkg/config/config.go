@@ -11,7 +11,6 @@ import (
 	"github.com/joho/godotenv"
 )
 
-// loadEnvFiles mencari dan memuat file .env dari direktori aktif hingga direktori root proyek.
 func loadEnvFiles() {
 	dir, err := os.Getwd()
 	if err != nil {
@@ -88,8 +87,6 @@ type StorageConfig struct {
 	UseSSL    bool
 }
 
-// Load membaca variabel lingkungan dari file konfigurasi .env dan variabel sistem operasi tanpa menyertakan secret hardcoded.
-// Mengembalikan pointer *Config yang telah divalidasi dan error jika terdapat konfigurasi wajib yang belum terisi.
 func Load() (*Config, error) {
 	loadEnvFiles()
 
@@ -140,8 +137,6 @@ func Load() (*Config, error) {
 	return cfg, nil
 }
 
-// Validate memeriksa kelengkapan variabel rahasia dan konfigurasi penting sebelum aplikasi dijalankan.
-// Mengembalikan error deskriptif jika terdapat variabel lingkungan wajib yang bernilai kosong atau tidak memenuhi syarat keamanan minimum.
 func (c *Config) Validate() error {
 	if c.JWT.Secret == "" {
 		return errors.New("variabel lingkungan wajib belum diisi: JWT_SECRET")
@@ -172,10 +167,6 @@ func (c *Config) Validate() error {
 	return nil
 }
 
-// getEnv membaca nilai environment variable berdasarkan kunci yang diberikan.
-// Parameter key merupakan nama variabel lingkungan yang dicari.
-// Parameter defaultValue merupakan nilai kembalian jika variabel tidak ditemukan atau bernilai kosong.
-// Mengembalikan nilai string dari environment variable atau defaultValue.
 func getEnv(key, defaultValue string) string {
 	if val := os.Getenv(key); val != "" {
 		return val
@@ -183,10 +174,6 @@ func getEnv(key, defaultValue string) string {
 	return defaultValue
 }
 
-// getEnvAsInt membaca nilai environment variable dan mengonversinya menjadi tipe integer.
-// Parameter key merupakan nama variabel lingkungan yang dicari.
-// Parameter defaultValue merupakan nilai kembalian jika variabel tidak ditemukan atau gagal dikonversi.
-// Mengembalikan integer dari hasil konversi nilai variabel atau defaultValue.
 func getEnvAsInt(key string, defaultValue int) int {
 	valStr := os.Getenv(key)
 	if valStr == "" {
@@ -199,10 +186,6 @@ func getEnvAsInt(key string, defaultValue int) int {
 	return val
 }
 
-// getEnvAsBool membaca nilai environment variable dan mengonversinya menjadi tipe boolean.
-// Parameter key merupakan nama variabel lingkungan yang dicari.
-// Parameter defaultValue merupakan nilai kembalian jika variabel tidak ditemukan atau gagal dikonversi.
-// Mengembalikan boolean dari hasil konversi nilai variabel atau defaultValue.
 func getEnvAsBool(key string, defaultValue bool) bool {
 	valStr := os.Getenv(key)
 	if valStr == "" {
@@ -215,10 +198,6 @@ func getEnvAsBool(key string, defaultValue bool) bool {
 	return val
 }
 
-// getEnvAsDuration membaca nilai environment variable dan mengonversinya menjadi tipe time.Duration.
-// Parameter key merupakan nama variabel lingkungan yang dicari.
-// Parameter defaultValue merupakan nilai kembalian jika variabel tidak ditemukan atau gagal dikonversi.
-// Mengembalikan time.Duration dari hasil parsing nilai variabel atau defaultValue.
 func getEnvAsDuration(key string, defaultValue time.Duration) time.Duration {
 	valStr := os.Getenv(key)
 	if valStr == "" {
@@ -231,10 +210,6 @@ func getEnvAsDuration(key string, defaultValue time.Duration) time.Duration {
 	return val
 }
 
-// getEnvAsSlice membaca nilai environment variable berupa teks yang dipisahkan koma dan mengonversinya menjadi slice of string.
-// Parameter key merupakan nama variabel lingkungan yang dicari.
-// Parameter defaultValue merupakan nilai kembalian jika variabel tidak ditemukan atau bernilai kosong.
-// Mengembalikan slice string hasil pemisahan teks atau defaultValue.
 func getEnvAsSlice(key string, defaultValue []string) []string {
 	valStr := os.Getenv(key)
 	if valStr == "" {

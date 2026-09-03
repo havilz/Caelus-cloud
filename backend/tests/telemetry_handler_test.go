@@ -16,10 +16,10 @@ import (
 	"github.com/havilz/caelus-cloud/backend/internal/domain"
 	"github.com/havilz/caelus-cloud/backend/internal/usecase/monitoring"
 	"github.com/havilz/caelus-cloud/backend/pkg/config"
+	"github.com/havilz/caelus-cloud/backend/pkg/hasher"
 	"github.com/havilz/caelus-cloud/backend/pkg/jwt"
 )
 
-// setupTelemetryHTTPTest menginisialisasi router dan test server untuk modul telemetri dan alert.
 func setupTelemetryHTTPTest() (http.Handler, *mockMetricRepo, *mockAlertRepo, *mockServerRepo, jwt.Manager, uuid.UUID, uuid.UUID) {
 	jwtCfg := &config.JWTConfig{
 		Secret:            "test_secret_key_at_least_32_characters_long_12345",
@@ -30,12 +30,15 @@ func setupTelemetryHTTPTest() (http.Handler, *mockMetricRepo, *mockAlertRepo, *m
 	orgID := uuid.New()
 	serverID := uuid.New()
 
+	secret := "test-agent-secret-12345"
+	secretHash, _ := hasher.Hash(secret, nil)
 	mockServerRepo := newMockServerRepo()
 	_ = mockServerRepo.Create(context.Background(), &domain.Server{
-		ID:             serverID,
-		OrganizationID: orgID,
-		Name:           "api-gateway",
-		Status:         domain.ServerStatusRunning,
+		ID:              serverID,
+		OrganizationID:  orgID,
+		Name:            "api-gateway",
+		Status:          domain.ServerStatusRunning,
+		AgentSecretHash: &secretHash,
 	})
 
 	mockMetricRepo := &mockMetricRepo{
@@ -65,6 +68,7 @@ func setupTelemetryHTTPTest() (http.Handler, *mockMetricRepo, *mockAlertRepo, *m
 
 	routerConfig := deliveryHttp.RouterConfig{
 		JWTManager: jwtManager,
+		ServerRepo: mockServerRepo,
 		Handlers: deliveryHttp.Handlers{
 			TelemetryHandler: v1.NewTelemetryHandler(monitoringUc),
 			AlertHandler:     v1.NewAlertHandler(monitoringUc),
@@ -76,7 +80,6 @@ func setupTelemetryHTTPTest() (http.Handler, *mockMetricRepo, *mockAlertRepo, *m
 	return router, mockMetricRepo, mockAlertRepo, mockServerRepo, jwtManager, orgID, serverID
 }
 
-// TestTelemetryHTTP_IngestAndQuery memverifikasi endpoint ingestion telemetri dan pembacaan metrik live & history.
 func TestTelemetryHTTP_IngestAndQuery(t *testing.T) {
 	router, _, _, _, jwtManager, orgID, serverID := setupTelemetryHTTPTest()
 	user := &domain.User{ID: uuid.New(), Email: "admin@caelus.cloud"}
@@ -85,7 +88,6 @@ func TestTelemetryHTTP_IngestAndQuery(t *testing.T) {
 		t.Fatalf("failed to generate tokens: %v", err)
 	}
 
-	// 1. Ingest report via POST /api/v1/telemetry/report
 	payload := domain.TelemetryReportPayload{
 		ServerID:  serverID,
 		Timestamp: time.Now().UTC(),
@@ -98,6 +100,8 @@ func TestTelemetryHTTP_IngestAndQuery(t *testing.T) {
 
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/telemetry/report", bytes.NewReader(bodyBytes))
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-Server-ID", serverID.String())
+	req.Header.Set("Authorization", "Bearer test-agent-secret-12345")
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
 
@@ -105,7 +109,6 @@ func TestTelemetryHTTP_IngestAndQuery(t *testing.T) {
 		t.Fatalf("expected status 200, got %d: %s", w.Code, w.Body.String())
 	}
 
-	// 2. Query Live Metrics via GET /api/v1/servers/{id}/metrics/live
 	liveReq := httptest.NewRequest(http.MethodGet, "/api/v1/servers/"+serverID.String()+"/metrics/live", nil)
 	liveReq.Header.Set("Authorization", "Bearer "+tokens.AccessToken)
 	liveW := httptest.NewRecorder()
@@ -115,7 +118,6 @@ func TestTelemetryHTTP_IngestAndQuery(t *testing.T) {
 		t.Fatalf("expected status 200 for live metrics, got %d: %s", liveW.Code, liveW.Body.String())
 	}
 
-	// 3. Query Metric History via GET /api/v1/servers/{id}/metrics/history
 	histReq := httptest.NewRequest(http.MethodGet, "/api/v1/servers/"+serverID.String()+"/metrics/history?duration=1h", nil)
 	histReq.Header.Set("Authorization", "Bearer "+tokens.AccessToken)
 	histW := httptest.NewRecorder()
@@ -126,7 +128,6 @@ func TestTelemetryHTTP_IngestAndQuery(t *testing.T) {
 	}
 }
 
-// TestAlertHTTP_ListAndAcknowledge memverifikasi endpoint daftar alert dan aksi konfirmasi.
 func TestAlertHTTP_ListAndAcknowledge(t *testing.T) {
 	router, _, mockAlerts, _, jwtManager, orgID, _ := setupTelemetryHTTPTest()
 	user := &domain.User{ID: uuid.New(), Email: "admin@caelus.cloud"}
@@ -135,7 +136,6 @@ func TestAlertHTTP_ListAndAcknowledge(t *testing.T) {
 		t.Fatalf("failed to generate tokens: %v", err)
 	}
 
-	// 1. List alerts
 	listReq := httptest.NewRequest(http.MethodGet, "/api/v1/alerts?status=active", nil)
 	listReq.Header.Set("Authorization", "Bearer "+tokens.AccessToken)
 	listW := httptest.NewRecorder()
@@ -145,7 +145,6 @@ func TestAlertHTTP_ListAndAcknowledge(t *testing.T) {
 		t.Fatalf("expected status 200 for list alerts, got %d: %s", listW.Code, listW.Body.String())
 	}
 
-	// 2. Acknowledge alert
 	alertID := mockAlerts.alerts[0].ID
 	ackReq := httptest.NewRequest(http.MethodPost, "/api/v1/alerts/"+alertID.String()+"/acknowledge", nil)
 	ackReq.Header.Set("Authorization", "Bearer "+tokens.AccessToken)

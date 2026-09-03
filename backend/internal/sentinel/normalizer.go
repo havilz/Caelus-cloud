@@ -11,27 +11,19 @@ import (
 	"github.com/havilz/caelus-cloud/backend/internal/domain"
 )
 
-// FindingNormalizer menstandardisasi output temuan dari berbagai worker pemindai dan menghasilkan fingerprint deduplikasi.
 type FindingNormalizer struct{}
 
-// NewFindingNormalizer membuat instance baru FindingNormalizer.
 func NewFindingNormalizer() *FindingNormalizer {
 	return &FindingNormalizer{}
 }
 
-// Normalize mengubah DTO NormalizedFinding menjadi domain entity SecurityFinding yang siap disimpan ke database.
-// Parameter orgID merupakan UUID organisasi pemilik resource.
-// Parameter serverID merupakan pointer UUID server target (opsional).
-// Parameter scanID merupakan pointer UUID pemindaian (opsional).
-// Parameter item memuat data temuan dari scanner.
-// Mengembalikan pointer *domain.SecurityFinding.
 func (n *FindingNormalizer) Normalize(
 	orgID uuid.UUID,
 	serverID *uuid.UUID,
 	scanID *uuid.UUID,
 	item domain.NormalizedFinding,
 ) (*domain.SecurityFinding, error) {
-	// Buat fingerprint unik untuk deduplikasi
+
 	serverKey := "global"
 	if serverID != nil {
 		serverKey = serverID.String()

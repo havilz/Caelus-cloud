@@ -7,7 +7,6 @@ import (
 	"github.com/google/uuid"
 )
 
-// BackupStatus mendefinisikan status siklus hidup proses pembuatan backup.
 type BackupStatus string
 
 const (
@@ -17,7 +16,6 @@ const (
 	BackupStatusFailed     BackupStatus = "failed"
 )
 
-// BackupPolicy merepresentasikan konfigurasi kebijakan jadwal dan retensi backup server.
 type BackupPolicy struct {
 	ID             uuid.UUID  `json:"id"`
 	OrganizationID uuid.UUID  `json:"organization_id"`
@@ -33,12 +31,10 @@ type BackupPolicy struct {
 	CreatedAt      time.Time  `json:"created_at"`
 	UpdatedAt      time.Time  `json:"updated_at"`
 
-	// Relational views
 	ServerName *string `json:"server_name,omitempty"`
 	BucketName *string `json:"bucket_name,omitempty"`
 }
 
-// BackupRecord merepresentasikan rekaman arsip berkas backup yang tersimpan di Object Storage.
 type BackupRecord struct {
 	ID             uuid.UUID    `json:"id"`
 	OrganizationID uuid.UUID    `json:"organization_id"`
@@ -57,12 +53,10 @@ type BackupRecord struct {
 	CreatedAt      time.Time    `json:"created_at"`
 	UpdatedAt      time.Time    `json:"updated_at"`
 
-	// Relational views
 	ServerName *string `json:"server_name,omitempty"`
 	BucketName *string `json:"bucket_name,omitempty"`
 }
 
-// CreateBackupPolicyInput parameter pembuatan kebijakan backup.
 type CreateBackupPolicyInput struct {
 	OrganizationID uuid.UUID
 	ServerID       uuid.UUID
@@ -73,47 +67,32 @@ type CreateBackupPolicyInput struct {
 	IncludeDisks   bool
 }
 
-// BackupRepository mendefinisikan kontrak persistensi basis data untuk kebijakan dan arsip backup.
 type BackupRepository interface {
-	// CreatePolicy menyimpan kebijakan backup baru.
 	CreatePolicy(ctx context.Context, policy *BackupPolicy) error
 
-	// GetPolicyByID mengambil detail kebijakan backup berdasarkan ID.
 	GetPolicyByID(ctx context.Context, id uuid.UUID) (*BackupPolicy, error)
 
-	// ListPoliciesByOrgID mengambil seluruh kebijakan backup milik organisasi.
 	ListPoliciesByOrgID(ctx context.Context, orgID uuid.UUID) ([]BackupPolicy, error)
 
-	// ListPoliciesByServerID mengambil kebijakan backup untuk server tertentu.
 	ListPoliciesByServerID(ctx context.Context, serverID uuid.UUID) ([]BackupPolicy, error)
 
-	// ListDuePolicies mengambil daftar kebijakan aktif yang jadwal eksekusinya telah jatuh tempo.
 	ListDuePolicies(ctx context.Context, now time.Time) ([]BackupPolicy, error)
 
-	// UpdatePolicy memperbarui konfigurasi kebijakan backup.
 	UpdatePolicy(ctx context.Context, policy *BackupPolicy) error
 
-	// DeletePolicy menghapus kebijakan backup.
 	DeletePolicy(ctx context.Context, id uuid.UUID) error
 
-	// CreateRecord membuat entri rekaman backup baru.
 	CreateRecord(ctx context.Context, record *BackupRecord) error
 
-	// GetRecordByID mengambil rekaman backup berdasarkan ID.
 	GetRecordByID(ctx context.Context, id uuid.UUID) (*BackupRecord, error)
 
-	// UpdateRecordStatus memperbarui status proses, ukuran, dan error rekaman backup.
 	UpdateRecordStatus(ctx context.Context, id uuid.UUID, status BackupStatus, sizeBytes int64, checksum, errMsg *string, completedAt *time.Time) error
 
-	// ListRecordsByOrgID mengambil daftar riwayat backup milik organisasi dengan paginasi.
 	ListRecordsByOrgID(ctx context.Context, orgID uuid.UUID, limit, offset int) ([]BackupRecord, int, error)
 
-	// ListRecordsByServerID mengambil riwayat backup untuk server tertentu.
 	ListRecordsByServerID(ctx context.Context, serverID uuid.UUID, limit, offset int) ([]BackupRecord, int, error)
 
-	// ListExpiredRecords mengambil daftar arsip backup yang masa retensinya telah kedaluwarsa.
 	ListExpiredRecords(ctx context.Context, now time.Time, limit int) ([]BackupRecord, error)
 
-	// DeleteRecord menghapus rekaman metadata backup dari basis data.
 	DeleteRecord(ctx context.Context, id uuid.UUID) error
 }

@@ -15,7 +15,6 @@ import (
 	storageUcPkg "github.com/havilz/caelus-cloud/backend/internal/usecase/storage"
 )
 
-// mockBucketRepo menyediakan implementasi in-memory domain.BucketRepository untuk pengujian usecase.
 type mockBucketRepo struct {
 	buckets map[uuid.UUID]*domain.Bucket
 	mu      sync.RWMutex
@@ -125,7 +124,6 @@ func TestStorageUsecase_BucketLifecycleAndObjects(t *testing.T) {
 	orgID := uuid.New()
 	bucketName := "project-assets"
 
-	// 1. Create Bucket
 	bucket, err := uc.CreateBucket(ctx, orgID, bucketName, domain.StorageProviderMinIO, "us-east-1", false, false)
 	if err != nil {
 		t.Fatalf("failed to create bucket via usecase: %v", err)
@@ -134,7 +132,6 @@ func TestStorageUsecase_BucketLifecycleAndObjects(t *testing.T) {
 		t.Fatalf("unexpected bucket returned: %+v", bucket)
 	}
 
-	// 2. List Buckets
 	buckets, total, err := uc.ListBuckets(ctx, orgID, 10, 0)
 	if err != nil {
 		t.Fatalf("failed to list buckets: %v", err)
@@ -143,7 +140,6 @@ func TestStorageUsecase_BucketLifecycleAndObjects(t *testing.T) {
 		t.Fatalf("expected 1 bucket, got total=%d, len=%d", total, len(buckets))
 	}
 
-	// 3. Upload Object
 	content := "Welcome to Caelus Cloud multi-cloud storage!"
 	uploadRes, err := uc.UploadObject(ctx, orgID, bucketName, "docs/intro.txt", strings.NewReader(content), int64(len(content)), "text/plain", nil)
 	if err != nil {
@@ -153,7 +149,6 @@ func TestStorageUsecase_BucketLifecycleAndObjects(t *testing.T) {
 		t.Fatalf("unexpected uploaded key: %s", uploadRes.Key)
 	}
 
-	// 4. Download Object
 	downloadRes, err := uc.DownloadObject(ctx, orgID, bucketName, "docs/intro.txt")
 	if err != nil {
 		t.Fatalf("failed to download object: %v", err)
@@ -165,7 +160,6 @@ func TestStorageUsecase_BucketLifecycleAndObjects(t *testing.T) {
 		t.Fatalf("content mismatch. Expected %s, got %s", content, string(bodyBytes))
 	}
 
-	// 5. Generate Signed URL
 	signedURL, err := uc.GenerateSignedURL(ctx, orgID, bucketName, "docs/intro.txt", domain.SignedURLOpDownload, 15*time.Minute)
 	if err != nil {
 		t.Fatalf("failed to generate signed URL: %v", err)
@@ -174,17 +168,14 @@ func TestStorageUsecase_BucketLifecycleAndObjects(t *testing.T) {
 		t.Fatalf("invalid signed URL: %s", signedURL)
 	}
 
-	// 6. Delete Object
 	if err := uc.DeleteObject(ctx, orgID, bucketName, "docs/intro.txt"); err != nil {
 		t.Fatalf("failed to delete object: %v", err)
 	}
 
-	// 7. Delete Bucket
 	if err := uc.DeleteBucket(ctx, orgID, bucketName); err != nil {
 		t.Fatalf("failed to delete bucket: %v", err)
 	}
 
-	// 8. Verifikasi bucket sudah terhapus
 	_, err = uc.GetBucket(ctx, orgID, bucketName)
 	if err == nil {
 		t.Fatal("expected bucket to be not found after deletion")

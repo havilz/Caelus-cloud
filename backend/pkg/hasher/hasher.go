@@ -24,8 +24,6 @@ type Argon2Params struct {
 	KeyLength   uint32
 }
 
-// DefaultArgon2Params mengembalikan parameter standar hashing Argon2id tingkat produksi.
-// Mengembalikan instance Argon2Params dengan alokasi memori 64MB, 3 iterasi, 2 threads paralel, 16-byte salt, dan 32-byte key.
 func DefaultArgon2Params() *Argon2Params {
 	return &Argon2Params{
 		Memory:      64 * 1024,
@@ -36,10 +34,6 @@ func DefaultArgon2Params() *Argon2Params {
 	}
 }
 
-// Hash mengenkripsi teks sandi mentah menjadi string hash Argon2id berformat crypt standar.
-// Parameter password merupakan teks sandi yang akan di-hash.
-// Parameter params merupakan pointer *Argon2Params yang menentukan parameter algoritma hashing. Jika nil, DefaultArgon2Params() akan digunakan.
-// Mengembalikan string hash berformat $argon2id$v=19$m=...,t=...,p=...$<salt>$<hash> dan error jika pembuatan salt acak gagal.
 func Hash(password string, params *Argon2Params) (string, error) {
 	if params == nil {
 		params = DefaultArgon2Params()
@@ -75,10 +69,6 @@ func Hash(password string, params *Argon2Params) (string, error) {
 	return encoded, nil
 }
 
-// Compare membandingkan teks sandi mentah dengan string hash Argon2id yang tersimpan secara constant-time.
-// Parameter password merupakan teks sandi mentah yang diuji.
-// Parameter encodedHash merupakan string hash Argon2id pembanding.
-// Mengembalikan boolean true jika sandi cocok, false jika tidak cocok, dan error jika format hash tidak valid.
 func Compare(password, encodedHash string) (bool, error) {
 	parts := strings.Split(encodedHash, "$")
 	if len(parts) != 6 {

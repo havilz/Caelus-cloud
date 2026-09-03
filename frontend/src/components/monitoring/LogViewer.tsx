@@ -34,14 +34,12 @@ export const LogViewer: React.FC<LogViewerProps> = ({
   const [copied, setCopied] = useState(false);
   const terminalEndRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll ke baris terbawah jika aktif
   useEffect(() => {
     if (autoScroll && terminalEndRef.current) {
       terminalEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [logs, autoScroll]);
 
-  // Filter logs berdasarkan level dan kata kunci pencarian
   const filteredLogs = useMemo(() => {
     return logs.filter((log) => {
       const matchLevel =
@@ -151,9 +149,9 @@ export const LogViewer: React.FC<LogViewerProps> = ({
           </div>
         </div>
 
-        {/* Filter Bar */}
+        {}
         <div className="flex flex-col sm:flex-row items-center gap-2 pt-2 mt-1">
-          {/* Keyword Search */}
+          {}
           <div className="relative flex-1 w-full">
             <Search className="absolute left-2.5 top-2 h-3.5 w-3.5 text-[#707070]" />
             <input
@@ -165,7 +163,7 @@ export const LogViewer: React.FC<LogViewerProps> = ({
             />
           </div>
 
-          {/* Level Filter Buttons */}
+          {}
           <div className="flex items-center gap-1 bg-[#171717] p-0.5 rounded-md border border-[#262626] self-start sm:self-auto">
             {["ALL", "INFO", "WARN", "ERROR", "DEBUG"].map((lvl) => (
               <button
@@ -185,7 +183,7 @@ export const LogViewer: React.FC<LogViewerProps> = ({
         </div>
       </CardHeader>
 
-      {/* Terminal Output */}
+      {}
       <CardContent className="p-3 flex-1 overflow-y-auto font-mono text-[11px] leading-relaxed text-[#c0c0c0] select-text">
         {filteredLogs.length === 0 ? (
           <div className="flex h-full items-center justify-center text-center text-[#555555]">

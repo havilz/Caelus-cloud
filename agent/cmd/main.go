@@ -16,7 +16,6 @@ import (
 	"github.com/havilz/caelus-cloud/agent/pkg/logger"
 )
 
-// main adalah titik masuk utama daemon caelus-agent.
 func main() {
 	cfg, err := config.LoadConfig()
 	if err != nil {
@@ -62,7 +61,6 @@ func main() {
 	}
 }
 
-// runCollectionCycle menjalankan satu siklus pengumpulan data telemetri host, container, network, dan volume.
 func runCollectionCycle(
 	ctx context.Context,
 	sysCollector collector.Collector,
@@ -119,7 +117,6 @@ func runCollectionCycle(
 		return
 	}
 
-	// Eksekusi instruksi aksi remote dari Control Plane (Create/Delete Volume, dll)
 	if len(actions) > 0 {
 		for _, act := range actions {
 			slog.Info("received remote action from control plane", "action_id", act.ID, "type", act.Type, "target", act.Target)

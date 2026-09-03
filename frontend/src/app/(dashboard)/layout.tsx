@@ -41,10 +41,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   return (
     <div className="min-h-screen bg-[#0f0f0f] dark:bg-[#0f0f0f] light:bg-[#f9fafb] text-[#ededed] dark:text-[#ededed] light:text-[#111827] flex">
-      {/* Fixed Sidebar */}
+      {}
       <Sidebar />
 
-      {/* Main Content Area */}
+      {}
       <div className="flex-1 flex flex-col pl-64 min-h-screen">
         <Header />
         <main className="flex-1 p-6 overflow-y-auto">{children}</main>

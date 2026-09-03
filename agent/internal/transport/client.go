@@ -19,12 +19,10 @@ var (
 	ErrServerError         = errors.New("caelus API server returned an error")
 )
 
-// Client mendefinisikan interface pengiriman payload telemetri ke control plane.
 type Client interface {
 	SendReport(ctx context.Context, payload *AgentReportPayload) ([]AgentAction, error)
 }
 
-// HTTPClient mengimplementasikan interface Client menggunakan protokol HTTP/HTTPS.
 type HTTPClient struct {
 	httpClient  *http.Client
 	apiEndpoint string
@@ -33,15 +31,14 @@ type HTTPClient struct {
 	maxRetries  int
 }
 
-// NewHTTPClient membuat instance baru HTTPClient dengan konfigurasi koneksi dan TLS.
 func NewHTTPClient(apiEndpoint string, serverID uuid.UUID, agentSecret string, tlsSkipVerify bool) *HTTPClient {
 	transport := &http.Transport{
 		Proxy: http.ProxyFromEnvironment,
 		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: tlsSkipVerify, //nolint:gosec
+			InsecureSkipVerify: tlsSkipVerify,
 		},
-		MaxIdleConns:        10,
-		IdleConnTimeout:     30 * time.Second,
+		MaxIdleConns:       10,
+		IdleConnTimeout:    30 * time.Second,
 		DisableCompression: false,
 	}
 
@@ -57,7 +54,6 @@ func NewHTTPClient(apiEndpoint string, serverID uuid.UUID, agentSecret string, t
 	}
 }
 
-// SendReport mengirimkan payload data metrik ke endpoint API dan mengembalikan instruksi aksi tertunda.
 func (c *HTTPClient) SendReport(ctx context.Context, payload *AgentReportPayload) ([]AgentAction, error) {
 	bodyBytes, err := json.Marshal(payload)
 	if err != nil {
@@ -107,7 +103,6 @@ func (c *HTTPClient) SendReport(ctx context.Context, payload *AgentReportPayload
 	return nil, fmt.Errorf("failed to send telemetry report after %d attempts: %w", c.maxRetries, lastErr)
 }
 
-// applyHeaders menambahkan header autentikasi dan metadata ke request HTTP.
 func (c *HTTPClient) applyHeaders(req *http.Request) {
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.agentSecret))
@@ -115,7 +110,6 @@ func (c *HTTPClient) applyHeaders(req *http.Request) {
 	req.Header.Set("User-Agent", "caelus-agent/1.0.0")
 }
 
-// evaluateResponse memvalidasi status kode HTTP dari respon server.
 func (c *HTTPClient) evaluateResponse(resp *http.Response) error {
 	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
 		return nil

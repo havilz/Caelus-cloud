@@ -14,6 +14,7 @@ import (
 	v1 "github.com/havilz/caelus-cloud/backend/internal/delivery/http/v1"
 	"github.com/havilz/caelus-cloud/backend/internal/delivery/ws"
 	"github.com/havilz/caelus-cloud/backend/internal/domain"
+	iacApplier "github.com/havilz/caelus-cloud/backend/internal/iac/applier"
 	"github.com/havilz/caelus-cloud/backend/internal/notification"
 	"github.com/havilz/caelus-cloud/backend/internal/notification/email"
 	"github.com/havilz/caelus-cloud/backend/internal/notification/webhook"
@@ -29,7 +30,7 @@ import (
 	"github.com/havilz/caelus-cloud/backend/internal/usecase/auth"
 	automationUsecase "github.com/havilz/caelus-cloud/backend/internal/usecase/automation"
 	backupUsecase "github.com/havilz/caelus-cloud/backend/internal/usecase/backup"
-	iacApplier "github.com/havilz/caelus-cloud/backend/internal/iac/applier"
+	domainUsecase "github.com/havilz/caelus-cloud/backend/internal/usecase/domain"
 	iacUsecase "github.com/havilz/caelus-cloud/backend/internal/usecase/iac"
 	"github.com/havilz/caelus-cloud/backend/internal/usecase/monitoring"
 	networkUsecase "github.com/havilz/caelus-cloud/backend/internal/usecase/network"
@@ -37,16 +38,14 @@ import (
 	provUsecase "github.com/havilz/caelus-cloud/backend/internal/usecase/provider"
 	securityUsecase "github.com/havilz/caelus-cloud/backend/internal/usecase/security"
 	"github.com/havilz/caelus-cloud/backend/internal/usecase/server"
+	settingsUsecase "github.com/havilz/caelus-cloud/backend/internal/usecase/settings"
 	storageUsecase "github.com/havilz/caelus-cloud/backend/internal/usecase/storage"
 	volumeUsecase "github.com/havilz/caelus-cloud/backend/internal/usecase/volume"
-	domainUsecase "github.com/havilz/caelus-cloud/backend/internal/usecase/domain"
-	settingsUsecase "github.com/havilz/caelus-cloud/backend/internal/usecase/settings"
 	"github.com/havilz/caelus-cloud/backend/pkg/config"
 	"github.com/havilz/caelus-cloud/backend/pkg/jwt"
 	"github.com/havilz/caelus-cloud/backend/pkg/logger"
 )
 
-// main menginisialisasi konfigurasi sistem, logging terstruktur, koneksi database, usecase, router HTTP, dan menjalankan server API.
 func main() {
 	cfg, err := config.Load()
 	if err != nil {
@@ -91,7 +90,6 @@ func main() {
 	factory := provFactory.NewDriverFactoryWithKey([]byte(cfg.JWT.EncryptionKey))
 	wsHub := ws.NewHub()
 
-	// Inisialisasi Storage Factory & Adapters
 	storageFactoryInstance := storageFactory.NewStorageFactory()
 	minioEndpoint := os.Getenv("STORAGE_ENDPOINT")
 	if minioEndpoint == "" {
@@ -132,7 +130,6 @@ func main() {
 	storageUc := storageUsecase.NewStorageUsecase(bucketRepo, storageFactoryInstance, credRepo, []byte(cfg.JWT.EncryptionKey))
 	backupUc := backupUsecase.NewBackupUsecase(backupRepo, serverRepo, bucketRepo, storageFactoryInstance)
 
-	// Inisialisasi Automation & Notification Dispatcher
 	webhookClient := webhook.NewClient(os.Getenv("WEBHOOK_SIGNING_SECRET"))
 	emailClient := email.NewClient(email.Config{
 		Host:     os.Getenv("SMTP_HOST"),
@@ -143,7 +140,6 @@ func main() {
 	})
 	unifiedNotifier := notification.NewUnifiedDispatcher(webhookClient, emailClient)
 
-	// Inisialisasi Central Event Dispatcher & Rule Engine
 	centralDispatcher := automation.NewCentralEventDispatcher()
 	ruleEngine := automation.NewEngine(automationRepo, nil, unifiedNotifier, serverUc, backupUc)
 	centralDispatcher.Subscribe(func(ctx context.Context, event domain.SystemEvent) error {
@@ -152,12 +148,10 @@ func main() {
 
 	automationUc := automationUsecase.NewAutomationUsecase(automationRepo, ruleEngine, centralDispatcher)
 
-	// Background Backup Scheduler & Retention Cleaner Worker
 	backupScheduler := backupUsecase.NewScheduler(backupRepo, backupUc, logger.Get())
 	backupScheduler.Start(60 * time.Second)
 	defer backupScheduler.Stop()
 
-	// Background Heartbeat Liveness Watchdog (Mendeteksi server mati setelah 15s tanpa telemetri)
 	watchdog := monitoring.NewHeartbeatWatchdog(
 		serverRepo,
 		metricRepo,
@@ -170,7 +164,6 @@ func main() {
 	watchdog.Start()
 	defer watchdog.Stop()
 
-	// Background Multi-Provider Resource Status Sync Engine (Rekonsiliasi status setiap 60 detik)
 	syncEngine := provSync.NewSyncEngine(
 		serverRepo,
 		providerRepo,
@@ -190,7 +183,6 @@ func main() {
 	})
 	securityUc := securityUsecase.NewSecurityUsecase(securityRepo, serverRepo, metricRepo, sentinelOrchestrator)
 
-	// Inisialisasi Repositori dan Usecase IaC & Orkestrasi Deployment
 	iacRepo := postgres.NewIaCRepository(client.Pool)
 	deploymentRepo := postgres.NewDeploymentRepository(client.Pool)
 	iacUc := iacUsecase.NewUseCaseWithDeps(iacApplier.Dependencies{
@@ -218,7 +210,6 @@ func main() {
 	webhookRepo := postgres.NewWebhookRepository(client.Pool)
 	settingsUc := settingsUsecase.NewSettingsUsecase(userRepo, orgRepo, apiKeyRepo, webhookRepo, auditRepo)
 
-	// Hubungkan repositori Auto-Discovery ke Monitoring Usecase
 	monitoringUc.SetDiscoveryRepos(deploymentRepo, networkRepo, volumeRepo)
 
 	routerConfig := deliveryHttp.RouterConfig{

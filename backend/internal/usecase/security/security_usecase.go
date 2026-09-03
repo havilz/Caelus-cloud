@@ -11,7 +11,6 @@ import (
 	"github.com/havilz/caelus-cloud/backend/pkg/logger"
 )
 
-// SecurityUsecase mendefinisikan kontrak interface logika bisnis manajemen keamanan Sentinel.
 type SecurityUsecase interface {
 	TriggerScan(ctx context.Context, orgID uuid.UUID, serverID *uuid.UUID, scanType domain.ScanType) (*domain.SecurityScan, error)
 	GetScan(ctx context.Context, orgID, scanID uuid.UUID) (*domain.SecurityScan, error)
@@ -32,7 +31,6 @@ type securityUsecase struct {
 	orchestrator *sentinel.Orchestrator
 }
 
-// NewSecurityUsecase membuat instance baru SecurityUsecase.
 func NewSecurityUsecase(
 	securityRepo domain.SecurityRepository,
 	serverRepo domain.ServerRepository,
@@ -47,7 +45,6 @@ func NewSecurityUsecase(
 	}
 }
 
-// TriggerScan membuat sesi pemindaian baru dan mengeksekusinya via Sentinel Orchestrator.
 func (u *securityUsecase) TriggerScan(ctx context.Context, orgID uuid.UUID, serverID *uuid.UUID, scanType domain.ScanType) (*domain.SecurityScan, error) {
 	if scanType == "" {
 		scanType = domain.ScanTypeFull
@@ -76,20 +73,19 @@ func (u *securityUsecase) TriggerScan(ctx context.Context, orgID uuid.UUID, serv
 		}
 		target.OSType = srv.OSType
 
-		// Ambil metrik telemetri terbaru jika ada
 		latestMetric, err := u.metricRepo.GetLatestByServerID(ctx, srv.ID)
 		if err == nil && latestMetric != nil {
 			target.TelemetryData = &domain.HostMetricsPayload{
-				CPUUsagePct:     latestMetric.CPUUsagePct,
-				MemoryUsagePct:  latestMetric.MemoryUsagePct,
-				MemoryUsedMB:    uint64(latestMetric.MemoryUsedMB),
-				MemoryTotalMB:   uint64(latestMetric.MemoryTotalMB),
-				DiskUsagePct:    latestMetric.DiskUsagePct,
-				DiskUsedGB:      latestMetric.DiskUsedGB,
-				DiskTotalGB:     latestMetric.DiskTotalGB,
-				UptimeSeconds:   uint64(latestMetric.UptimeSeconds),
-				Platform:        srv.OSType,
-				Hostname:        target.Hostname,
+				CPUUsagePct:    latestMetric.CPUUsagePct,
+				MemoryUsagePct: latestMetric.MemoryUsagePct,
+				MemoryUsedMB:   uint64(latestMetric.MemoryUsedMB),
+				MemoryTotalMB:  uint64(latestMetric.MemoryTotalMB),
+				DiskUsagePct:   latestMetric.DiskUsagePct,
+				DiskUsedGB:     latestMetric.DiskUsedGB,
+				DiskTotalGB:    latestMetric.DiskTotalGB,
+				UptimeSeconds:  uint64(latestMetric.UptimeSeconds),
+				Platform:       srv.OSType,
+				Hostname:       target.Hostname,
 			}
 		}
 	} else {
@@ -111,7 +107,6 @@ func (u *securityUsecase) TriggerScan(ctx context.Context, orgID uuid.UUID, serv
 		return nil, fmt.Errorf("gagal membuat sesi scan: %w", err)
 	}
 
-	// Jalankan pemindaian secara asynchronous di background
 	go func(s *domain.SecurityScan, t domain.ScanTarget) {
 		bgCtx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 		defer cancel()
@@ -124,12 +119,10 @@ func (u *securityUsecase) TriggerScan(ctx context.Context, orgID uuid.UUID, serv
 	return scan, nil
 }
 
-// GetScan mengambil data sesi pemindaian berdasarkan ID.
 func (u *securityUsecase) GetScan(ctx context.Context, orgID, scanID uuid.UUID) (*domain.SecurityScan, error) {
 	return u.securityRepo.GetScanByID(ctx, orgID, scanID)
 }
 
-// ListScans mengambil daftar riwayat pemindaian organisasi.
 func (u *securityUsecase) ListScans(ctx context.Context, orgID uuid.UUID, serverID *uuid.UUID, page, limit int) ([]domain.SecurityScan, int, error) {
 	if page < 1 {
 		page = 1
@@ -140,7 +133,6 @@ func (u *securityUsecase) ListScans(ctx context.Context, orgID uuid.UUID, server
 	return u.securityRepo.ListScans(ctx, orgID, serverID, page, limit)
 }
 
-// ListFindings mengambil daftar temuan keamanan terfilter.
 func (u *securityUsecase) ListFindings(
 	ctx context.Context,
 	orgID uuid.UUID,
@@ -159,22 +151,18 @@ func (u *securityUsecase) ListFindings(
 	return u.securityRepo.ListFindings(ctx, orgID, serverID, category, severity, status, page, limit)
 }
 
-// GetFinding mengambil detail satu temuan keamanan.
 func (u *securityUsecase) GetFinding(ctx context.Context, orgID, findingID uuid.UUID) (*domain.SecurityFinding, error) {
 	return u.securityRepo.GetFindingByID(ctx, orgID, findingID)
 }
 
-// UpdateFindingStatus memperbarui status tindakan remediasi pada temuan.
 func (u *securityUsecase) UpdateFindingStatus(ctx context.Context, orgID, findingID uuid.UUID, status domain.FindingStatus) error {
 	return u.securityRepo.UpdateFindingStatus(ctx, orgID, findingID, status)
 }
 
-// GetPostureOverview menghitung postur dan skor keamanan organisasi.
 func (u *securityUsecase) GetPostureOverview(ctx context.Context, orgID uuid.UUID) (*domain.SecurityPostureOverview, error) {
 	return u.securityRepo.GetPostureOverview(ctx, orgID)
 }
 
-// CreateIncident membuat rekaman insiden keamanan baru.
 func (u *securityUsecase) CreateIncident(ctx context.Context, orgID uuid.UUID, title, summary string, severity domain.FindingSeverity, findingIDs []uuid.UUID) (*domain.SecurityIncident, error) {
 	if severity == "" {
 		severity = domain.SeverityHigh
@@ -193,7 +181,6 @@ func (u *securityUsecase) CreateIncident(ctx context.Context, orgID uuid.UUID, t
 	return incident, nil
 }
 
-// ListIncidents mengambil daftar insiden keamanan.
 func (u *securityUsecase) ListIncidents(ctx context.Context, orgID uuid.UUID, status *domain.IncidentStatus, page, limit int) ([]domain.SecurityIncident, int, error) {
 	if page < 1 {
 		page = 1
@@ -204,7 +191,6 @@ func (u *securityUsecase) ListIncidents(ctx context.Context, orgID uuid.UUID, st
 	return u.securityRepo.ListIncidents(ctx, orgID, status, page, limit)
 }
 
-// UpdateIncidentStatus memperbarui status insiden keamanan dan catatan mitigasi.
 func (u *securityUsecase) UpdateIncidentStatus(ctx context.Context, orgID, incidentID uuid.UUID, status domain.IncidentStatus, notes string) error {
 	return u.securityRepo.UpdateIncidentStatus(ctx, orgID, incidentID, status, notes)
 }

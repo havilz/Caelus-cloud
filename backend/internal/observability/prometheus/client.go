@@ -11,13 +11,11 @@ import (
 	"github.com/havilz/caelus-cloud/backend/internal/domain"
 )
 
-// Client mengimplementasikan domain.MetricsQueryAdapter untuk berinteraksi dengan HTTP API Prometheus.
 type Client struct {
 	baseURL    string
 	httpClient *http.Client
 }
 
-// NewClient membuat instance baru adapter Prometheus Client.
 func NewClient(baseURL string) domain.MetricsQueryAdapter {
 	if baseURL == "" {
 		baseURL = "http://localhost:9090"
@@ -30,7 +28,6 @@ func NewClient(baseURL string) domain.MetricsQueryAdapter {
 	}
 }
 
-// QueryInstant mengeksekusi instant PromQL query ke endpoint /api/v1/query.
 func (c *Client) QueryInstant(ctx context.Context, query string) (any, error) {
 	endpoint := fmt.Sprintf("%s/api/v1/query?query=%s", c.baseURL, url.QueryEscape(query))
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
@@ -56,7 +53,6 @@ func (c *Client) QueryInstant(ctx context.Context, query string) (any, error) {
 	return result, nil
 }
 
-// QueryRange mengeksekusi range PromQL query ke endpoint /api/v1/query_range.
 func (c *Client) QueryRange(ctx context.Context, query string, start, end time.Time, step time.Duration) (any, error) {
 	stepSec := int(step.Seconds())
 	if stepSec <= 0 {

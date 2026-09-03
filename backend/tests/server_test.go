@@ -101,7 +101,6 @@ func (m *mockServerRepo) GetByIDWithSecret(ctx context.Context, id uuid.UUID) (*
 	return nil, domain.ErrNotFound
 }
 
-
 func setupServerUsecaseTest() (server.ServerUsecase, *mockServerRepo, *mockProviderRepo, uuid.UUID, uuid.UUID) {
 	serverRepo := newMockServerRepo()
 	provRepo := newMockProviderRepo()
@@ -121,7 +120,6 @@ func setupServerUsecaseTest() (server.ServerUsecase, *mockServerRepo, *mockProvi
 	return uc, serverRepo, provRepo, orgID, providerID
 }
 
-// TestServerUsecase_CreateAndGet memverifikasi pembuatan server melalui usecase dan pengambilan detail data server.
 func TestServerUsecase_CreateAndGet(t *testing.T) {
 	uc, _, _, orgID, provID := setupServerUsecaseTest()
 	ctx := context.Background()
@@ -153,7 +151,6 @@ func TestServerUsecase_CreateAndGet(t *testing.T) {
 	}
 }
 
-// TestServerUsecase_ListServers memverifikasi pengambilan daftar server milik organisasi dengan paginasi.
 func TestServerUsecase_ListServers(t *testing.T) {
 	uc, _, _, orgID, provID := setupServerUsecaseTest()
 	ctx := context.Background()
@@ -176,7 +173,6 @@ func TestServerUsecase_ListServers(t *testing.T) {
 	}
 }
 
-// TestServerUsecase_PowerControls memverifikasi aksi kontrol daya (shutdown, start, reboot) pada server.
 func TestServerUsecase_PowerControls(t *testing.T) {
 	uc, _, _, orgID, provID := setupServerUsecaseTest()
 	ctx := context.Background()
@@ -213,7 +209,6 @@ func TestServerUsecase_PowerControls(t *testing.T) {
 	}
 }
 
-// TestServerUsecase_Resize memverifikasi pengubahan spesifikasi vCPU/RAM/Disk server.
 func TestServerUsecase_Resize(t *testing.T) {
 	uc, _, _, orgID, provID := setupServerUsecaseTest()
 	ctx := context.Background()
@@ -245,7 +240,6 @@ func TestServerUsecase_Resize(t *testing.T) {
 	}
 }
 
-// TestServerUsecase_Delete memverifikasi penghapusan server dari sistem.
 func TestServerUsecase_Delete(t *testing.T) {
 	uc, _, _, orgID, provID := setupServerUsecaseTest()
 	ctx := context.Background()
@@ -341,7 +335,6 @@ func createServerViaHTTP(handler http.Handler, authHeader string, provID uuid.UU
 	return dataMap["id"].(string)
 }
 
-// TestServerHTTP_CreateAndGet memverifikasi pembuatan server dan pengambilan detailnya melalui REST API.
 func TestServerHTTP_CreateAndGet(t *testing.T) {
 	router, authHeader, provID := setupServerHTTPTest()
 	serverID := createServerViaHTTP(router, authHeader, provID)
@@ -352,7 +345,6 @@ func TestServerHTTP_CreateAndGet(t *testing.T) {
 	}
 }
 
-// TestServerHTTP_ListServers memverifikasi pengambilan daftar server melalui REST API.
 func TestServerHTTP_ListServers(t *testing.T) {
 	router, authHeader, provID := setupServerHTTPTest()
 	_ = createServerViaHTTP(router, authHeader, provID)
@@ -363,7 +355,6 @@ func TestServerHTTP_ListServers(t *testing.T) {
 	}
 }
 
-// TestServerHTTP_PowerControls memverifikasi endpoint reboot, shutdown, dan start server melalui REST API.
 func TestServerHTTP_PowerControls(t *testing.T) {
 	router, authHeader, provID := setupServerHTTPTest()
 	serverID := createServerViaHTTP(router, authHeader, provID)
@@ -384,7 +375,6 @@ func TestServerHTTP_PowerControls(t *testing.T) {
 	}
 }
 
-// TestServerHTTP_ResizeAndDelete memverifikasi pengubahan spesifikasi dan penghapusan server melalui REST API.
 func TestServerHTTP_ResizeAndDelete(t *testing.T) {
 	router, authHeader, provID := setupServerHTTPTest()
 	serverID := createServerViaHTTP(router, authHeader, provID)

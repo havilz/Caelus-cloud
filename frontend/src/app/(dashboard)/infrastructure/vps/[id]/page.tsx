@@ -61,7 +61,6 @@ export default function ServerDetailPage({
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Hook WebSocket telemetri real-time
   const onMetricUpdate = useCallback((metric: ServerMetric) => {
     setMetricsHistory((prev) => {
       const next = [...prev, metric];
@@ -118,7 +117,7 @@ export default function ServerDetailPage({
       const history = await monitoringService.getMetricHistory(serverId, timeRange);
       setMetricsHistory(history);
     } catch {
-      // Data history kosong atau belum tersedia
+      
     }
   };
 
@@ -136,7 +135,7 @@ export default function ServerDetailPage({
       );
       setServerRules(serverSpecificRules);
     } catch {
-      // Abaikan error fetch alert
+      
     }
   };
 
@@ -239,7 +238,7 @@ export default function ServerDetailPage({
 
   return (
     <div className={AppContainers.pageWrapper}>
-      {/* Top Breadcrumb & Actions Bar */}
+      {}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <Link href="/infrastructure/vps">
@@ -265,7 +264,7 @@ export default function ServerDetailPage({
           </div>
         </div>
 
-        {/* Server Power Controls */}
+        {}
         <div className="flex items-center gap-1.5 self-start sm:self-auto flex-wrap">
           {server.status === "stopped" ? (
             <Button
@@ -326,7 +325,7 @@ export default function ServerDetailPage({
         </div>
       </div>
 
-      {/* Navigation Tabs */}
+      {}
       <div className={`flex items-center gap-1 border-b ${AppColors.border.subtle} pb-0`}>
         {[
           { id: "overview", label: "Overview & Hardware", icon: ServerIcon },
@@ -365,7 +364,7 @@ export default function ServerDetailPage({
         })}
       </div>
 
-      {/* TAB 1: OVERVIEW & HARDWARE */}
+      {}
       {activeTab === "overview" && (
         <div className={AppContainers.overviewSplitGrid}>
           <div className="lg:col-span-2 space-y-4">
@@ -569,10 +568,10 @@ export default function ServerDetailPage({
         </div>
       )}
 
-      {/* TAB 2: LIVE TELEMETRY & METRICS CHARTS */}
+      {}
       {activeTab === "metrics" && (
         <div className="space-y-4">
-          {/* Quick Metrics Cards */}
+          {}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <MetricCard
               title="vCPU Load"
@@ -610,7 +609,7 @@ export default function ServerDetailPage({
             />
           </div>
 
-          {/* Time Series Charts Grid */}
+          {}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <MetricTimeSeriesChart
               title="vCPU Utilization Percentage"
@@ -663,7 +662,7 @@ export default function ServerDetailPage({
         </div>
       )}
 
-      {/* TAB 3: CONSOLE LOGS */}
+      {}
       {activeTab === "logs" && (
         <div className="space-y-4">
           <LogViewer
@@ -675,7 +674,7 @@ export default function ServerDetailPage({
         </div>
       )}
 
-      {/* TAB 4: ALERTS & THRESHOLD RULES */}
+      {}
       {activeTab === "alerts" && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
@@ -693,7 +692,7 @@ export default function ServerDetailPage({
             </Button>
           </div>
 
-          {/* Active Alerts List */}
+          {}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <Card className={AppContainers.card}>
               <CardHeader className={AppContainers.cardHeader}>
@@ -727,7 +726,7 @@ export default function ServerDetailPage({
               </CardContent>
             </Card>
 
-            {/* Configured Rules */}
+            {}
             <Card className={AppContainers.card}>
               <CardHeader className={AppContainers.cardHeader}>
                 <CardTitle className={AppText.h4}>Aturan Evaluasi Aktif ({serverRules.length})</CardTitle>
@@ -762,7 +761,7 @@ export default function ServerDetailPage({
         </div>
       )}
 
-      {/* Resize Modal */}
+      {}
       <ResizeServerModal
         server={server}
         isOpen={isResizeOpen}
@@ -772,7 +771,7 @@ export default function ServerDetailPage({
         }}
       />
 
-      {/* Create Alert Rule Modal */}
+      {}
       <CreateAlertRuleModal
         serverId={server.id}
         isOpen={isCreateRuleOpen}

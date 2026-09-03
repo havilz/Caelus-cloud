@@ -18,7 +18,6 @@ import (
 	"github.com/havilz/caelus-cloud/agent/internal/transport"
 )
 
-// Inspector mendefinisikan interface inspeksi status, metrik, network, dan volume Docker daemon.
 type Inspector interface {
 	IsAvailable(ctx context.Context) bool
 	InspectContainers(ctx context.Context) ([]transport.ContainerMetrics, error)
@@ -33,13 +32,11 @@ type Inspector interface {
 	RestartContainer(ctx context.Context, name string) error
 }
 
-// UnixSocketInspector mengimplementasikan Inspector melalui komunikasi Unix domain socket ke Docker daemon.
 type UnixSocketInspector struct {
 	socketPath string
 	client     *http.Client
 }
 
-// NewInspector membuat instance baru UnixSocketInspector menggunakan path socket yang ditentukan.
 func NewInspector(socketPath string) *UnixSocketInspector {
 	tr := &http.Transport{
 		DialContext: func(ctx context.Context, _, _ string) (net.Conn, error) {
@@ -58,7 +55,6 @@ func NewInspector(socketPath string) *UnixSocketInspector {
 	}
 }
 
-// IsAvailable memeriksa apakah socket Docker ada dan merespons ping status.
 func (i *UnixSocketInspector) IsAvailable(ctx context.Context) bool {
 	if _, err := os.Stat(i.socketPath); os.IsNotExist(err) {
 		return false
@@ -78,7 +74,6 @@ func (i *UnixSocketInspector) IsAvailable(ctx context.Context) bool {
 	return resp.StatusCode == http.StatusOK
 }
 
-// InspectContainers mengambil daftar seluruh container Docker beserta konfigurasi port, volume, dan network-nya.
 func (i *UnixSocketInspector) InspectContainers(ctx context.Context) ([]transport.ContainerMetrics, error) {
 	if !i.IsAvailable(ctx) {
 		return []transport.ContainerMetrics{}, nil
@@ -196,7 +191,6 @@ func (i *UnixSocketInspector) InspectContainers(ctx context.Context) ([]transpor
 	return result, nil
 }
 
-// InspectNetworks mengambil seluruh konfigurasi Docker network / VPC bridge pada host.
 func (i *UnixSocketInspector) InspectNetworks(ctx context.Context) ([]transport.DiscoveredNetwork, error) {
 	if !i.IsAvailable(ctx) {
 		return []transport.DiscoveredNetwork{}, nil
@@ -258,7 +252,6 @@ func (i *UnixSocketInspector) InspectNetworks(ctx context.Context) ([]transport.
 	return result, nil
 }
 
-// InspectVolumes mengambil seluruh persistent block volumes yang ada pada host.
 func (i *UnixSocketInspector) InspectVolumes(ctx context.Context) ([]transport.DiscoveredVolume, error) {
 	if !i.IsAvailable(ctx) {
 		return []transport.DiscoveredVolume{}, nil
@@ -310,7 +303,6 @@ func (i *UnixSocketInspector) InspectVolumes(ctx context.Context) ([]transport.D
 	return result, nil
 }
 
-// fetchContainerStats mengambil ringkasan metrik CPU dan RAM container yang sedang berjalan.
 func (i *UnixSocketInspector) fetchContainerStats(ctx context.Context, containerID string) (float64, float64, float64) {
 	url := fmt.Sprintf("http://localhost/containers/%s/stats?stream=false", containerID)
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
@@ -370,7 +362,6 @@ func (i *UnixSocketInspector) fetchContainerStats(ctx context.Context, container
 	return cpuPercent, memMB, limitMB
 }
 
-// fetchContainerLogs mengambil snippet baris log output stdout/stderr terbaru dari container.
 func (i *UnixSocketInspector) fetchContainerLogs(ctx context.Context, containerID string) []string {
 	url := fmt.Sprintf("http://localhost/containers/%s/logs?stdout=1&stderr=1&tail=15&timestamps=0", containerID)
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
@@ -408,7 +399,6 @@ func (i *UnixSocketInspector) fetchContainerLogs(ctx context.Context, containerI
 	return lines
 }
 
-// CreateVolume membuat Docker named volume baru via Docker Unix Socket REST API.
 func (i *UnixSocketInspector) CreateVolume(ctx context.Context, name string) error {
 	if !i.IsAvailable(ctx) {
 		return fmt.Errorf("docker daemon is not available")
@@ -433,7 +423,6 @@ func (i *UnixSocketInspector) CreateVolume(ctx context.Context, name string) err
 	return nil
 }
 
-// RemoveVolume menghapus Docker volume secara fisik via Docker Unix Socket REST API.
 func (i *UnixSocketInspector) RemoveVolume(ctx context.Context, name string) error {
 	if !i.IsAvailable(ctx) {
 		return fmt.Errorf("docker daemon is not available")
@@ -457,7 +446,6 @@ func (i *UnixSocketInspector) RemoveVolume(ctx context.Context, name string) err
 	return nil
 }
 
-// DeployContainer mengunduh image, membuat container dengan port forwarding, env, volume, dan menjalankannya via Docker REST API.
 func (i *UnixSocketInspector) DeployContainer(ctx context.Context, payload transport.ContainerDeployPayload) error {
 	if !i.IsAvailable(ctx) {
 		return fmt.Errorf("docker daemon is not available")
@@ -472,8 +460,6 @@ func (i *UnixSocketInspector) DeployContainer(ctx context.Context, payload trans
 		return fmt.Errorf("image name cannot be empty")
 	}
 
-	// 1. Pull Image via Docker API: POST /images/create?fromImage=...
-	// Use a dedicated long-timeout client (5 min) for image pull - standard client timeout (10s) is too short.
 	pullTransport := &http.Transport{
 		DialContext: func(pCtx context.Context, _, _ string) (net.Conn, error) {
 			var dialer net.Dialer
@@ -500,10 +486,8 @@ func (i *UnixSocketInspector) DeployContainer(ctx context.Context, payload trans
 		return fmt.Errorf("docker image pull returned status %d for image %s", pullResp.StatusCode, imageName)
 	}
 
-	// 2. Remove existing container if any with force=1
 	_ = i.RemoveContainer(ctx, containerName)
 
-	// 3. Prepare PortBindings, ExposedPorts, Binds, Env
 	exposedPorts := make(map[string]struct{})
 	portBindings := make(map[string][]map[string]string)
 
@@ -573,7 +557,6 @@ func (i *UnixSocketInspector) DeployContainer(ctx context.Context, payload trans
 	}
 	_ = json.NewDecoder(createResp.Body).Decode(&createResult)
 
-	// 4. Start Container: POST /containers/{id}/start
 	startID := containerName
 	if createResult.ID != "" {
 		startID = createResult.ID
@@ -599,7 +582,6 @@ func (i *UnixSocketInspector) DeployContainer(ctx context.Context, payload trans
 	return nil
 }
 
-// RemoveContainer menghentikan dan menghapus Docker container via Docker Unix Socket REST API.
 func (i *UnixSocketInspector) RemoveContainer(ctx context.Context, name string) error {
 	if !i.IsAvailable(ctx) {
 		return fmt.Errorf("docker daemon is not available")
@@ -623,7 +605,6 @@ func (i *UnixSocketInspector) RemoveContainer(ctx context.Context, name string) 
 	return nil
 }
 
-// StartContainer memulai container yang berhenti via Docker Unix Socket REST API.
 func (i *UnixSocketInspector) StartContainer(ctx context.Context, name string) error {
 	if !i.IsAvailable(ctx) {
 		return fmt.Errorf("docker daemon is not available")
@@ -647,7 +628,6 @@ func (i *UnixSocketInspector) StartContainer(ctx context.Context, name string) e
 	return nil
 }
 
-// StopContainer menghentikan container aktif via Docker Unix Socket REST API.
 func (i *UnixSocketInspector) StopContainer(ctx context.Context, name string) error {
 	if !i.IsAvailable(ctx) {
 		return fmt.Errorf("docker daemon is not available")
@@ -671,7 +651,6 @@ func (i *UnixSocketInspector) StopContainer(ctx context.Context, name string) er
 	return nil
 }
 
-// RestartContainer me-restart container via Docker Unix Socket REST API.
 func (i *UnixSocketInspector) RestartContainer(ctx context.Context, name string) error {
 	if !i.IsAvailable(ctx) {
 		return fmt.Errorf("docker daemon is not available")
@@ -694,4 +673,3 @@ func (i *UnixSocketInspector) RestartContainer(ctx context.Context, name string)
 	}
 	return nil
 }
-

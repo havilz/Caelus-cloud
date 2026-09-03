@@ -39,7 +39,6 @@ func (m *mockAuditRepo) ListByOrg(ctx context.Context, orgID uuid.UUID, page, li
 	return result, int64(len(result)), nil
 }
 
-// TestAuditRepository_CreateAndList memverifikasi penyimpanan entitas audit log ke repository dan pengambilan data log berdasarkan organisasi.
 func TestAuditRepository_CreateAndList(t *testing.T) {
 	repo := newMockAuditRepo()
 	ctx := context.Background()
@@ -79,7 +78,6 @@ func TestAuditRepository_CreateAndList(t *testing.T) {
 	}
 }
 
-// TestAuditInterceptor_MutatingMethod_Captured memverifikasi bahwa HTTP request mutasi data (POST) otomatis dicatat ke dalam audit log lengkap dengan identitas pengguna.
 func TestAuditInterceptor_MutatingMethod_Captured(t *testing.T) {
 	jwtCfg := &config.JWTConfig{
 		Secret:            "test_secret_key_at_least_32_characters_long_12345",
@@ -113,6 +111,7 @@ func TestAuditInterceptor_MutatingMethod_Captured(t *testing.T) {
 	req.Header.Set("Authorization", "Bearer "+tokens.AccessToken)
 	req.Header.Set("User-Agent", "CaelusTestClient/1.0")
 	req.Header.Set("X-Forwarded-For", "203.0.113.195")
+	req.RemoteAddr = "127.0.0.1:1234"
 	rec := httptest.NewRecorder()
 
 	handler.ServeHTTP(rec, req)
@@ -143,7 +142,6 @@ func TestAuditInterceptor_MutatingMethod_Captured(t *testing.T) {
 	}
 }
 
-// TestAuditInterceptor_NonMutatingMethod_Skipped memverifikasi bahwa HTTP request pembacaan data (GET) diabaikan dan tidak dicatat ke tabel audit log.
 func TestAuditInterceptor_NonMutatingMethod_Skipped(t *testing.T) {
 	jwtCfg := &config.JWTConfig{
 		Secret:            "test_secret_key_at_least_32_characters_long_12345",
@@ -181,7 +179,6 @@ func TestAuditInterceptor_NonMutatingMethod_Skipped(t *testing.T) {
 	}
 }
 
-// TestAuditInterceptor_Unauthenticated_Skipped memverifikasi bahwa request yang tidak memiliki konteks pengguna terautentikasi tidak dicatat ke audit logs.
 func TestAuditInterceptor_Unauthenticated_Skipped(t *testing.T) {
 	auditRepo := newMockAuditRepo()
 	auditMw := middleware.AuditLogInterceptor(auditRepo, nil)

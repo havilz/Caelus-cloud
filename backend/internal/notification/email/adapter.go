@@ -8,7 +8,6 @@ import (
 	"time"
 )
 
-// Config mendefinisikan parameter konfigurasi server SMTP.
 type Config struct {
 	Host     string
 	Port     int
@@ -17,14 +16,10 @@ type Config struct {
 	From     string
 }
 
-// Client mengelola pengiriman email berbasis SMTP.
 type Client struct {
 	cfg Config
 }
 
-// NewClient membuat instance baru Client pengirim email SMTP.
-// Parameter cfg memuat konfigurasi host, port, username, password, dan email pengirim.
-// Mengembalikan pointer *Client.
 func NewClient(cfg Config) *Client {
 	if cfg.From == "" {
 		cfg.From = "no-reply@caelus.cloud"
@@ -32,18 +27,13 @@ func NewClient(cfg Config) *Client {
 	return &Client{cfg: cfg}
 }
 
-// EmailMessage merepresentasikan konten pesan email yang akan dikirimkan.
 type EmailMessage struct {
 	To      string
 	Subject string
-	Body    string // HTML atau Plaintext body
+	Body    string
 	IsHTML  bool
 }
 
-// SendEmail mengirimkan email ke alamat tujuan via SMTP.
-// Parameter ctx merupakan context pemanggilan.
-// Parameter msg memuat tujuan, subjek, dan isi email.
-// Mengembalikan error jika otentikasi atau transmisi SMTP gagal.
 func (c *Client) SendEmail(ctx context.Context, msg EmailMessage) error {
 	if msg.To == "" {
 		return fmt.Errorf("recipient email address cannot be empty")
@@ -52,7 +42,6 @@ func (c *Client) SendEmail(ctx context.Context, msg EmailMessage) error {
 		msg.Subject = "Caelus Cloud Notification"
 	}
 
-	// Jika server SMTP tidak dikonfigurasi (misal di lokal/dev), log simulasi pengiriman
 	if c.cfg.Host == "" {
 		return nil
 	}
@@ -95,7 +84,6 @@ func (c *Client) SendEmail(ctx context.Context, msg EmailMessage) error {
 	return nil
 }
 
-// BuildAlertHTMLTemplate menghasilkan template HTML email yang bersih untuk notifikasi insiden atau otomasi.
 func BuildAlertHTMLTemplate(title, ruleName, triggerEvent, details string) string {
 	return fmt.Sprintf(`<!DOCTYPE html>
 <html>

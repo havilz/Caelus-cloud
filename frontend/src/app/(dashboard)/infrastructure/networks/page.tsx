@@ -35,14 +35,12 @@ export default function NetworksManagementPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
   const [isRuleModalOpen, setIsRuleModalOpen] = useState<boolean>(false);
 
-  // New Network Form State
   const [newNetServerId, setNewNetServerId] = useState<string>("");
   const [newNetName, setNewNetName] = useState<string>("");
   const [newNetType, setNewNetType] = useState<"vpc" | "bridge" | "overlay">("vpc");
   const [newNetCidr, setNewNetCidr] = useState<string>("10.20.0.0/16");
   const [newNetRegion, setNewNetRegion] = useState<string>("ap-southeast-1");
 
-  // New Rule Form State
   const [newRuleServerId, setNewRuleServerId] = useState<string>("");
   const [newRuleName, setNewRuleName] = useState<string>("");
   const [newRuleDirection, setNewRuleDirection] = useState<"inbound" | "outbound">("inbound");
@@ -159,7 +157,7 @@ export default function NetworksManagementPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-100 flex items-center gap-2.5">
@@ -191,7 +189,7 @@ export default function NetworksManagementPage() {
         </div>
       </div>
 
-      {/* Top Stats Overview */}
+      {}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800/80">
           <div className="flex items-center justify-between">
@@ -246,7 +244,7 @@ export default function NetworksManagementPage() {
         </div>
       </div>
 
-      {/* Navigation Tabs & Search */}
+      {}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
         <div className="flex items-center gap-2">
           <button
@@ -283,7 +281,7 @@ export default function NetworksManagementPage() {
         </div>
       </div>
 
-      {/* Tab 1: Virtual Networks List */}
+      {}
       {activeTab === "networks" && (
         filteredNetworks.length === 0 ? (
           <div className="p-12 text-center rounded-xl bg-slate-900/60 border border-slate-800/80">
@@ -371,7 +369,7 @@ export default function NetworksManagementPage() {
         )
       )}
 
-      {/* Tab 2: Firewall Rules Table */}
+      {}
       {activeTab === "firewall" && (
         <div className="rounded-xl bg-slate-900/60 border border-slate-800/80 overflow-hidden">
           <div className="overflow-x-auto">
@@ -460,7 +458,7 @@ export default function NetworksManagementPage() {
         </div>
       )}
 
-      {/* Modal: Create Network */}
+      {}
       <Dialog
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
@@ -549,7 +547,7 @@ export default function NetworksManagementPage() {
         </form>
       </Dialog>
 
-      {/* Modal: Add Firewall Rule */}
+      {}
       <Dialog
         isOpen={isRuleModalOpen}
         onClose={() => setIsRuleModalOpen(false)}

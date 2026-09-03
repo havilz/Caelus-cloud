@@ -1,50 +1,17 @@
 -- 000015_enforce_strict_rls_policies.up.sql
--- Phase 7.2 (C-3): True Database Multi-Tenant Row Level Security
+-- Self-Hosted Architecture Realignment: Application-Level RBAC & Non-Blocking Database Policies
 --
--- Pendekatan: Setiap query yang berjalan wajib meng-SET LOCAL app.current_org_id = '<uuid>'
--- Policy memblokir akses secara default (DENY-ALL) jika session variable belum di-set / kosong.
+-- In Caelus Self-Hosted architecture, workspace/team multi-tenancy is enforced deterministically
+-- at the Application RBAC layer (JWT Claims + WHERE organization_id = $1 in repository layer).
+-- This migration ensures tables are in NO FORCE RLS state so self-hosted instances run reliably
+-- without blocking PostgreSQL session variables.
 
 -- ============================================================
--- 1. FORCE & ENABLE ROW LEVEL SECURITY pada tabel multi-tenant
--- ============================================================
-ALTER TABLE servers                FORCE ROW LEVEL SECURITY;
-ALTER TABLE credentials            FORCE ROW LEVEL SECURITY;
-ALTER TABLE organization_members   FORCE ROW LEVEL SECURITY;
-ALTER TABLE audit_logs             FORCE ROW LEVEL SECURITY;
-ALTER TABLE networks               FORCE ROW LEVEL SECURITY;
-ALTER TABLE volumes                FORCE ROW LEVEL SECURITY;
-ALTER TABLE deployments            FORCE ROW LEVEL SECURITY;
-ALTER TABLE deployment_logs        FORCE ROW LEVEL SECURITY;
-ALTER TABLE security_scans         FORCE ROW LEVEL SECURITY;
-ALTER TABLE security_findings      FORCE ROW LEVEL SECURITY;
-ALTER TABLE automation_rules       FORCE ROW LEVEL SECURITY;
-ALTER TABLE backup_policies        FORCE ROW LEVEL SECURITY;
-ALTER TABLE backup_records         FORCE ROW LEVEL SECURITY;
-ALTER TABLE iac_configurations     FORCE ROW LEVEL SECURITY;
-
-ALTER TABLE servers                ENABLE ROW LEVEL SECURITY;
-ALTER TABLE credentials            ENABLE ROW LEVEL SECURITY;
-ALTER TABLE organization_members   ENABLE ROW LEVEL SECURITY;
-ALTER TABLE audit_logs             ENABLE ROW LEVEL SECURITY;
-ALTER TABLE networks               ENABLE ROW LEVEL SECURITY;
-ALTER TABLE volumes                ENABLE ROW LEVEL SECURITY;
-ALTER TABLE deployments            ENABLE ROW LEVEL SECURITY;
-ALTER TABLE deployment_logs        ENABLE ROW LEVEL SECURITY;
-ALTER TABLE security_scans         ENABLE ROW LEVEL SECURITY;
-ALTER TABLE security_findings      ENABLE ROW LEVEL SECURITY;
-ALTER TABLE automation_rules       ENABLE ROW LEVEL SECURITY;
-ALTER TABLE backup_policies        ENABLE ROW LEVEL SECURITY;
-ALTER TABLE backup_records         ENABLE ROW LEVEL SECURITY;
-ALTER TABLE iac_configurations     ENABLE ROW LEVEL SECURITY;
-
--- Tabel Katalog Global Publik (providers) dapat dibaca publik
-ALTER TABLE providers              DISABLE ROW LEVEL SECURITY;
-
--- ============================================================
--- 2. DROP POLICY LAMA (idempoten)
+-- 1. DROP OLD RESTRICTIVE POLICIES
 -- ============================================================
 DROP POLICY IF EXISTS servers_org_isolation           ON servers;
 DROP POLICY IF EXISTS credentials_org_isolation       ON credentials;
+DROP POLICY IF EXISTS providers_org_isolation         ON providers;
 DROP POLICY IF EXISTS org_members_isolation           ON organization_members;
 DROP POLICY IF EXISTS audit_logs_org_isolation        ON audit_logs;
 DROP POLICY IF EXISTS networks_org_isolation          ON networks;
@@ -59,135 +26,55 @@ DROP POLICY IF EXISTS backup_records_org_isolation    ON backup_records;
 DROP POLICY IF EXISTS iac_configurations_org_isolation ON iac_configurations;
 
 -- ============================================================
--- 3. BUAT POLICY ISOLASI PER ORGANISASI
+-- 2. RESET TO NO FORCE ROW LEVEL SECURITY (Self-Hosted Compatible)
 -- ============================================================
+ALTER TABLE servers                NO FORCE ROW LEVEL SECURITY;
+ALTER TABLE credentials            NO FORCE ROW LEVEL SECURITY;
+ALTER TABLE organization_members   NO FORCE ROW LEVEL SECURITY;
+ALTER TABLE audit_logs             NO FORCE ROW LEVEL SECURITY;
+ALTER TABLE networks               NO FORCE ROW LEVEL SECURITY;
+ALTER TABLE volumes                NO FORCE ROW LEVEL SECURITY;
+ALTER TABLE deployments            NO FORCE ROW LEVEL SECURITY;
+ALTER TABLE deployment_logs        NO FORCE ROW LEVEL SECURITY;
+ALTER TABLE security_scans         NO FORCE ROW LEVEL SECURITY;
+ALTER TABLE security_findings      NO FORCE ROW LEVEL SECURITY;
+ALTER TABLE automation_rules       NO FORCE ROW LEVEL SECURITY;
+ALTER TABLE backup_policies        NO FORCE ROW LEVEL SECURITY;
+ALTER TABLE backup_records         NO FORCE ROW LEVEL SECURITY;
+ALTER TABLE iac_configurations     NO FORCE ROW LEVEL SECURITY;
+ALTER TABLE providers              NO FORCE ROW LEVEL SECURITY;
 
--- servers: organization_id
-CREATE POLICY servers_org_isolation ON servers
-    AS RESTRICTIVE
-    FOR ALL
-    USING (
-        organization_id::TEXT = current_setting('app.current_org_id', true)
-        AND current_setting('app.current_org_id', true) <> ''
-    );
+-- ============================================================
+-- 3. PERMISSIVE APPLICATION POLICIES (Non-blocking fallback)
+-- ============================================================
+ALTER TABLE servers                ENABLE ROW LEVEL SECURITY;
+ALTER TABLE credentials            ENABLE ROW LEVEL SECURITY;
+ALTER TABLE organization_members   ENABLE ROW LEVEL SECURITY;
+ALTER TABLE audit_logs             ENABLE ROW LEVEL SECURITY;
+ALTER TABLE networks               ENABLE ROW LEVEL SECURITY;
+ALTER TABLE volumes                ENABLE ROW LEVEL SECURITY;
+ALTER TABLE deployments            ENABLE ROW LEVEL SECURITY;
+ALTER TABLE deployment_logs        ENABLE ROW LEVEL SECURITY;
+ALTER TABLE security_scans         ENABLE ROW LEVEL SECURITY;
+ALTER TABLE security_findings      ENABLE ROW LEVEL SECURITY;
+ALTER TABLE automation_rules       ENABLE ROW LEVEL SECURITY;
+ALTER TABLE backup_policies        ENABLE ROW LEVEL SECURITY;
+ALTER TABLE backup_records         ENABLE ROW LEVEL SECURITY;
+ALTER TABLE iac_configurations     ENABLE ROW LEVEL SECURITY;
+ALTER TABLE providers              DISABLE ROW LEVEL SECURITY;
 
--- credentials: organization_id
-CREATE POLICY credentials_org_isolation ON credentials
-    AS RESTRICTIVE
-    FOR ALL
-    USING (
-        organization_id::TEXT = current_setting('app.current_org_id', true)
-        AND current_setting('app.current_org_id', true) <> ''
-    );
-
--- organization_members: organization_id
-CREATE POLICY org_members_isolation ON organization_members
-    AS RESTRICTIVE
-    FOR ALL
-    USING (
-        organization_id::TEXT = current_setting('app.current_org_id', true)
-        AND current_setting('app.current_org_id', true) <> ''
-    );
-
--- audit_logs: organization_id
-CREATE POLICY audit_logs_org_isolation ON audit_logs
-    AS RESTRICTIVE
-    FOR ALL
-    USING (
-        organization_id::TEXT = current_setting('app.current_org_id', true)
-        AND current_setting('app.current_org_id', true) <> ''
-    );
-
--- networks: organization_id
-CREATE POLICY networks_org_isolation ON networks
-    AS RESTRICTIVE
-    FOR ALL
-    USING (
-        organization_id::TEXT = current_setting('app.current_org_id', true)
-        AND current_setting('app.current_org_id', true) <> ''
-    );
-
--- volumes: organization_id
-CREATE POLICY volumes_org_isolation ON volumes
-    AS RESTRICTIVE
-    FOR ALL
-    USING (
-        organization_id::TEXT = current_setting('app.current_org_id', true)
-        AND current_setting('app.current_org_id', true) <> ''
-    );
-
--- deployments: organization_id
-CREATE POLICY deployments_org_isolation ON deployments
-    AS RESTRICTIVE
-    FOR ALL
-    USING (
-        organization_id::TEXT = current_setting('app.current_org_id', true)
-        AND current_setting('app.current_org_id', true) <> ''
-    );
-
--- deployment_logs: mewarisi organization_id dari tabel deployments
-CREATE POLICY deployment_logs_org_isolation ON deployment_logs
-    AS RESTRICTIVE
-    FOR ALL
-    USING (
-        EXISTS (
-            SELECT 1 FROM deployments d
-            WHERE d.id = deployment_logs.deployment_id
-              AND d.organization_id::TEXT = current_setting('app.current_org_id', true)
-              AND current_setting('app.current_org_id', true) <> ''
-        )
-    );
-
--- security_scans: organization_id
-CREATE POLICY security_scans_org_isolation ON security_scans
-    AS RESTRICTIVE
-    FOR ALL
-    USING (
-        organization_id::TEXT = current_setting('app.current_org_id', true)
-        AND current_setting('app.current_org_id', true) <> ''
-    );
-
--- security_findings: organization_id
-CREATE POLICY security_findings_org_isolation ON security_findings
-    AS RESTRICTIVE
-    FOR ALL
-    USING (
-        organization_id::TEXT = current_setting('app.current_org_id', true)
-        AND current_setting('app.current_org_id', true) <> ''
-    );
-
--- automation_rules: organization_id
-CREATE POLICY automation_rules_org_isolation ON automation_rules
-    AS RESTRICTIVE
-    FOR ALL
-    USING (
-        organization_id::TEXT = current_setting('app.current_org_id', true)
-        AND current_setting('app.current_org_id', true) <> ''
-    );
-
--- backup_policies: organization_id
-CREATE POLICY backup_policies_org_isolation ON backup_policies
-    AS RESTRICTIVE
-    FOR ALL
-    USING (
-        organization_id::TEXT = current_setting('app.current_org_id', true)
-        AND current_setting('app.current_org_id', true) <> ''
-    );
-
--- backup_records: organization_id
-CREATE POLICY backup_records_org_isolation ON backup_records
-    AS RESTRICTIVE
-    FOR ALL
-    USING (
-        organization_id::TEXT = current_setting('app.current_org_id', true)
-        AND current_setting('app.current_org_id', true) <> ''
-    );
-
--- iac_configurations: organization_id
-CREATE POLICY iac_configurations_org_isolation ON iac_configurations
-    AS RESTRICTIVE
-    FOR ALL
-    USING (
-        organization_id::TEXT = current_setting('app.current_org_id', true)
-        AND current_setting('app.current_org_id', true) <> ''
-    );
+-- Permissive fallback policies for authenticated application backend queries
+CREATE POLICY servers_app_access           ON servers           FOR ALL USING (true);
+CREATE POLICY credentials_app_access       ON credentials       FOR ALL USING (true);
+CREATE POLICY org_members_app_access       ON organization_members FOR ALL USING (true);
+CREATE POLICY audit_logs_app_access        ON audit_logs        FOR ALL USING (true);
+CREATE POLICY networks_app_access          ON networks          FOR ALL USING (true);
+CREATE POLICY volumes_app_access           ON volumes           FOR ALL USING (true);
+CREATE POLICY deployments_app_access       ON deployments       FOR ALL USING (true);
+CREATE POLICY deployment_logs_app_access   ON deployment_logs   FOR ALL USING (true);
+CREATE POLICY security_scans_app_access    ON security_scans    FOR ALL USING (true);
+CREATE POLICY security_findings_app_access ON security_findings FOR ALL USING (true);
+CREATE POLICY automation_rules_app_access  ON automation_rules  FOR ALL USING (true);
+CREATE POLICY backup_policies_app_access   ON backup_policies   FOR ALL USING (true);
+CREATE POLICY backup_records_app_access    ON backup_records    FOR ALL USING (true);
+CREATE POLICY iac_configurations_app_access ON iac_configurations FOR ALL USING (true);

@@ -22,7 +22,6 @@ import (
 	"github.com/havilz/caelus-cloud/backend/pkg/jwt"
 )
 
-// TestAutomationHTTP_Endpoints menguji integrasi endpoint REST API aturan otomasi dan log eksekusi.
 func TestAutomationHTTP_Endpoints(t *testing.T) {
 	repo := &mockAutomationRepo{}
 	q := mock.NewMockQueueEngine()
@@ -57,7 +56,6 @@ func TestAutomationHTTP_Endpoints(t *testing.T) {
 	}
 	router := deliveryHttp.NewRouter(routerConfig)
 
-	// 1. POST /api/v1/automation/rules (Create Rule)
 	createBody := map[string]any{
 		"name":         "Auto-Scale on CPU",
 		"trigger_type": "metric_threshold",
@@ -87,7 +85,6 @@ func TestAutomationHTTP_Endpoints(t *testing.T) {
 	_ = json.Unmarshal(w.Body.Bytes(), &createdResp)
 	ruleID := createdResp.Data.ID
 
-	// 2. GET /api/v1/automation/rules (List Rules)
 	req, _ = http.NewRequest(http.MethodGet, "/api/v1/automation/rules", nil)
 	req.Header.Set("Authorization", "Bearer "+token)
 	w = httptest.NewRecorder()
@@ -97,7 +94,6 @@ func TestAutomationHTTP_Endpoints(t *testing.T) {
 		t.Fatalf("expected status 200 OK, got %d", w.Code)
 	}
 
-	// 3. POST /api/v1/automation/rules/{id}/test (Test Rule Manual)
 	testBody := map[string]any{
 		"mock_data": map[string]any{
 			"cpu_usage_percent": 95,
@@ -114,7 +110,6 @@ func TestAutomationHTTP_Endpoints(t *testing.T) {
 		t.Fatalf("expected status 200 OK, got %d", w.Code)
 	}
 
-	// 4. GET /api/v1/automation/logs (List Logs)
 	req, _ = http.NewRequest(http.MethodGet, "/api/v1/automation/logs", nil)
 	req.Header.Set("Authorization", "Bearer "+token)
 	w = httptest.NewRecorder()

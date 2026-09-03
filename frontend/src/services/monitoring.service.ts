@@ -3,13 +3,12 @@ import { ServerMetric, Alert, AlertRule } from "@/types/monitoring";
 import { APIResponse, PaginatedResponse } from "@/types/api";
 
 export const monitoringService = {
-  // Mengambil rekaman snapshot metrik telemetri terbaru untuk server tertentu.
+  
   async getLiveMetrics(serverId: string): Promise<ServerMetric> {
     const res = await apiClient.get<APIResponse<ServerMetric>>(`/servers/${serverId}/metrics/live`);
     return res.data.data;
   },
 
-  // Mengambil riwayat deret waktu metrik server dalam rentang waktu tertentu (1h, 6h, 24h, 7d).
   async getMetricHistory(serverId: string, duration = "1h"): Promise<ServerMetric[]> {
     const res = await apiClient.get<APIResponse<ServerMetric[]>>(
       `/servers/${serverId}/metrics/history?duration=${duration}`
@@ -17,7 +16,6 @@ export const monitoringService = {
     return res.data.data || [];
   },
 
-  // Mengambil daftar insiden alert organisasi dengan paginasi dan filter status.
   async listAlerts(
     status?: string,
     page = 1,
@@ -34,23 +32,19 @@ export const monitoringService = {
     return res.data;
   },
 
-  // Mengubah status alert menjadi Acknowledged (telah ditinjau).
   async acknowledgeAlert(alertId: string): Promise<void> {
     await apiClient.post(`/alerts/${alertId}/acknowledge`);
   },
 
-  // Mengubah status alert menjadi Resolved (telah terselesaikan).
   async resolveAlert(alertId: string): Promise<void> {
     await apiClient.post(`/alerts/${alertId}/resolve`);
   },
 
-  // Mengambil seluruh aturan ambang batas alert milik organisasi.
   async listAlertRules(): Promise<AlertRule[]> {
     const res = await apiClient.get<APIResponse<AlertRule[]>>("/alerts/rules");
     return res.data.data || [];
   },
 
-  // Membuat aturan threshold alert baru.
   async createAlertRule(data: {
     server_id?: string;
     name: string;
@@ -64,7 +58,6 @@ export const monitoringService = {
     return res.data.data;
   },
 
-  // Menghapus aturan alert berdasarkan ID.
   async deleteAlertRule(ruleId: string): Promise<void> {
     await apiClient.delete(`/alerts/rules/${ruleId}`);
   },

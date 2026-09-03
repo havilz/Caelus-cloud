@@ -18,9 +18,6 @@ var (
 	ErrDecryptionFailed   = errors.New("gagal mendekripsi data atau otentikasi tag gagal")
 )
 
-// DeriveKey menghasilkan kunci 32-byte (256-bit) yang valid untuk AES-256-GCM.
-// Kunci idealnya berupa 32-byte raw binary atau 64-char hex string (hasil dari `openssl rand -hex 32`).
-// Jika panjang kunci tidak 32-byte atau 64-char hex, SHA-256 hash KDF digunakan sebagai penyesuai.
 func deriveKey(key []byte) []byte {
 	if len(key) == 32 {
 		return key
@@ -34,8 +31,6 @@ func deriveKey(key []byte) []byte {
 	return h[:]
 }
 
-// GenerateRandomKey menghasilkan string base64 32-byte yang aman dengan entropi kriptografis tinggi.
-// Dapat digunakan untuk mengatur ENCRYPTION_KEY pada file .env (`openssl rand -base64 32`).
 func GenerateRandomKey() (string, error) {
 	key := make([]byte, 32)
 	if _, err := io.ReadFull(rand.Reader, key); err != nil {
@@ -44,7 +39,6 @@ func GenerateRandomKey() (string, error) {
 	return base64.StdEncoding.EncodeToString(key), nil
 }
 
-// ValidateKeyEntropy memvalidasi apakah kunci memenuhi standar minimal 32 byte (256 bit) entropi (L-2).
 func ValidateKeyEntropy(key []byte) error {
 	if len(key) < 32 {
 		return ErrInvalidKeySize
@@ -52,10 +46,6 @@ func ValidateKeyEntropy(key []byte) error {
 	return nil
 }
 
-// Encrypt mengenkripsi teks mentah menggunakan algoritma AES-256-GCM dengan nonce acak 12-byte.
-// Parameter plainText merupakan teks rahasia yang akan dienkripsi.
-// Parameter key merupakan byte slice kunci rahasia sepanjang 32-byte (256-bit) atau 64-char hex string.
-// Mengembalikan string ciphertext berformat base64 (nonce + tag + ciphertext) atau error jika enkripsi gagal.
 func Encrypt(plainText string, key []byte) (string, error) {
 	aesKey := deriveKey(key)
 
@@ -78,10 +68,6 @@ func Encrypt(plainText string, key []byte) (string, error) {
 	return base64.StdEncoding.EncodeToString(cipherBytes), nil
 }
 
-// Decrypt mendekripsi string base64 ciphertext yang dihasilkan oleh fungsi Encrypt.
-// Parameter cipherText merupakan string terenkripsi berformat base64.
-// Parameter key merupakan byte slice kunci rahasia.
-// Mengembalikan teks asli (plainText) atau error jika integritas data tidak valid atau kunci salah.
 func Decrypt(cipherText string, key []byte) (string, error) {
 	aesKey := deriveKey(key)
 

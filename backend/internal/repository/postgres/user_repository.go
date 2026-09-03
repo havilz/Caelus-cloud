@@ -6,27 +6,20 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/havilz/caelus-cloud/backend/internal/domain"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/havilz/caelus-cloud/backend/internal/domain"
 )
 
 type UserRepository struct {
 	pool *pgxpool.Pool
 }
 
-// NewUserRepository menginisialisasi repository User berbasis PostgreSQL.
-// Parameter pool merupakan pointer *pgxpool.Pool aktif untuk eksekusi query database.
-// Mengembalikan pointer *UserRepository yang mengimplementasikan domain.UserRepository.
 func NewUserRepository(pool *pgxpool.Pool) *UserRepository {
 	return &UserRepository{pool: pool}
 }
 
-// Create menyimpan data entitas User baru ke dalam tabel users.
-// Parameter ctx merupakan konteks eksekusi query database.
-// Parameter user merupakan pointer *domain.User yang akan disimpan.
-// Mengembalikan error jika terjadi kegagalan eksekusi query atau duplikasi email (domain.ErrEmailAlreadyInUse).
 func (r *UserRepository) Create(ctx context.Context, user *domain.User) error {
 	query := `
 		INSERT INTO users (id, email, password_hash, full_name, avatar_url, is_active, created_at, updated_at)
@@ -62,10 +55,6 @@ func (r *UserRepository) Create(ctx context.Context, user *domain.User) error {
 	return nil
 }
 
-// GetByID mengambil data User dari tabel users berdasarkan identifier UUID.
-// Parameter ctx merupakan konteks eksekusi query database.
-// Parameter id merupakan UUID pengguna yang dicari.
-// Mengembalikan pointer *domain.User jika ditemukan dan domain.ErrNotFound jika data tidak ada.
 func (r *UserRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.User, error) {
 	query := `
 		SELECT id, email, password_hash, full_name, avatar_url, is_active, created_at, updated_at
@@ -95,10 +84,6 @@ func (r *UserRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Use
 	return &user, nil
 }
 
-// GetByEmail mengambil data User dari tabel users berdasarkan alamat email unik.
-// Parameter ctx merupakan konteks eksekusi query database.
-// Parameter email merupakan alamat email pengguna yang dicari.
-// Mengembalikan pointer *domain.User jika ditemukan dan domain.ErrNotFound jika data tidak ada.
 func (r *UserRepository) GetByEmail(ctx context.Context, email string) (*domain.User, error) {
 	query := `
 		SELECT id, email, password_hash, full_name, avatar_url, is_active, created_at, updated_at
@@ -128,10 +113,6 @@ func (r *UserRepository) GetByEmail(ctx context.Context, email string) (*domain.
 	return &user, nil
 }
 
-// Update memperbarui data profil pengguna pada tabel users.
-// Parameter ctx merupakan konteks eksekusi query database.
-// Parameter user merupakan pointer *domain.User yang memuat data terbaru.
-// Mengembalikan error jika terjadi kegagalan eksekusi query atau data pengguna tidak ditemukan.
 func (r *UserRepository) Update(ctx context.Context, user *domain.User) error {
 	query := `
 		UPDATE users
@@ -165,10 +146,6 @@ func (r *UserRepository) Update(ctx context.Context, user *domain.User) error {
 	return nil
 }
 
-// Delete menghapus data pengguna dari tabel users berdasarkan identifier UUID.
-// Parameter ctx merupakan konteks eksekusi query database.
-// Parameter id merupakan UUID pengguna yang akan dihapus.
-// Mengembalikan error jika terjadi kegagalan eksekusi query atau data tidak ditemukan.
 func (r *UserRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	query := `DELETE FROM users WHERE id = $1;`
 

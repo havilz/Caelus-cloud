@@ -21,7 +21,6 @@ type APIKey struct {
 	CreatedAt      time.Time  `json:"created_at"`
 	UpdatedAt      time.Time  `json:"updated_at"`
 
-	// Token mentah hanya diisi saat pembuatan pertama kali (tidak disimpan di database)
 	RawToken string `json:"raw_token,omitempty"`
 }
 

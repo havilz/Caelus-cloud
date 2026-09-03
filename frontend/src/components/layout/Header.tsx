@@ -18,7 +18,7 @@ export const Header: React.FC = () => {
       const res = await monitoringService.listAlerts("active", 1, 1);
       setActiveAlertsCount(res.meta?.total_items || 0);
     } catch {
-      // Abaikan error saat fetch
+      
     }
   };
 
@@ -41,7 +41,7 @@ export const Header: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Notification Bell with Active Alert Count */}
+          {}
           <button
             type="button"
             onClick={() => setIsAlertDrawerOpen(true)}
@@ -56,7 +56,7 @@ export const Header: React.FC = () => {
             )}
           </button>
 
-          {/* System Status Indicator */}
+          {}
           <div className="hidden sm:flex items-center gap-2 rounded-md border border-emerald-800/40 bg-emerald-950/40 px-2.5 py-1 text-xs text-emerald-400">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
@@ -65,7 +65,7 @@ export const Header: React.FC = () => {
             <span className="font-medium text-[11px]">System Operational</span>
           </div>
 
-        {/* User / Workspace Dropdown */}
+        {}
         <div className="relative">
           <button
             type="button"

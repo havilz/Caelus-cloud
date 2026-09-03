@@ -6,7 +6,6 @@ import (
 	"github.com/havilz/caelus-cloud/backend/pkg/hasher"
 )
 
-// TestArgon2HashingAndComparison memvalidasi fungsi pembuatan hash Argon2id dan kecocokan verifikasi kata sandi.
 func TestArgon2HashingAndComparison(t *testing.T) {
 	password := "SecureP@ssw0rd123!"
 

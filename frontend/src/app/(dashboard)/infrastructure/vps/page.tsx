@@ -80,7 +80,7 @@ export default function VPSManagementPage() {
 
   return (
     <div className={AppContainers.pageWrapper}>
-      {/* Header */}
+      {}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h2 className={AppText.h2}>
@@ -114,7 +114,7 @@ export default function VPSManagementPage() {
         </div>
       </div>
 
-      {/* Filter & Search Toolbar */}
+      {}
       <div className="flex flex-col sm:flex-row items-center gap-3">
         <div className="relative flex-1 w-full">
           <Search className="h-3.5 w-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[#707070]" />
@@ -141,7 +141,7 @@ export default function VPSManagementPage() {
         </div>
       </div>
 
-      {/* Server Table Card */}
+      {}
       <Card className="overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs text-[#ededed] dark:text-[#ededed] light:text-[#111827]">
@@ -172,7 +172,7 @@ export default function VPSManagementPage() {
 
                   return (
                     <tr key={server.id} className="hover:bg-[#1a1a1a] dark:hover:bg-[#1a1a1a] light:hover:bg-[#f3f4f6] transition-colors">
-                      {/* Name */}
+                      {}
                       <td className="px-5 py-4 font-medium">
                         <Link
                           href={`/infrastructure/vps/${server.id}`}
@@ -186,19 +186,19 @@ export default function VPSManagementPage() {
                         </span>
                       </td>
 
-                      {/* Status */}
+                      {}
                       <td className="px-5 py-4">
                         <ServerStatusBadge status={server.status} />
                       </td>
 
-                      {/* Provider */}
+                      {}
                       <td className="px-5 py-4">
                         <Badge variant="outline" className="text-[10px] py-0 px-2">
                           {server.provider?.name || "Mock Provider"}
                         </Badge>
                       </td>
 
-                      {/* IP Address */}
+                      {}
                       <td className="px-5 py-4 font-mono">
                         {server.ip_address ? (
                           <button
@@ -219,7 +219,7 @@ export default function VPSManagementPage() {
                         )}
                       </td>
 
-                      {/* Hardware Specs */}
+                      {}
                       <td className="px-5 py-4">
                         <div className="font-medium text-[#ededed] dark:text-[#ededed] light:text-[#111827]">
                           {server.cpu_cores} vCPU • {(server.memory_mb / 1024).toFixed(0)} GB RAM
@@ -227,16 +227,16 @@ export default function VPSManagementPage() {
                         <span className={AppText.caption}>{server.disk_gb} GB SSD</span>
                       </td>
 
-                      {/* Region & OS */}
+                      {}
                       <td className="px-5 py-4">
                         <div className="text-[#ededed] dark:text-[#ededed] light:text-[#111827]">{server.region}</div>
                         <span className={AppText.caption}>{server.os_type}</span>
                       </td>
 
-                      {/* Actions */}
+                      {}
                       <td className="px-5 py-4 text-right">
                         <div className="flex items-center justify-end gap-1.5">
-                          {/* Connect Agent Instructions Button */}
+                          {}
                           <button
                             type="button"
                             onClick={() => setConnectTarget(server)}
@@ -246,7 +246,7 @@ export default function VPSManagementPage() {
                             <Terminal className="h-3.5 w-3.5" />
                           </button>
 
-                          {/* Reboot Button */}
+                          {}
                           <button
                             type="button"
                             disabled={isActionLoading || server.status !== "running"}
@@ -257,7 +257,7 @@ export default function VPSManagementPage() {
                             <RotateCcw className="h-3.5 w-3.5" />
                           </button>
 
-                          {/* Shutdown / Start Toggle */}
+                          {}
                           {server.status === "running" ? (
                             <button
                               type="button"
@@ -280,7 +280,7 @@ export default function VPSManagementPage() {
                             </button>
                           )}
 
-                          {/* Resize Button */}
+                          {}
                           <button
                             type="button"
                             disabled={isActionLoading}
@@ -291,7 +291,7 @@ export default function VPSManagementPage() {
                             <Sliders className="h-3.5 w-3.5" />
                           </button>
 
-                          {/* Delete Button */}
+                          {}
                           <button
                             type="button"
                             disabled={isActionLoading}
@@ -315,7 +315,7 @@ export default function VPSManagementPage() {
           </table>
         </div>
 
-        {/* Pagination Footer */}
+        {}
         {totalPages > 1 && (
           <div className="flex items-center justify-between p-4 border-t border-[#262626] dark:border-[#262626] light:border-[#e5e7eb] bg-[#141414] dark:bg-[#141414] light:bg-[#f4f4f5] text-xs text-[#a1a1a1]">
             <span>
@@ -343,7 +343,7 @@ export default function VPSManagementPage() {
         )}
       </Card>
 
-      {/* Modals */}
+      {}
       <CreateServerModal isOpen={isCreateOpen} onClose={() => setIsCreateOpen(false)} />
       <ResizeServerModal
         server={resizeTarget}

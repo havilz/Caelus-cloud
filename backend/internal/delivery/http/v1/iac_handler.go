@@ -39,7 +39,6 @@ type rollbackRequest struct {
 	TargetVersion int `json:"target_version"`
 }
 
-// ValidateYAML memvalidasi sintaks dan skema YAML deklaratif tanpa menyimpannya ke database.
 func (h *IaCHandler) ValidateYAML(w http.ResponseWriter, r *http.Request) {
 	var req validateYAMLRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -51,7 +50,6 @@ func (h *IaCHandler) ValidateYAML(w http.ResponseWriter, r *http.Request) {
 	response.Success(w, http.StatusOK, "YAML validation executed", result)
 }
 
-// ListConfigs mengambil seluruh daftar konfigurasi IaC milik organisasi.
 func (h *IaCHandler) ListConfigs(w http.ResponseWriter, r *http.Request) {
 	orgID, ok := middleware.GetOrganizationIDFromContext(r.Context())
 	if !ok {
@@ -68,7 +66,6 @@ func (h *IaCHandler) ListConfigs(w http.ResponseWriter, r *http.Request) {
 	response.Success(w, http.StatusOK, "IaC configs retrieved", configs)
 }
 
-// CreateConfig membuat template konfigurasi deklaratif baru.
 func (h *IaCHandler) CreateConfig(w http.ResponseWriter, r *http.Request) {
 	orgID, ok := middleware.GetOrganizationIDFromContext(r.Context())
 	if !ok {
@@ -96,7 +93,6 @@ func (h *IaCHandler) CreateConfig(w http.ResponseWriter, r *http.Request) {
 	response.Success(w, http.StatusCreated, "IaC config created successfully", config)
 }
 
-// GetConfig mengambil detail konfigurasi spesifik berdasarkan ID.
 func (h *IaCHandler) GetConfig(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, err := uuid.Parse(idStr)
@@ -114,7 +110,6 @@ func (h *IaCHandler) GetConfig(w http.ResponseWriter, r *http.Request) {
 	response.Success(w, http.StatusOK, "IaC config retrieved", config)
 }
 
-// UpdateConfig memperbarui konfigurasi deklaratif.
 func (h *IaCHandler) UpdateConfig(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, err := uuid.Parse(idStr)
@@ -138,7 +133,6 @@ func (h *IaCHandler) UpdateConfig(w http.ResponseWriter, r *http.Request) {
 	response.Success(w, http.StatusOK, "IaC config updated", config)
 }
 
-// DeleteConfig menghapus konfigurasi deklaratif.
 func (h *IaCHandler) DeleteConfig(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, err := uuid.Parse(idStr)
@@ -155,7 +149,6 @@ func (h *IaCHandler) DeleteConfig(w http.ResponseWriter, r *http.Request) {
 	response.Success(w, http.StatusOK, "IaC config deleted", nil)
 }
 
-// GeneratePlan menghasilkan diff perbandingan Desired State vs Actual State.
 func (h *IaCHandler) GeneratePlan(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, err := uuid.Parse(idStr)
@@ -173,7 +166,6 @@ func (h *IaCHandler) GeneratePlan(w http.ResponseWriter, r *http.Request) {
 	response.Success(w, http.StatusOK, "Execution plan generated", plan)
 }
 
-// GetLatestPlan mengambil rencana eksekusi terakhir untuk konfigurasi tertentu.
 func (h *IaCHandler) GetLatestPlan(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, err := uuid.Parse(idStr)
@@ -191,7 +183,6 @@ func (h *IaCHandler) GetLatestPlan(w http.ResponseWriter, r *http.Request) {
 	response.Success(w, http.StatusOK, "Latest plan retrieved", plan)
 }
 
-// ApplyPlan mengeksekusi rencana IaC dan menyimpan snapshot state baru.
 func (h *IaCHandler) ApplyPlan(w http.ResponseWriter, r *http.Request) {
 	planIDStr := chi.URLParam(r, "id")
 	planID, err := uuid.Parse(planIDStr)
@@ -214,7 +205,6 @@ func (h *IaCHandler) ApplyPlan(w http.ResponseWriter, r *http.Request) {
 	response.Success(w, http.StatusOK, "Plan applied successfully", state)
 }
 
-// RollbackState mengembalikan status konfigurasi ke snapshot versi sebelumnya.
 func (h *IaCHandler) RollbackState(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	configID, err := uuid.Parse(idStr)
@@ -248,7 +238,6 @@ func (h *IaCHandler) RollbackState(w http.ResponseWriter, r *http.Request) {
 	response.Success(w, http.StatusOK, "State rolled back successfully", restoredState)
 }
 
-// ListStates mengambil riwayat snapshot state versi dari sebuah konfigurasi.
 func (h *IaCHandler) ListStates(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	configID, err := uuid.Parse(idStr)

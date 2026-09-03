@@ -10,7 +10,6 @@ import (
 	"github.com/havilz/caelus-cloud/backend/internal/domain"
 )
 
-// CommonPortDef mendefinisikan informasi port TCP standar dan tingkat risikonya jika terbuka ke publik.
 type CommonPortDef struct {
 	Port        int
 	Service     string
@@ -37,12 +36,10 @@ var commonPorts = []CommonPortDef{
 	{Port: 8080, Service: "HTTP-Alt", IsHighRisk: false, Severity: domain.SeverityLow, Description: "Port alternatif HTTP terbuka.", Remediation: "Pastikan aplikasi di port 8080 memiliki otentikasi yang memadai."},
 }
 
-// PortScanner melakukan pemindaian keterbukaan port TCP dan layanan berisiko pada target.
 type PortScanner struct {
 	dialTimeout time.Duration
 }
 
-// NewPortScanner membuat instance baru PortScanner.
 func NewPortScanner(dialTimeout time.Duration) *PortScanner {
 	if dialTimeout <= 0 {
 		dialTimeout = 800 * time.Millisecond
@@ -50,15 +47,10 @@ func NewPortScanner(dialTimeout time.Duration) *PortScanner {
 	return &PortScanner{dialTimeout: dialTimeout}
 }
 
-// Type mengembalikan tipe pemindaian domain.ScanTypePort.
 func (s *PortScanner) Type() domain.ScanType {
 	return domain.ScanTypePort
 }
 
-// Scan menjalankan pemindaian port TCP konkuren terhadap target IP atau hostname.
-// Parameter ctx merupakan konteks eksekusi.
-// Parameter target memuat metadata target pemindaian.
-// Mengembalikan slice []domain.NormalizedFinding dan error jika target tidak valid.
 func (s *PortScanner) Scan(ctx context.Context, target domain.ScanTarget) ([]domain.NormalizedFinding, error) {
 	ipOrHost := target.IPAddress
 	if ipOrHost == "" || ipOrHost == "0.0.0.0" {
@@ -89,7 +81,6 @@ func (s *PortScanner) Scan(ctx context.Context, target domain.ScanTarget) ([]dom
 			if err == nil {
 				_ = conn.Close()
 
-				// Port terbuka
 				finding := domain.NormalizedFinding{
 					CheckID:     fmt.Sprintf("port-%d-exposure", p.Port),
 					Category:    domain.CategoryNetwork,

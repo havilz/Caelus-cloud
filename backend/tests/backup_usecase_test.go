@@ -13,7 +13,6 @@ import (
 	backupUcPkg "github.com/havilz/caelus-cloud/backend/internal/usecase/backup"
 )
 
-// mockBackupRepo menyediakan implementasi in-memory domain.BackupRepository untuk pengujian.
 type mockBackupRepo struct {
 	policies map[uuid.UUID]*domain.BackupPolicy
 	records  map[uuid.UUID]*domain.BackupRecord
@@ -219,7 +218,6 @@ func TestBackupUsecase_PolicyAndSnapshotLifecycle(t *testing.T) {
 	}
 	_ = serverRepo.Create(ctx, server)
 
-	// 1. Create Policy
 	policy, err := uc.CreatePolicy(ctx, domain.CreateBackupPolicyInput{
 		OrganizationID: orgID,
 		ServerID:       server.ID,
@@ -235,13 +233,11 @@ func TestBackupUsecase_PolicyAndSnapshotLifecycle(t *testing.T) {
 		t.Fatalf("unexpected policy created: %+v", policy)
 	}
 
-	// 2. List Policies
 	policies, err := uc.ListPolicies(ctx, orgID)
 	if err != nil || len(policies) != 1 {
 		t.Fatalf("expected 1 policy, got len=%d, err=%v", len(policies), err)
 	}
 
-	// 3. Trigger Instant Backup
 	record, err := uc.TriggerBackup(ctx, orgID, server.ID, &policy.ID, "manual-snapshot-01")
 	if err != nil {
 		t.Fatalf("failed to trigger backup: %v", err)
@@ -253,18 +249,15 @@ func TestBackupUsecase_PolicyAndSnapshotLifecycle(t *testing.T) {
 		t.Fatalf("expected valid size and sha256 checksum in backup record: %+v", record)
 	}
 
-	// 4. List Records
 	records, total, err := uc.ListRecords(ctx, orgID, 10, 0)
 	if err != nil || total != 1 || len(records) != 1 {
 		t.Fatalf("expected 1 backup record, got total=%d, err=%v", total, err)
 	}
 
-	// 5. Delete Record
 	if err := uc.DeleteRecord(ctx, orgID, record.ID); err != nil {
 		t.Fatalf("failed to delete backup record: %v", err)
 	}
 
-	// 6. Delete Policy
 	if err := uc.DeletePolicy(ctx, orgID, policy.ID); err != nil {
 		t.Fatalf("failed to delete backup policy: %v", err)
 	}

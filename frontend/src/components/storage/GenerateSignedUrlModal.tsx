@@ -59,7 +59,7 @@ export const GenerateSignedUrlModal: React.FC<GenerateSignedUrlModalProps> = ({
   return (
     <div className={AppContainers.modalBackdrop}>
       <div className={`${AppContainers.modalDialog} max-w-lg p-6`}>
-        {/* Header */}
+        {}
         <div className="flex items-center justify-between pb-4 border-b border-[#262626]">
           <div className="flex items-center space-x-3">
             <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
@@ -80,7 +80,7 @@ export const GenerateSignedUrlModal: React.FC<GenerateSignedUrlModalProps> = ({
           </button>
         </div>
 
-        {/* Form Body */}
+        {}
         <form onSubmit={handleGenerate} className="mt-5 space-y-4">
           {error && (
             <div className="p-3 rounded-lg bg-rose-950/60 border border-rose-800/40 text-rose-300 text-xs">
@@ -88,7 +88,7 @@ export const GenerateSignedUrlModal: React.FC<GenerateSignedUrlModalProps> = ({
             </div>
           )}
 
-          {/* Target Key Info */}
+          {}
           <div>
             <label className={`${AppText.caption} block mb-1`}>
               Target Object
@@ -98,7 +98,7 @@ export const GenerateSignedUrlModal: React.FC<GenerateSignedUrlModalProps> = ({
             </div>
           </div>
 
-          {/* Operation Selector */}
+          {}
           <div>
             <label className={`${AppText.label} mb-1.5`}>
               Permission / Operation Type
@@ -131,7 +131,7 @@ export const GenerateSignedUrlModal: React.FC<GenerateSignedUrlModalProps> = ({
             </div>
           </div>
 
-          {/* Expiration Duration */}
+          {}
           <div>
             <label className={`${AppText.label} mb-1.5`}>
               Link Expiration
@@ -152,7 +152,7 @@ export const GenerateSignedUrlModal: React.FC<GenerateSignedUrlModalProps> = ({
             </select>
           </div>
 
-          {/* Generate Button */}
+          {}
           {!result && (
             <div className="pt-2">
               <button
@@ -166,7 +166,7 @@ export const GenerateSignedUrlModal: React.FC<GenerateSignedUrlModalProps> = ({
             </div>
           )}
 
-          {/* Result Section */}
+          {}
           {result && (
             <div className="p-4 rounded-xl bg-[#141414] border border-emerald-500/30 space-y-3 animate-in fade-in">
               <div className="flex items-center justify-between">

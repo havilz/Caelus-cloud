@@ -53,10 +53,6 @@ type jwtManager struct {
 	issuer            string
 }
 
-// NewJWTManager menginisialisasi manajer token JWT berdasarkan konfigurasi keamanan aplikasi.
-// Parameter cfg memuat konfigurasi kunci rahasia dan masa berlaku token JWT.
-// Parameter appName merupakan nama aplikasi yang disematkan sebagai issuer token.
-// Mengembalikan implementasi interface Manager untuk pembuatan dan validasi token.
 func NewJWTManager(cfg *config.JWTConfig, appName string) Manager {
 	return &jwtManager{
 		secret:            []byte(cfg.Secret),
@@ -66,10 +62,6 @@ func NewJWTManager(cfg *config.JWTConfig, appName string) Manager {
 	}
 }
 
-// GenerateTokenPair membuat pasangan Access Token dan Refresh Token berformat JWT yang ditandatangani dengan algoritma HMAC-SHA256.
-// Parameter user merupakan pointer entitas *domain.User pemilik token.
-// Parameter orgID merupakan pointer UUID organisasi aktif yang dapat bernilai nil.
-// Mengembalikan pointer *TokenPair dan error jika proses penandatanganan token gagal.
 func (m *jwtManager) GenerateTokenPair(user *domain.User, orgID *uuid.UUID) (*TokenPair, error) {
 	accessToken, err := m.generateToken(user, orgID, TokenTypeAccess, m.accessExpiration)
 	if err != nil {
@@ -89,26 +81,14 @@ func (m *jwtManager) GenerateTokenPair(user *domain.User, orgID *uuid.UUID) (*To
 	}, nil
 }
 
-// ValidateAccessToken memvalidasi integritas tanda tangan kriptografi dan masa berlaku Access Token.
-// Parameter tokenString merupakan string token JWT yang dikirimkan klien.
-// Mengembalikan pointer *UserClaims jika token valid, atau error jika tanda tangan salah/kedaluwarsa.
 func (m *jwtManager) ValidateAccessToken(tokenString string) (*UserClaims, error) {
 	return m.validateTokenWithType(tokenString, TokenTypeAccess)
 }
 
-// ValidateRefreshToken memvalidasi integritas tanda tangan kriptografi dan masa berlaku Refresh Token.
-// Parameter tokenString merupakan string refresh token JWT yang dikirimkan klien.
-// Mengembalikan pointer *UserClaims jika token valid, atau error jika tanda tangan salah/kedaluwarsa.
 func (m *jwtManager) ValidateRefreshToken(tokenString string) (*UserClaims, error) {
 	return m.validateTokenWithType(tokenString, TokenTypeRefresh)
 }
 
-// generateToken membuat string token JWT individual berdasarkan tipe dan durasi kedaluwarsa.
-// Parameter user merupakan entitas pengguna pemilik token.
-// Parameter orgID merupakan identifier organisasi aktif.
-// Parameter tokenType menentukan tipe token (access atau refresh).
-// Parameter duration menentukan masa berlaku token.
-// Mengembalikan string token yang telah ditandatangani dan error jika terjadi kegagalan.
 func (m *jwtManager) generateToken(user *domain.User, orgID *uuid.UUID, tokenType TokenType, duration time.Duration) (string, error) {
 	now := time.Now()
 	expiresAt := now.Add(duration)
@@ -131,10 +111,6 @@ func (m *jwtManager) generateToken(user *domain.User, orgID *uuid.UUID, tokenTyp
 	return tokenObj.SignedString(m.secret)
 }
 
-// validateTokenWithType memverifikasi integritas token dan memastikan tipe token sesuai dengan yang diharapkan.
-// Parameter tokenString merupakan teks token mentah.
-// Parameter expectedType merupakan tipe token yang diharapkan (access atau refresh).
-// Mengembalikan pointer *UserClaims jika token valid dan sesuai tipe, atau error jika tidak valid.
 func (m *jwtManager) validateTokenWithType(tokenString string, expectedType TokenType) (*UserClaims, error) {
 	claims, err := m.parseAndValidate(tokenString)
 	if err != nil {
@@ -148,9 +124,6 @@ func (m *jwtManager) validateTokenWithType(tokenString string, expectedType Toke
 	return claims, nil
 }
 
-// parseAndValidate mem-parsing string token JWT, memverifikasi algoritma HMAC, dan mengekstrak klaim pengguna.
-// Parameter tokenString merupakan teks token JWT mentah.
-// Mengembalikan pointer *UserClaims hasil ekstraksi dan error jika parsing atau verifikasi gagal.
 func (m *jwtManager) parseAndValidate(tokenString string) (*UserClaims, error) {
 	token, err := jwtlib.ParseWithClaims(tokenString, &UserClaims{}, func(token *jwtlib.Token) (any, error) {
 		if _, ok := token.Method.(*jwtlib.SigningMethodHMAC); !ok {

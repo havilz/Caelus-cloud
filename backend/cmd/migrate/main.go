@@ -13,7 +13,6 @@ import (
 	"github.com/havilz/caelus-cloud/backend/pkg/logger"
 )
 
-// main merupakan entry point CLI untuk menjalankan migrasi skema basis data PostgreSQL.
 func main() {
 	direction := flag.String("direction", "up", "Arah migrasi: up")
 	flag.Parse()

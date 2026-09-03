@@ -33,7 +33,6 @@ export function useRealtimeTelemetry({
 
     if (!token) return;
 
-    // Bersihkan timeout reconnect sebelumnya jika ada
     if (reconnectTimeoutRef.current) {
       clearTimeout(reconnectTimeoutRef.current);
     }
@@ -50,11 +49,11 @@ export function useRealtimeTelemetry({
 
       ws.onopen = () => {
         setIsConnected(true);
-        // Subscribe ke topik server tertentu jika serverId disediakan
+        
         if (serverId) {
           ws.send(JSON.stringify({ type: "subscribe", topic: `server:${serverId}` }));
         }
-        // Subscribe ke topik organisasi jika orgId disediakan
+        
         if (orgId) {
           ws.send(JSON.stringify({ type: "subscribe", topic: `org:${orgId}` }));
         }
@@ -73,13 +72,13 @@ export function useRealtimeTelemetry({
             onAlert?.(alert);
           }
         } catch {
-          // Abaikan pesan yang bukan format JSON terstruktur
+          
         }
       };
 
     ws.onclose = () => {
       setIsConnected(false);
-      // Jadwalkan rekoneksi otomatis setelah 3 detik
+      
       reconnectTimeoutRef.current = setTimeout(() => {
         connectRef.current?.();
       }, 3000);

@@ -11,42 +11,28 @@ import (
 	"github.com/havilz/caelus-cloud/backend/internal/domain"
 )
 
-// AutomationUsecase mendefinisikan seluruh kontrak logika bisnis operasional aturan otomasi.
 type AutomationUsecase interface {
-	// CreateRule membuat aturan otomasi baru untuk organisasi.
 	CreateRule(ctx context.Context, input domain.CreateRuleInput) (*domain.AutomationRule, error)
 
-	// GetRule mengambil detail satu aturan otomasi.
 	GetRule(ctx context.Context, orgID, ruleID uuid.UUID) (*domain.AutomationRule, error)
 
-	// ListRules mengambil seluruh aturan otomasi milik organisasi.
 	ListRules(ctx context.Context, orgID uuid.UUID, page, limit int) ([]domain.AutomationRule, int, error)
 
-	// UpdateRule memperbarui aturan otomasi yang ada.
 	UpdateRule(ctx context.Context, orgID, ruleID uuid.UUID, input domain.UpdateRuleInput) (*domain.AutomationRule, error)
 
-	// DeleteRule menghapus aturan otomasi.
 	DeleteRule(ctx context.Context, orgID, ruleID uuid.UUID) error
 
-	// TestRule melakukan simulasi uji coba eksekusi aturan otomasi secara manual.
 	TestRule(ctx context.Context, orgID, ruleID uuid.UUID, mockData map[string]any) (*domain.RuleExecutionLog, error)
 
-	// ListLogs mengambil riwayat log audit eksekusi aturan.
 	ListLogs(ctx context.Context, orgID uuid.UUID, ruleID *uuid.UUID, status *domain.ExecutionStatus, page, limit int) ([]domain.RuleExecutionLog, int, error)
 }
 
-// usecase mengimplementasikan AutomationUsecase.
 type usecase struct {
 	repo       domain.AutomationRepository
 	engine     automation.RuleEngine
 	dispatcher automation.EventDispatcher
 }
 
-// NewAutomationUsecase membuat instance baru usecase otomasi.
-// Parameter repo merupakan repositori PostgreSQL otomasi.
-// Parameter engine merupakan mesin evaluasi aturan.
-// Parameter dispatcher merupakan penyebar kejadian sistem.
-// Mengembalikan pointer instance usecase.
 func NewAutomationUsecase(
 	repo domain.AutomationRepository,
 	engine automation.RuleEngine,
@@ -59,7 +45,6 @@ func NewAutomationUsecase(
 	}
 }
 
-// CreateRule memvalidasi dan membuat aturan otomasi baru.
 func (u *usecase) CreateRule(ctx context.Context, input domain.CreateRuleInput) (*domain.AutomationRule, error) {
 	if input.OrganizationID == uuid.Nil {
 		return nil, errors.New("organization_id is required")
@@ -81,7 +66,7 @@ func (u *usecase) CreateRule(ctx context.Context, input domain.CreateRuleInput) 
 
 	cooldown := input.CooldownSeconds
 	if cooldown <= 0 {
-		cooldown = 300 // default 5 menit
+		cooldown = 300
 	}
 
 	rule := &domain.AutomationRule{
@@ -106,17 +91,14 @@ func (u *usecase) CreateRule(ctx context.Context, input domain.CreateRuleInput) 
 	return rule, nil
 }
 
-// GetRule mengambil detail satu aturan otomasi.
 func (u *usecase) GetRule(ctx context.Context, orgID, ruleID uuid.UUID) (*domain.AutomationRule, error) {
 	return u.repo.GetRuleByID(ctx, orgID, ruleID)
 }
 
-// ListRules mengambil daftar aturan otomasi terpaginasi.
 func (u *usecase) ListRules(ctx context.Context, orgID uuid.UUID, page, limit int) ([]domain.AutomationRule, int, error) {
 	return u.repo.ListRules(ctx, orgID, page, limit)
 }
 
-// UpdateRule memperbarui data aturan otomasi yang ada.
 func (u *usecase) UpdateRule(ctx context.Context, orgID, ruleID uuid.UUID, input domain.UpdateRuleInput) (*domain.AutomationRule, error) {
 	rule, err := u.repo.GetRuleByID(ctx, orgID, ruleID)
 	if err != nil {
@@ -155,12 +137,10 @@ func (u *usecase) UpdateRule(ctx context.Context, orgID, ruleID uuid.UUID, input
 	return rule, nil
 }
 
-// DeleteRule menghapus aturan otomasi.
 func (u *usecase) DeleteRule(ctx context.Context, orgID, ruleID uuid.UUID) error {
 	return u.repo.DeleteRule(ctx, orgID, ruleID)
 }
 
-// TestRule melakukan simulasi uji coba eksekusi aturan otomasi secara manual.
 func (u *usecase) TestRule(ctx context.Context, orgID, ruleID uuid.UUID, mockData map[string]any) (*domain.RuleExecutionLog, error) {
 	rule, err := u.repo.GetRuleByID(ctx, orgID, ruleID)
 	if err != nil {
@@ -209,7 +189,6 @@ func (u *usecase) TestRule(ctx context.Context, orgID, ruleID uuid.UUID, mockDat
 	return log, nil
 }
 
-// ListLogs mengambil daftar catatan log riwayat eksekusi otomasi.
 func (u *usecase) ListLogs(
 	ctx context.Context,
 	orgID uuid.UUID,

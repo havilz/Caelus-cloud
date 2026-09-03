@@ -23,7 +23,7 @@ export const MetricTimeSeriesChart: React.FC<MetricTimeSeriesChartProps> = ({
   data,
   dataKey,
   unit = "%",
-  color = "#10b981", // emerald-500
+  color = "#10b981", 
   selectedRange,
   onRangeChange,
   isLive = false,
@@ -31,7 +31,6 @@ export const MetricTimeSeriesChart: React.FC<MetricTimeSeriesChartProps> = ({
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Ekstraksi nilai numerik untuk grafik
   const points = useMemo(() => {
     if (!data || data.length === 0) return [];
     return data.map((d, index) => ({
@@ -41,7 +40,6 @@ export const MetricTimeSeriesChart: React.FC<MetricTimeSeriesChartProps> = ({
     }));
   }, [data, dataKey]);
 
-  // Statistik min, max, avg, current
   const stats = useMemo(() => {
     if (points.length === 0) {
       return { current: 0, min: 0, max: 0, avg: 0 };
@@ -54,12 +52,10 @@ export const MetricTimeSeriesChart: React.FC<MetricTimeSeriesChartProps> = ({
     return { current, min, max, avg };
   }, [points]);
 
-  // Dimensi SVG
   const width = 600;
   const height = 200;
   const padding = { top: 20, right: 15, bottom: 25, left: 35 };
 
-  // Hitung skala koordinat X dan Y
   const chartCoordinates = useMemo(() => {
     if (points.length < 2) return [];
 
@@ -79,7 +75,6 @@ export const MetricTimeSeriesChart: React.FC<MetricTimeSeriesChartProps> = ({
     });
   }, [points, stats.max, unit]);
 
-  // Buat path SVG halus (Smooth Bezier Line)
   const pathD = useMemo(() => {
     if (chartCoordinates.length < 2) return "";
     let d = `M ${chartCoordinates[0].x} ${chartCoordinates[0].y}`;
@@ -92,7 +87,6 @@ export const MetricTimeSeriesChart: React.FC<MetricTimeSeriesChartProps> = ({
     return d;
   }, [chartCoordinates]);
 
-  // Buat path area tertutup untuk gradient fill
   const areaD = useMemo(() => {
     if (chartCoordinates.length < 2) return "";
     const bottomY = height - padding.bottom;
@@ -142,7 +136,7 @@ export const MetricTimeSeriesChart: React.FC<MetricTimeSeriesChartProps> = ({
             {description && <CardDescription className="text-[11px] mt-0.5">{description}</CardDescription>}
           </div>
 
-          {/* Time Range Selector */}
+          {}
           <div className="flex items-center gap-1 rounded-lg bg-[#171717] p-1 border border-[#262626]">
             {["1h", "6h", "24h", "7d"].map((range) => (
               <button
@@ -161,7 +155,7 @@ export const MetricTimeSeriesChart: React.FC<MetricTimeSeriesChartProps> = ({
           </div>
         </div>
 
-        {/* Stats Strip */}
+        {}
         <div className="grid grid-cols-4 gap-2 pt-3 border-t border-[#1a1a1a] mt-2">
           <div>
             <p className="text-[10px] text-[#707070] uppercase tracking-wider font-mono">Current</p>
@@ -211,7 +205,7 @@ export const MetricTimeSeriesChart: React.FC<MetricTimeSeriesChartProps> = ({
                 </linearGradient>
               </defs>
 
-              {/* Horizontal Grid lines */}
+              {}
               {[0, 0.25, 0.5, 0.75, 1].map((ratio) => {
                 const y = padding.top + (height - padding.top - padding.bottom) * ratio;
                 return (
@@ -228,16 +222,16 @@ export const MetricTimeSeriesChart: React.FC<MetricTimeSeriesChartProps> = ({
                 );
               })}
 
-              {/* Area Gradient Fill */}
+              {}
               <path d={areaD} fill={`url(#gradient-${dataKey})`} />
 
-              {/* Smooth Line Path */}
+              {}
               <path d={pathD} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" />
 
-              {/* Hover Crosshair & Tooltip Indicator */}
+              {}
               {hoveredPoint && (
                 <g>
-                  {/* Vertical Crosshair Line */}
+                  {}
                   <line
                     x1={hoveredPoint.x}
                     y1={padding.top}
@@ -247,14 +241,14 @@ export const MetricTimeSeriesChart: React.FC<MetricTimeSeriesChartProps> = ({
                     strokeDasharray="2 2"
                     strokeWidth="1"
                   />
-                  {/* Glowing Point */}
+                  {}
                   <circle cx={hoveredPoint.x} cy={hoveredPoint.y} r="6" fill={color} opacity="0.3" />
                   <circle cx={hoveredPoint.x} cy={hoveredPoint.y} r="3.5" fill="#ffffff" stroke={color} strokeWidth="2" />
                 </g>
               )}
             </svg>
 
-            {/* Floating Tooltip Box */}
+            {}
             {hoveredPoint && (
               <div
                 className="absolute z-20 pointer-events-none rounded-lg border border-[#333333] bg-[#1a1a1a]/95 px-2.5 py-1.5 shadow-xl backdrop-blur-sm text-[11px] text-[#ededed] font-mono animate-in fade-in duration-75"

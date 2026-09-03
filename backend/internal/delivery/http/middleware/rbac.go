@@ -12,10 +12,6 @@ import (
 
 const memberKey contextKey = "auth_org_member"
 
-// RequireOrganizationRole mengembalikan middleware HTTP yang memvalidasi bahwa pengguna terautentikasi memiliki peran yang diizinkan dalam organisasi target.
-// Parameter orgRepo merupakan implementasi domain.OrganizationRepository untuk memverifikasi keanggotaan pengguna.
-// Parameter allowedRoles merupakan daftar peran yang berhak mengakses rute endpoint.
-// Mengembalikan fungsi middleware func(http.Handler) http.Handler.
 func RequireOrganizationRole(orgRepo domain.OrganizationRepository, allowedRoles ...domain.OrganizationRole) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -50,17 +46,11 @@ func RequireOrganizationRole(orgRepo domain.OrganizationRepository, allowedRoles
 	}
 }
 
-// GetMemberFromContext mengambil entitas *domain.OrganizationMember dari konteks request HTTP.
-// Parameter ctx merupakan konteks request HTTP.
-// Mengembalikan pointer *domain.OrganizationMember dan boolean bernilai true jika data anggota ditemukan.
 func GetMemberFromContext(ctx context.Context) (*domain.OrganizationMember, bool) {
 	member, ok := ctx.Value(memberKey).(*domain.OrganizationMember)
 	return member, ok
 }
 
-// resolveOrganizationID mengekstrak UUID organisasi dari URL parameter, header HTTP, atau klaim konteks.
-// Parameter r merupakan pointer request HTTP yang sedang diproses.
-// Mengembalikan uuid.UUID organisasi yang ditemukan atau error jika identifier tidak tersedia atau format cacat.
 func resolveOrganizationID(r *http.Request) (uuid.UUID, error) {
 	if param := chi.URLParam(r, "org_id"); param != "" {
 		return uuid.Parse(param)
@@ -81,10 +71,6 @@ func resolveOrganizationID(r *http.Request) (uuid.UUID, error) {
 	return uuid.Nil, domain.ErrNotFound
 }
 
-// isRoleAuthorized memeriksa apakah peran pengguna memenuhi salah satu peran yang diizinkan atau memiliki hierarki peran yang lebih tinggi.
-// Parameter userRole merupakan peran yang dimiliki pengguna saat ini.
-// Parameter allowedRoles merupakan daftar peran yang diperbolehkan.
-// Mengembalikan true jika peran pengguna diizinkan.
 func isRoleAuthorized(userRole domain.OrganizationRole, allowedRoles []domain.OrganizationRole) bool {
 	if len(allowedRoles) == 0 {
 		return true
@@ -101,9 +87,6 @@ func isRoleAuthorized(userRole domain.OrganizationRole, allowedRoles []domain.Or
 	return false
 }
 
-// getRoleRank mengonversi tipe peran organisasi menjadi nilai numerik hierarki hak akses.
-// Parameter role merupakan peran organisasi.
-// Mengembalikan integer bobot peran (Owner: 4, Admin: 3, Member: 2, Viewer: 1, Lainnya: 0).
 func getRoleRank(role domain.OrganizationRole) int {
 	switch role {
 	case domain.RoleOwner:

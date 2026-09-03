@@ -19,7 +19,6 @@ type CloudflareDriver struct {
 	servers       map[string]*domain.ProviderServer
 }
 
-// NewCloudflareDriver menginisialisasi driver provider Cloudflare (R2 Storage, Tunnel & DNS).
 func NewCloudflareDriver(encryptionKey []byte) domain.ProviderDriver {
 	return &CloudflareDriver{
 		encryptionKey: encryptionKey,

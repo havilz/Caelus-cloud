@@ -23,7 +23,6 @@ const (
 	AlertStatusResolved     AlertStatus = "resolved"
 )
 
-// Alert merepresentasikan entitas insiden peringatan sistem yang terpicu oleh anomali metrik.
 type Alert struct {
 	ID             uuid.UUID     `json:"id"`
 	OrganizationID uuid.UUID     `json:"organization_id"`
@@ -45,7 +44,6 @@ type Alert struct {
 	Server         *Server       `json:"server,omitempty"`
 }
 
-// AlertRule merepresentasikan aturan ambang batas evaluasi otomatis untuk metrik tertentu.
 type AlertRule struct {
 	ID              uuid.UUID     `json:"id"`
 	OrganizationID  uuid.UUID     `json:"organization_id"`
@@ -61,7 +59,6 @@ type AlertRule struct {
 	UpdatedAt       time.Time     `json:"updated_at"`
 }
 
-// AlertRepository mendefinisikan interface persistensi alert dan aturan threshold.
 type AlertRepository interface {
 	CreateAlert(ctx context.Context, alert *Alert) error
 	GetAlertByID(ctx context.Context, id uuid.UUID) (*Alert, error)

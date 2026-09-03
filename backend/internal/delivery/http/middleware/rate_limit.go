@@ -17,7 +17,6 @@ type rateLimitEntry struct {
 	resetTime time.Time
 }
 
-// AuthRateLimiter mengimplementasikan rate limiter berbasis sliding window / fixed window terpotong per IP & email (H-1).
 type AuthRateLimiter struct {
 	mu          sync.Mutex
 	limit       int
@@ -26,9 +25,6 @@ type AuthRateLimiter struct {
 	lastCleanup time.Time
 }
 
-// NewAuthRateLimiter membuat instance baru AuthRateLimiter.
-// Parameter limit merupakan jumlah maksimum request yang diizinkan dalam satu jendela waktu.
-// Parameter window merupakan durasi jendela waktu rate limiting (misal: 1 menit).
 func NewAuthRateLimiter(limit int, window time.Duration) *AuthRateLimiter {
 	limiter := &AuthRateLimiter{
 		limit:       limit,
@@ -39,14 +35,12 @@ func NewAuthRateLimiter(limit int, window time.Duration) *AuthRateLimiter {
 	return limiter
 }
 
-// Limit mengembalikan middleware HTTP yang mengevaluasi batas request per IP/email pada endpoint autentikasi.
 func (l *AuthRateLimiter) Limit() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ip := extractClientIP(r)
 			email := extractEmailFromPayload(r)
 
-			// Menyusun kunci unik gabungan IP dan email (jika ada)
 			key := ip
 			if email != "" {
 				key = ip + ":" + strings.ToLower(email)
@@ -62,14 +56,12 @@ func (l *AuthRateLimiter) Limit() func(http.Handler) http.Handler {
 	}
 }
 
-// allow memeriksa apakah kunci request masih berada dalam ambang batas yang diizinkan.
 func (l *AuthRateLimiter) allow(key string) bool {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
 	now := time.Now()
 
-	// Pembersihan berkala otomatis untuk entri yang sudah kadaluwarsa setiap 5 menit
 	if now.Sub(l.lastCleanup) > 5*time.Minute {
 		for k, v := range l.entries {
 			if now.After(v.resetTime) {
@@ -96,7 +88,6 @@ func (l *AuthRateLimiter) allow(key string) bool {
 	return true
 }
 
-// extractEmailFromPayload membaca dan mengembalikan email dari payload JSON request tanpa merusak r.Body.
 func extractEmailFromPayload(r *http.Request) string {
 	if r.Body == nil {
 		return ""
@@ -107,7 +98,6 @@ func extractEmailFromPayload(r *http.Request) string {
 		return ""
 	}
 
-	// Restore body request agar handler berikutnya tetap bisa membaca body
 	r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 
 	var payload struct {

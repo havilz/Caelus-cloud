@@ -61,7 +61,7 @@ export const OrganizationTab: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Pengaturan Organisasi */}
+      {}
       <div className={AppTheme.containers.card}>
         <div className="border-b border-[#262626] pb-4 mb-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -141,7 +141,7 @@ export const OrganizationTab: React.FC = () => {
         </form>
       </div>
 
-      {/* Danger Zone */}
+      {}
       <div className="p-5 rounded-xl bg-rose-950/10 border border-rose-500/20">
         <div className="flex items-center gap-3 border-b border-rose-500/20 pb-4 mb-4">
           <div className="p-2 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400">

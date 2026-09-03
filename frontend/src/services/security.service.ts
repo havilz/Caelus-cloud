@@ -12,13 +12,12 @@ import {
 } from '@/types/security';
 
 export const securityService = {
-  // Posture Overview
+  
   async getPostureOverview(): Promise<SecurityPostureOverview> {
     const res = await apiClient.get<APIResponse<SecurityPostureOverview>>('/security/overview');
     return res.data.data!;
   },
 
-  // Scans
   async triggerScan(payload: TriggerScanInput): Promise<SecurityScan> {
     const res = await apiClient.post<APIResponse<SecurityScan>>('/security/scans', payload);
     return res.data.data!;
@@ -36,7 +35,6 @@ export const securityService = {
     return res.data.data!;
   },
 
-  // Findings
   async listFindings(filter: ListFindingsFilter = {}): Promise<PaginatedResponse<SecurityFinding>> {
     const res = await apiClient.get<PaginatedResponse<SecurityFinding>>('/security/findings', {
       params: {
@@ -60,7 +58,6 @@ export const securityService = {
     await apiClient.patch(`/security/findings/${id}/status`, { status });
   },
 
-  // Incidents
   async listIncidents(page = 1, limit = 20, status?: IncidentStatus): Promise<PaginatedResponse<SecurityIncident>> {
     const res = await apiClient.get<PaginatedResponse<SecurityIncident>>('/security/incidents', {
       params: { page, limit, status: status || undefined },

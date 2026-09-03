@@ -12,17 +12,14 @@ import (
 	"github.com/havilz/caelus-cloud/backend/internal/usecase/monitoring"
 )
 
-// TelemetryHandler menangani request HTTP terkait ingestion telemetri agent dan query data metrik.
 type TelemetryHandler struct {
 	usecase monitoring.MonitoringUsecase
 }
 
-// NewTelemetryHandler membuat instance baru HTTP TelemetryHandler.
 func NewTelemetryHandler(usecase monitoring.MonitoringUsecase) *TelemetryHandler {
 	return &TelemetryHandler{usecase: usecase}
 }
 
-// IngestReport menerima dan memproses kiriman batch data telemetri dari daemon caelus-agent.
 func (h *TelemetryHandler) IngestReport(w http.ResponseWriter, r *http.Request) {
 	var payload domain.TelemetryReportPayload
 	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
@@ -56,7 +53,6 @@ func (h *TelemetryHandler) IngestReport(w http.ResponseWriter, r *http.Request) 
 	})
 }
 
-// GetLiveMetrics mengembalikan snapshot rekaman telemetri terbaru dari server tertentu.
 func (h *TelemetryHandler) GetLiveMetrics(w http.ResponseWriter, r *http.Request) {
 	serverIDStr := chi.URLParam(r, "id")
 	serverID, err := uuid.Parse(serverIDStr)
@@ -74,7 +70,6 @@ func (h *TelemetryHandler) GetLiveMetrics(w http.ResponseWriter, r *http.Request
 	response.Success(w, http.StatusOK, "live metric retrieved successfully", metric)
 }
 
-// GetMetricHistory mengembalikan riwayat deret waktu metrik server untuk visualisasi grafik.
 func (h *TelemetryHandler) GetMetricHistory(w http.ResponseWriter, r *http.Request) {
 	serverIDStr := chi.URLParam(r, "id")
 	serverID, err := uuid.Parse(serverIDStr)

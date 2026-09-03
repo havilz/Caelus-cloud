@@ -8,8 +8,6 @@ import (
 	"github.com/havilz/caelus-cloud/backend/pkg/logger"
 )
 
-// RequestLogger membuat middleware pencatatan aktivitas HTTP request ke structured logger.
-// Mengembalikan closure fungsi middleware func(next http.Handler) http.Handler yang membungkus siklus HTTP request dan mencatat durasi, status HTTP, serta metadata klien.
 func RequestLogger() func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

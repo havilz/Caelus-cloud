@@ -10,25 +10,17 @@ import (
 	"github.com/havilz/caelus-cloud/backend/internal/domain"
 )
 
-// CustomDriver mengimplementasikan domain.ProviderDriver untuk server mandiri (BYOS / Home Server / Existing VPS).
 type CustomDriver struct {
 	mu      sync.RWMutex
 	servers map[string]*domain.ProviderServer
 }
 
-// NewCustomDriver membuat instance baru CustomDriver.
-// Mengembalikan implementasi interface domain.ProviderDriver.
 func NewCustomDriver() domain.ProviderDriver {
 	return &CustomDriver{
 		servers: make(map[string]*domain.ProviderServer),
 	}
 }
 
-// CreateServer mendaftarkan server kustom/eksternal ke dalam sistem Caelus dengan status pending menunggu heartbeat agent.
-// Parameter ctx merupakan konteks eksekusi operasi.
-// Parameter cred merupakan kredensial provider opsional.
-// Parameter req memuat spesifikasi dan data server yang didaftarkan.
-// Mengembalikan pointer *domain.ProviderServer.
 func (d *CustomDriver) CreateServer(ctx context.Context, cred *domain.Credential, req domain.CreateServerRequest) (*domain.ProviderServer, error) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
@@ -51,7 +43,6 @@ func (d *CustomDriver) CreateServer(ctx context.Context, cred *domain.Credential
 	return server, nil
 }
 
-// GetServer mengambil detail server kustom dari penyimpanan internal.
 func (d *CustomDriver) GetServer(ctx context.Context, cred *domain.Credential, externalID string) (*domain.ProviderServer, error) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
@@ -67,7 +58,6 @@ func (d *CustomDriver) GetServer(ctx context.Context, cred *domain.Credential, e
 	return server, nil
 }
 
-// ListServers mengambil seluruh daftar server kustom.
 func (d *CustomDriver) ListServers(ctx context.Context, cred *domain.Credential) ([]domain.ProviderServer, error) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
@@ -79,7 +69,6 @@ func (d *CustomDriver) ListServers(ctx context.Context, cred *domain.Credential)
 	return list, nil
 }
 
-// StartServer menyimulasikan perintah start pada server kustom.
 func (d *CustomDriver) StartServer(ctx context.Context, cred *domain.Credential, externalID string) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
@@ -89,7 +78,6 @@ func (d *CustomDriver) StartServer(ctx context.Context, cred *domain.Credential,
 	return nil
 }
 
-// ShutdownServer menyimulasikan perintah shutdown pada server kustom.
 func (d *CustomDriver) ShutdownServer(ctx context.Context, cred *domain.Credential, externalID string) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
@@ -99,7 +87,6 @@ func (d *CustomDriver) ShutdownServer(ctx context.Context, cred *domain.Credenti
 	return nil
 }
 
-// RebootServer menyimulasikan perintah reboot pada server kustom.
 func (d *CustomDriver) RebootServer(ctx context.Context, cred *domain.Credential, externalID string) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
@@ -109,7 +96,6 @@ func (d *CustomDriver) RebootServer(ctx context.Context, cred *domain.Credential
 	return nil
 }
 
-// ResizeServer mengubah alokasi spesifikasi komputasi server kustom.
 func (d *CustomDriver) ResizeServer(ctx context.Context, cred *domain.Credential, req domain.ResizeServerRequest) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
@@ -121,7 +107,6 @@ func (d *CustomDriver) ResizeServer(ctx context.Context, cred *domain.Credential
 	return nil
 }
 
-// DeleteServer menghapus entri server kustom dari registri driver.
 func (d *CustomDriver) DeleteServer(ctx context.Context, cred *domain.Credential, externalID string) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()

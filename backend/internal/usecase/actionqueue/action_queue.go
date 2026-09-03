@@ -7,7 +7,6 @@ import (
 	"github.com/havilz/caelus-cloud/backend/internal/domain"
 )
 
-// ActionQueue mendefinisikan antrean instruksi thread-safe dari Control Plane ke Caelus Agent.
 type ActionQueue interface {
 	Enqueue(serverID uuid.UUID, action domain.AgentAction)
 	PopAll(serverID uuid.UUID) []domain.AgentAction
@@ -19,14 +18,12 @@ type memoryActionQueue struct {
 	queues map[uuid.UUID][]domain.AgentAction
 }
 
-// NewActionQueue membuat instance baru ActionQueue in-memory.
 func NewActionQueue() ActionQueue {
 	return &memoryActionQueue{
 		queues: make(map[uuid.UUID][]domain.AgentAction),
 	}
 }
 
-// Enqueue menambahkan action ke antrean server tertentu.
 func (q *memoryActionQueue) Enqueue(serverID uuid.UUID, action domain.AgentAction) {
 	q.mu.Lock()
 	defer q.mu.Unlock()
@@ -34,7 +31,6 @@ func (q *memoryActionQueue) Enqueue(serverID uuid.UUID, action domain.AgentActio
 	q.queues[serverID] = append(q.queues[serverID], action)
 }
 
-// PopAll mengambil dan menghapus seluruh action yang tertunda untuk server tertentu.
 func (q *memoryActionQueue) PopAll(serverID uuid.UUID) []domain.AgentAction {
 	q.mu.Lock()
 	defer q.mu.Unlock()
@@ -48,7 +44,6 @@ func (q *memoryActionQueue) PopAll(serverID uuid.UUID) []domain.AgentAction {
 	return actions
 }
 
-// HasPendingAction memeriksa apakah antrean server memuat aksi tertentu yang belum diproses.
 func (q *memoryActionQueue) HasPendingAction(serverID uuid.UUID, actionType string, target string) bool {
 	q.mu.Lock()
 	defer q.mu.Unlock()

@@ -49,7 +49,6 @@ export const CreateServerModal: React.FC<CreateServerModalProps> = ({ isOpen, on
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Success Connection Step State
   const [createdServer, setCreatedServer] = useState<Server | null>(null);
   const [copiedType, setCopiedType] = useState<string | null>(null);
   const [targetEndpoint, setTargetEndpoint] = useState<string>("");
@@ -175,7 +174,7 @@ export const CreateServerModal: React.FC<CreateServerModalProps> = ({ isOpen, on
         </div>
       )}
 
-      {/* Step 2: Post-Creation Installation Command Screen */}
+      {}
       {createdServer ? (
         <div className="space-y-4 py-1">
           <div className="p-3.5 rounded-xl bg-[#141414] border border-emerald-500/30 bg-emerald-950/20 flex items-center justify-between">
@@ -189,7 +188,7 @@ export const CreateServerModal: React.FC<CreateServerModalProps> = ({ isOpen, on
             </div>
           </div>
 
-          {/* Smart API Endpoint Selector */}
+          {}
           <div className="p-3 rounded-xl bg-[#141414] border border-[#262626] space-y-2.5">
             <div className="flex items-center justify-between">
               <label className="text-[11px] font-semibold text-[#ededed]">
@@ -204,7 +203,7 @@ export const CreateServerModal: React.FC<CreateServerModalProps> = ({ isOpen, on
               placeholder="http://100.x.y.z:8080 atau http://ip-public:8080"
               className="font-mono text-xs text-emerald-400 bg-[#0d0d0d] border-[#333333]"
             />
-            {/* Quick Presets */}
+            {}
             <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
               <span className="text-[10px] text-[#707070] mr-1">Preset Cepat:</span>
               <button
@@ -299,9 +298,9 @@ export const CreateServerModal: React.FC<CreateServerModalProps> = ({ isOpen, on
           </div>
         </div>
       ) : (
-        /* Step 1: Creation Form */
+        
         <div>
-          {/* Tab Navigation */}
+          {}
           <div className="flex items-center gap-2 p-1 mb-4 rounded-lg bg-[#141414] border border-[#262626]">
             <button
               type="button"
@@ -331,7 +330,7 @@ export const CreateServerModal: React.FC<CreateServerModalProps> = ({ isOpen, on
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4 pb-2">
-            {/* BYOS Mode: Super Simple Name-Only Flow */}
+            {}
             {tab === "byos" ? (
               <div className="space-y-4">
                 <div className="p-3.5 rounded-xl bg-emerald-950/20 border border-emerald-500/20 text-xs text-[#ededed] flex items-start gap-3">
@@ -353,7 +352,7 @@ export const CreateServerModal: React.FC<CreateServerModalProps> = ({ isOpen, on
                   placeholder="e.g. idcloud-ubuntu-prod atau homelab-proxmox-01"
                 />
 
-                {/* Auto-Detection Features Preview */}
+                {}
                 <div className="p-4 rounded-xl bg-[#141414] border border-[#262626] space-y-3">
                   <div className="flex items-center gap-2 text-xs font-semibold text-[#ededed]">
                     <Sparkles className="w-4 h-4 text-emerald-400" />
@@ -396,7 +395,7 @@ export const CreateServerModal: React.FC<CreateServerModalProps> = ({ isOpen, on
                 </div>
               </div>
             ) : (
-              /* Cloud Provider Mode: Needs explicit Specs */
+              
               <div className="space-y-4">
                 <div className="space-y-1.5">
                   <span className={AppText.label}>Penyedia Cloud (Provider Driver)</span>
@@ -431,7 +430,7 @@ export const CreateServerModal: React.FC<CreateServerModalProps> = ({ isOpen, on
                   </div>
                 </div>
 
-                {/* Credential Selector for Multi-Provider */}
+                {}
                 {(() => {
                   const currentProv = providers.find((p) => p.id === selectedProviderID);
                   if (!currentProv || currentProv.slug === "mock") return null;
@@ -504,7 +503,7 @@ export const CreateServerModal: React.FC<CreateServerModalProps> = ({ isOpen, on
                   </div>
                 </div>
 
-                {/* OS Selection for Cloud Deploy */}
+                {}
                 <div className="space-y-1.5">
                   <span className={AppText.label}>Sistem Operasi (OS)</span>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -530,7 +529,7 @@ export const CreateServerModal: React.FC<CreateServerModalProps> = ({ isOpen, on
                   </div>
                 </div>
 
-                {/* Hardware Specifications for Cloud Deploy */}
+                {}
                 <div className="space-y-2 pt-2 border-t border-[#262626]">
                   <span className={AppText.label}>Spesifikasi Komputasi Instance Baru</span>
                   <div className="grid grid-cols-3 gap-3">
@@ -590,7 +589,7 @@ export const CreateServerModal: React.FC<CreateServerModalProps> = ({ isOpen, on
               </div>
             )}
 
-            {/* Modal Actions */}
+            {}
             <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#262626]">
               <Button variant="outline" type="button" onClick={onClose} disabled={isLoading}>
                 Batal

@@ -20,9 +20,6 @@ type EC2Driver struct {
 	servers       map[string]*domain.ProviderServer
 }
 
-// NewEC2Driver menginisialisasi driver provider AWS EC2 dengan kunci dekripsi kredensial.
-// Parameter encryptionKey merupakan kunci 32-byte untuk mendekripsi data kredensial.
-// Mengembalikan implementasi interface domain.ProviderDriver.
 func NewEC2Driver(encryptionKey []byte) domain.ProviderDriver {
 	return &EC2Driver{
 		encryptionKey: encryptionKey,
@@ -31,7 +28,6 @@ func NewEC2Driver(encryptionKey []byte) domain.ProviderDriver {
 	}
 }
 
-// CreateServer membuat atau melakukan provisioning instance AWS EC2 baru.
 func (d *EC2Driver) CreateServer(ctx context.Context, cred *domain.Credential, req domain.CreateServerRequest) (*domain.ProviderServer, error) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
@@ -83,7 +79,6 @@ func (d *EC2Driver) CreateServer(ctx context.Context, cred *domain.Credential, r
 	return server, nil
 }
 
-// GetServer mengambil detail status dan spesifikasi instance AWS EC2 berdasarkan externalID.
 func (d *EC2Driver) GetServer(ctx context.Context, cred *domain.Credential, externalID string) (*domain.ProviderServer, error) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
@@ -107,7 +102,6 @@ func (d *EC2Driver) GetServer(ctx context.Context, cred *domain.Credential, exte
 	return server, nil
 }
 
-// ListServers mengambil seluruh daftar instance EC2 yang terafiliasi dengan kredensial AWS.
 func (d *EC2Driver) ListServers(ctx context.Context, cred *domain.Credential) ([]domain.ProviderServer, error) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
@@ -119,7 +113,6 @@ func (d *EC2Driver) ListServers(ctx context.Context, cred *domain.Credential) ([
 	return list, nil
 }
 
-// RebootServer mengirim perintah restart (RebootInstances) ke instance AWS EC2.
 func (d *EC2Driver) RebootServer(ctx context.Context, cred *domain.Credential, externalID string) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
@@ -130,7 +123,6 @@ func (d *EC2Driver) RebootServer(ctx context.Context, cred *domain.Credential, e
 	return nil
 }
 
-// ShutdownServer mengirim perintah stop (StopInstances) ke instance AWS EC2.
 func (d *EC2Driver) ShutdownServer(ctx context.Context, cred *domain.Credential, externalID string) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
@@ -141,7 +133,6 @@ func (d *EC2Driver) ShutdownServer(ctx context.Context, cred *domain.Credential,
 	return nil
 }
 
-// StartServer mengirim perintah start (StartInstances) ke instance AWS EC2 yang sedang mati.
 func (d *EC2Driver) StartServer(ctx context.Context, cred *domain.Credential, externalID string) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
@@ -152,7 +143,6 @@ func (d *EC2Driver) StartServer(ctx context.Context, cred *domain.Credential, ex
 	return nil
 }
 
-// ResizeServer mengubah tipe instance atau kapasitas komputasi pada AWS EC2.
 func (d *EC2Driver) ResizeServer(ctx context.Context, cred *domain.Credential, req domain.ResizeServerRequest) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
@@ -171,7 +161,6 @@ func (d *EC2Driver) ResizeServer(ctx context.Context, cred *domain.Credential, r
 	return nil
 }
 
-// DeleteServer menterminasi instance AWS EC2 (TerminateInstances).
 func (d *EC2Driver) DeleteServer(ctx context.Context, cred *domain.Credential, externalID string) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()

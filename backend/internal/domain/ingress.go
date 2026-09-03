@@ -62,16 +62,16 @@ type CreateDomainRequest struct {
 }
 
 type VerifyDomainResponse struct {
-	DomainID      uuid.UUID    `json:"domain_id"`
-	DomainName    string       `json:"domain_name"`
-	Status        DomainStatus `json:"status"`
-	Verified      bool         `json:"verified"`
-	ExpectedIP    string       `json:"expected_ip"`
-	ResolvedIPs   []string     `json:"resolved_ips"`
-	ExpectedTXT   string       `json:"expected_txt"`
-	ResolvedTXT   []string     `json:"resolved_txt"`
-	SSLStatus     SSLStatus    `json:"ssl_status"`
-	Message       string       `json:"message"`
+	DomainID    uuid.UUID    `json:"domain_id"`
+	DomainName  string       `json:"domain_name"`
+	Status      DomainStatus `json:"status"`
+	Verified    bool         `json:"verified"`
+	ExpectedIP  string       `json:"expected_ip"`
+	ResolvedIPs []string     `json:"resolved_ips"`
+	ExpectedTXT string       `json:"expected_txt"`
+	ResolvedTXT []string     `json:"resolved_txt"`
+	SSLStatus   SSLStatus    `json:"ssl_status"`
+	Message     string       `json:"message"`
 }
 
 type DomainRepository interface {

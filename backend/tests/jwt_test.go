@@ -10,7 +10,6 @@ import (
 	"github.com/havilz/caelus-cloud/backend/pkg/jwt"
 )
 
-// TestJWTGenerationAndValidation menguji siklus pembuatan pasangan token JWT, validasi klaim, dan penolakan token yang rusak atau tidak sesuai.
 func TestJWTGenerationAndValidation(t *testing.T) {
 	jwtCfg := &config.JWTConfig{
 		Secret:            "test_secret_key_at_least_32_characters_long_12345",

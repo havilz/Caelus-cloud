@@ -22,7 +22,6 @@ func createTestServerHelper(driver domain.ProviderDriver, cred *domain.Credentia
 	return driver.CreateServer(context.Background(), cred, req)
 }
 
-// TestMockDriver_CreateAndGetServer memverifikasi proses provisioning server baru dan pengambilan data server berdasarkan external ID.
 func TestMockDriver_CreateAndGetServer(t *testing.T) {
 	driver := mock.NewMockDriver()
 	cred := &domain.Credential{ID: uuid.New(), OrganizationID: uuid.New(), ProviderID: uuid.New(), Name: "Mock Creds"}
@@ -42,7 +41,6 @@ func TestMockDriver_CreateAndGetServer(t *testing.T) {
 	}
 }
 
-// TestMockDriver_ListServers memverifikasi pengambilan seluruh daftar instance server dari provider.
 func TestMockDriver_ListServers(t *testing.T) {
 	driver := mock.NewMockDriver()
 	cred := &domain.Credential{ID: uuid.New(), OrganizationID: uuid.New(), ProviderID: uuid.New(), Name: "Mock Creds"}
@@ -55,7 +53,6 @@ func TestMockDriver_ListServers(t *testing.T) {
 	}
 }
 
-// TestMockDriver_PowerControls memverifikasi aksi shutdown, start, dan reboot pada instance server.
 func TestMockDriver_PowerControls(t *testing.T) {
 	driver := mock.NewMockDriver()
 	cred := &domain.Credential{ID: uuid.New(), OrganizationID: uuid.New(), ProviderID: uuid.New(), Name: "Mock Creds"}
@@ -84,7 +81,6 @@ func TestMockDriver_PowerControls(t *testing.T) {
 	}
 }
 
-// TestMockDriver_ResizeServer memverifikasi pengubahan kapasitas spesifikasi komputasi instance server.
 func TestMockDriver_ResizeServer(t *testing.T) {
 	driver := mock.NewMockDriver()
 	cred := &domain.Credential{ID: uuid.New(), OrganizationID: uuid.New(), ProviderID: uuid.New(), Name: "Mock Creds"}
@@ -108,7 +104,6 @@ func TestMockDriver_ResizeServer(t *testing.T) {
 	}
 }
 
-// TestMockDriver_DeleteServer memverifikasi penghapusan permanen instance server dari provider.
 func TestMockDriver_DeleteServer(t *testing.T) {
 	driver := mock.NewMockDriver()
 	cred := &domain.Credential{ID: uuid.New(), OrganizationID: uuid.New(), ProviderID: uuid.New(), Name: "Mock Creds"}

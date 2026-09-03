@@ -6,7 +6,6 @@ import (
 	"github.com/google/uuid"
 )
 
-// HostMetrics merepresentasikan ringkasan metrik utilisasi perangkat keras host sistem.
 type HostMetrics struct {
 	CPUUsagePct        float64 `json:"cpu_usage_pct"`
 	CPUCores           int     `json:"cpu_cores"`
@@ -32,24 +31,21 @@ type HostMetrics struct {
 	Hostname           string  `json:"hostname"`
 }
 
-// PortBindingInfo mendefinisikan pemetaan port container ke host.
 type PortBindingInfo struct {
 	HostPort      int    `json:"host_port"`
 	ContainerPort int    `json:"container_port"`
-	Protocol      string `json:"protocol"` // tcp, udp
+	Protocol      string `json:"protocol"`
 	HostIP        string `json:"host_ip,omitempty"`
 }
 
-// VolumeMountInfo mendefinisikan volume atau folder yang di-mount ke container.
 type VolumeMountInfo struct {
-	Name          string `json:"name,omitempty"`
-	Source        string `json:"source"`
-	Destination   string `json:"destination"`
-	Mode          string `json:"mode"` // rw, ro
-	Type          string `json:"type"` // volume, bind
+	Name        string `json:"name,omitempty"`
+	Source      string `json:"source"`
+	Destination string `json:"destination"`
+	Mode        string `json:"mode"`
+	Type        string `json:"type"`
 }
 
-// ContainerMetrics merepresentasikan data status dan utilisasi resource sebuah container Docker.
 type ContainerMetrics struct {
 	ID                   string            `json:"id"`
 	Names                []string          `json:"names"`
@@ -69,7 +65,6 @@ type ContainerMetrics struct {
 	Logs                 []string          `json:"logs,omitempty"`
 }
 
-// DiscoveredNetwork merepresentasikan VPC / Docker bridge yang ditemukan pada host.
 type DiscoveredNetwork struct {
 	ID         string `json:"id"`
 	Name       string `json:"name"`
@@ -80,7 +75,6 @@ type DiscoveredNetwork struct {
 	Internal   bool   `json:"internal"`
 }
 
-// DiscoveredVolume merepresentasikan persistent volume yang ditemukan pada host.
 type DiscoveredVolume struct {
 	Name       string  `json:"name"`
 	Driver     string  `json:"driver"`
@@ -90,15 +84,13 @@ type DiscoveredVolume struct {
 	InUse      bool    `json:"in_use"`
 }
 
-// AgentAction merepresentasikan perintah/instruksi yang dikirim control plane ke agent.
 type AgentAction struct {
 	ID      string `json:"id"`
-	Type    string `json:"type"` // CREATE_VOLUME, DELETE_VOLUME, DEPLOY_CONTAINER, dll
+	Type    string `json:"type"`
 	Target  string `json:"target"`
 	Payload string `json:"payload,omitempty"`
 }
 
-// ContainerDeployPayload merepresentasikan parameter konfigurasi untuk deploy container di remote host.
 type ContainerDeployPayload struct {
 	Name          string            `json:"name"`
 	Image         string            `json:"image"`
@@ -108,7 +100,6 @@ type ContainerDeployPayload struct {
 	RestartPolicy string            `json:"restart_policy,omitempty"`
 }
 
-// AgentReportResponse merepresentasikan struktur balasan dari POST /api/v1/telemetry/report.
 type AgentReportResponse struct {
 	Success bool   `json:"success"`
 	Message string `json:"message"`
@@ -119,7 +110,6 @@ type AgentReportResponse struct {
 	} `json:"data"`
 }
 
-// AgentReportPayload adalah payload agregat yang dikirim oleh agent ke control plane Caelus API.
 type AgentReportPayload struct {
 	ServerID        uuid.UUID           `json:"server_id"`
 	Timestamp       time.Time           `json:"timestamp"`

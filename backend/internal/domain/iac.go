@@ -7,7 +7,6 @@ import (
 	"github.com/google/uuid"
 )
 
-// IaCAction merepresentasikan jenis tindakan rekonsiliasi yang diusulkan oleh Plan Engine.
 type IaCAction string
 
 const (
@@ -17,7 +16,6 @@ const (
 	ActionNoOp   IaCAction = "noop"
 )
 
-// IaCStatus merepresentasikan status siklus hidup konfigurasi atau rencana IaC.
 type IaCStatus string
 
 const (
@@ -30,7 +28,6 @@ const (
 	IaCStatusRolledBack IaCStatus = "rolled_back"
 )
 
-// ResourceType mendefinisikan jenis resource yang didukung dalam declarative YAML.
 type ResourceType string
 
 const (
@@ -40,38 +37,34 @@ const (
 	ResourceTypeRule      ResourceType = "rule"
 )
 
-// ServerSpec mendefinisikan spesifikasi deklaratif server VPS/Cloud.
 type ServerSpec struct {
 	Name     string            `json:"name" yaml:"name"`
-	Provider string            `json:"provider" yaml:"provider"` // aws, digitalocean, hetzner, contabo, mock
+	Provider string            `json:"provider" yaml:"provider"`
 	Region   string            `json:"region" yaml:"region"`
-	Size     string            `json:"size" yaml:"size"` // e.g. t3.micro, s-1vcpu-1gb
+	Size     string            `json:"size" yaml:"size"`
 	Image    string            `json:"image" yaml:"image"`
 	Tags     map[string]string `json:"tags,omitempty" yaml:"tags,omitempty"`
 	SSHKeys  []string          `json:"ssh_keys,omitempty" yaml:"ssh_keys,omitempty"`
 }
 
-// StorageSpec mendefinisikan spesifikasi deklaratif object storage bucket.
 type StorageSpec struct {
 	Name       string `json:"name" yaml:"name"`
-	Type       string `json:"type" yaml:"type"` // local, s3, r2
+	Type       string `json:"type" yaml:"type"`
 	Region     string `json:"region,omitempty" yaml:"region,omitempty"`
 	Versioning bool   `json:"versioning,omitempty" yaml:"versioning,omitempty"`
-	Access     string `json:"access,omitempty" yaml:"access,omitempty"` // private, public-read
+	Access     string `json:"access,omitempty" yaml:"access,omitempty"`
 }
 
-// ContainerSpec mendefinisikan spesifikasi deklaratif container Docker.
 type ContainerSpec struct {
 	Name          string            `json:"name" yaml:"name"`
-	Server        string            `json:"server,omitempty" yaml:"server,omitempty"` // Server Name or Server UUID
+	Server        string            `json:"server,omitempty" yaml:"server,omitempty"`
 	Image         string            `json:"image" yaml:"image"`
-	Ports         []string          `json:"ports,omitempty" yaml:"ports,omitempty"` // e.g. ["80:80", "443:443"]
+	Ports         []string          `json:"ports,omitempty" yaml:"ports,omitempty"`
 	Environment   map[string]string `json:"environment,omitempty" yaml:"environment,omitempty"`
 	Volumes       []string          `json:"volumes,omitempty" yaml:"volumes,omitempty"`
 	RestartPolicy string            `json:"restart_policy,omitempty" yaml:"restart_policy,omitempty"`
 }
 
-// RuleSpec mendefinisikan spesifikasi deklaratif automation rule.
 type RuleSpec struct {
 	Name      string                 `json:"name" yaml:"name"`
 	Trigger   string                 `json:"trigger" yaml:"trigger"`
@@ -79,7 +72,6 @@ type RuleSpec struct {
 	Action    map[string]interface{} `json:"action" yaml:"action"`
 }
 
-// DeclarativeManifest merepresentasikan dokumen YAML utuh yang diparsing.
 type DeclarativeManifest struct {
 	Version    string          `json:"version" yaml:"version"`
 	Servers    []ServerSpec    `json:"servers,omitempty" yaml:"servers,omitempty"`
@@ -88,18 +80,16 @@ type DeclarativeManifest struct {
 	Rules      []RuleSpec      `json:"rules,omitempty" yaml:"rules,omitempty"`
 }
 
-// IaCChange merepresentasikan satu unit diff perubahan pada resource tertentu.
 type IaCChange struct {
 	ResourceType  ResourceType           `json:"resource_type"`
 	ResourceName  string                 `json:"resource_name"`
-	Action        IaCAction              `json:"action"` // create, update, delete, noop
+	Action        IaCAction              `json:"action"`
 	Before        map[string]interface{} `json:"before,omitempty"`
 	After         map[string]interface{} `json:"after,omitempty"`
 	ChangedFields []string               `json:"changed_fields,omitempty"`
 	Reason        string                 `json:"reason,omitempty"`
 }
 
-// IaCSummary merangkum jumlah aksi dalam sebuah rencana.
 type IaCSummary struct {
 	Create int `json:"create"`
 	Update int `json:"update"`
@@ -108,7 +98,6 @@ type IaCSummary struct {
 	Total  int `json:"total"`
 }
 
-// IaCConfiguration merepresentasikan file konfigurasi deklaratif pengguna.
 type IaCConfiguration struct {
 	ID             uuid.UUID `json:"id"`
 	OrganizationID uuid.UUID `json:"organization_id"`
@@ -121,7 +110,6 @@ type IaCConfiguration struct {
 	UpdatedAt      time.Time `json:"updated_at"`
 }
 
-// IaCState merepresentasikan snapshot actual state infrastruktur yang tercatat.
 type IaCState struct {
 	ID              uuid.UUID              `json:"id"`
 	ConfigurationID uuid.UUID              `json:"configuration_id"`
@@ -133,7 +121,6 @@ type IaCState struct {
 	CreatedAt       time.Time              `json:"created_at"`
 }
 
-// IaCPlan merepresentasikan hasil komputasi Plan Engine sebelum diaplikasikan.
 type IaCPlan struct {
 	ID              uuid.UUID   `json:"id"`
 	ConfigurationID uuid.UUID   `json:"configuration_id"`
@@ -146,7 +133,6 @@ type IaCPlan struct {
 	ExecutedAt      *time.Time  `json:"executed_at,omitempty"`
 }
 
-// IaCValidationError mendefinisikan error validasi sintaks / skema dengan baris dan kolom.
 type IaCValidationError struct {
 	Line    int    `json:"line"`
 	Column  int    `json:"column"`
@@ -154,14 +140,12 @@ type IaCValidationError struct {
 	Message string `json:"message"`
 }
 
-// IaCValidationResponse mengembalikan hasil validasi sintaks konfigurasi deklaratif.
 type IaCValidationResponse struct {
 	Valid    bool                 `json:"valid"`
 	Errors   []IaCValidationError `json:"errors,omitempty"`
 	Manifest *DeclarativeManifest `json:"manifest,omitempty"`
 }
 
-// IaCRepository mendefinisikan interface persistensi database untuk modul IaC.
 type IaCRepository interface {
 	CreateConfig(ctx context.Context, config *IaCConfiguration) error
 	GetConfigByID(ctx context.Context, id uuid.UUID) (*IaCConfiguration, error)

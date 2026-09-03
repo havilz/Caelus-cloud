@@ -12,13 +12,11 @@ import (
 	"github.com/havilz/caelus-cloud/backend/pkg/logger"
 )
 
-// ScannerInterface mendefinisikan kontrak interface yang harus dipenuhi oleh setiap modular scanner worker.
 type ScannerInterface interface {
 	Type() domain.ScanType
 	Scan(ctx context.Context, target domain.ScanTarget) ([]domain.NormalizedFinding, error)
 }
 
-// Orchestrator mengoordinasikan eksekusi pemindaian keamanan modular, normalisasi temuan, dan kalkulasi risiko.
 type Orchestrator struct {
 	scanners     map[domain.ScanType]ScannerInterface
 	normalizer   *FindingNormalizer
@@ -27,7 +25,6 @@ type Orchestrator struct {
 	eventEmitter func(ctx context.Context, event domain.SystemEvent)
 }
 
-// NewOrchestrator menginisialisasi instance Orchestrator dengan seluruh scanner worker modular standar.
 func NewOrchestrator(
 	securityRepo domain.SecurityRepository,
 	eventEmitter func(ctx context.Context, event domain.SystemEvent),
@@ -40,7 +37,6 @@ func NewOrchestrator(
 		eventEmitter: eventEmitter,
 	}
 
-	// Daftarkan modular scanner bawaan
 	o.RegisterScanner(scanner.NewPortScanner(800 * time.Millisecond))
 	o.RegisterScanner(scanner.NewTLSScanner(3 * time.Second))
 	o.RegisterScanner(scanner.NewHeadersScanner(3 * time.Second))
@@ -50,16 +46,10 @@ func NewOrchestrator(
 	return o
 }
 
-// RegisterScanner mendaftarkan implementasi scanner baru ke dalam orchestrator.
 func (o *Orchestrator) RegisterScanner(s ScannerInterface) {
 	o.scanners[s.Type()] = s
 }
 
-// ExecuteScan mengeksekusi sesi pemindaian keamanan secara asinkron atau sinkron terhadap target.
-// Parameter ctx merupakan konteks eksekusi.
-// Parameter scan memuat entitas SecurityScan yang sedang berjalan.
-// Parameter target memuat metadata target (server, IP, hostname, telemetri).
-// Mengembalikan pointer *domain.SecurityScan yang diperbarui dan error.
 func (o *Orchestrator) ExecuteScan(
 	ctx context.Context,
 	scan *domain.SecurityScan,
@@ -70,7 +60,6 @@ func (o *Orchestrator) ExecuteScan(
 	scan.StartedAt = &now
 	_ = o.securityRepo.UpdateScan(ctx, scan)
 
-	// Tentukan scanner yang akan dijalankan
 	var targetScanners []ScannerInterface
 	if scan.ScanType == domain.ScanTypeFull {
 		for _, s := range o.scanners {
@@ -90,7 +79,6 @@ func (o *Orchestrator) ExecuteScan(
 	var mu sync.Mutex
 	var wg sync.WaitGroup
 
-	// Eksekusi seluruh scanner secara paralel
 	for _, sc := range targetScanners {
 		wg.Add(1)
 		go func(worker ScannerInterface) {
@@ -108,7 +96,6 @@ func (o *Orchestrator) ExecuteScan(
 
 	wg.Wait()
 
-	// Normalisasi dan simpan temuan ke database
 	var normalizedFindings []domain.SecurityFinding
 	for _, raw := range rawFindings {
 		finding, err := o.normalizer.Normalize(scan.OrganizationID, scan.ServerID, &scan.ID, raw)
@@ -122,7 +109,6 @@ func (o *Orchestrator) ExecuteScan(
 		normalizedFindings = append(normalizedFindings, *finding)
 	}
 
-	// Kalkulasi skor risiko keamanan sesi scan
 	score, critical, high, medium, low := o.riskEngine.CalculateScore(normalizedFindings)
 	completedTime := time.Now().UTC()
 
@@ -139,7 +125,6 @@ func (o *Orchestrator) ExecuteScan(
 		return scan, fmt.Errorf("gagal memperbarui hasil scan: %w", err)
 	}
 
-	// Siarkan event sistem ke Central Event Dispatcher (Rule Engine)
 	if o.eventEmitter != nil {
 		o.eventEmitter(ctx, domain.SystemEvent{
 			ID:             uuid.New(),
@@ -157,7 +142,6 @@ func (o *Orchestrator) ExecuteScan(
 			OccurredAt: completedTime,
 		})
 
-		// Jika ditemukan temuan Critical, kirim event darurat
 		if critical > 0 {
 			o.eventEmitter(ctx, domain.SystemEvent{
 				ID:             uuid.New(),

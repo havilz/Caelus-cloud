@@ -11,7 +11,6 @@ import (
 	"github.com/havilz/caelus-cloud/backend/internal/iac/planner"
 )
 
-// MockIaCRepo implements domain.IaCRepository in-memory for testing.
 type MockIaCRepo struct {
 	configs map[uuid.UUID]*domain.IaCConfiguration
 	states  map[uuid.UUID][]*domain.IaCState
@@ -219,7 +218,7 @@ func TestIaC_PlanEngine(t *testing.T) {
 	})
 
 	t.Run("Drift / Update & Delete Plan", func(t *testing.T) {
-		// Simulate existing state where app-server-1 had size t3.micro, and old-server existed
+
 		currentState := &domain.IaCState{
 			ID:              uuid.New(),
 			ConfigurationID: configID,
@@ -241,10 +240,6 @@ func TestIaC_PlanEngine(t *testing.T) {
 			t.Fatalf("failed generating plan: %v", err)
 		}
 
-		// app-server-2: CREATE (1)
-		// app-server-1: UPDATE (1)
-		// old-server: DELETE (1)
-		// app-assets: NOOP (1)
 		if plan.Summary.Create != 1 {
 			t.Errorf("expected 1 create (app-server-2), got %d", plan.Summary.Create)
 		}
@@ -296,7 +291,6 @@ func TestIaC_ApplyAndRollback(t *testing.T) {
 	}
 	_ = repo.CreatePlan(ctx, plan)
 
-	// Apply Plan
 	state, err := app.Apply(ctx, config, plan, manifest, nil)
 	if err != nil {
 		t.Fatalf("failed applying plan: %v", err)
@@ -308,7 +302,6 @@ func TestIaC_ApplyAndRollback(t *testing.T) {
 		t.Errorf("expected config status applied, got %s", config.Status)
 	}
 
-	// Rollback State
 	restored, err := app.RollbackState(ctx, config, 1, nil)
 	if err != nil {
 		t.Fatalf("failed rolling back state: %v", err)

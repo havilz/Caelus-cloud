@@ -93,7 +93,7 @@ export const Sidebar: React.FC = () => {
 
   return (
     <aside className="fixed left-0 top-0 z-40 flex h-screen w-64 flex-col border-r border-[#262626] dark:border-[#262626] light:border-[#e5e7eb] bg-[#121212] dark:bg-[#121212] light:bg-[#ffffff] text-[#ededed] dark:text-[#ededed] light:text-[#111827]">
-      {/* Brand Header */}
+      {}
       <div className="flex h-16 items-center gap-3 border-b border-[#262626] dark:border-[#262626] light:border-[#e5e7eb] px-6">
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500 text-zinc-950 font-bold shadow-sm">
           <Cloud className="h-4 w-4" />
@@ -106,7 +106,7 @@ export const Sidebar: React.FC = () => {
         </div>
       </div>
 
-      {/* Navigation Links */}
+      {}
       <div className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
         <p className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-wider text-[#707070] dark:text-[#707070] light:text-[#9ca3af]">
           Platform Menu
@@ -195,7 +195,7 @@ export const Sidebar: React.FC = () => {
         })}
       </div>
 
-      {/* Footer Info */}
+      {}
       <div className="p-4 border-t border-[#262626] dark:border-[#262626] light:border-[#e5e7eb]">
         <div className="rounded-lg border border-[#262626] dark:border-[#262626] light:border-[#e5e7eb] bg-[#171717] dark:bg-[#171717] light:bg-[#f9fafb] p-3 text-xs">
           <div className="flex items-center justify-between font-medium mb-1">

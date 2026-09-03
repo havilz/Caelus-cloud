@@ -9,25 +9,18 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/havilz/caelus-cloud/backend/pkg/logger"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Migrator struct {
 	pool *pgxpool.Pool
 }
 
-// NewMigrator membuat instance baru dari Migrator menggunakan connection pool PostgreSQL yang diberikan.
-// Parameter pool merupakan pointer *pgxpool.Pool aktif untuk eksekusi skrip DDL SQL.
-// Mengembalikan pointer *Migrator yang siap menjalankan proses migrasi basis data.
 func NewMigrator(pool *pgxpool.Pool) *Migrator {
 	return &Migrator{pool: pool}
 }
 
-// Up mengeksekusi seluruh skrip migrasi SQL bertipe .up.sql yang belum pernah diaplikasikan ke basis data.
-// Parameter ctx merupakan konteks eksekusi migrasi.
-// Parameter migrationsDir menentukan path folder tempat skrip migrasi SQL disimpan.
-// Mengembalikan error jika terjadi kegagalan pembacaan file atau eksekusi perintah SQL di basis data.
 func (m *Migrator) Up(ctx context.Context, migrationsDir string) error {
 	createTableSQL := `
 	CREATE TABLE IF NOT EXISTS schema_migrations (

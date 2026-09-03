@@ -202,7 +202,6 @@ func setupTestAuthUsecase() (auth.Usecase, *mockUserRepo, *mockOrgRepo, jwt.Mana
 	return uc, userRepo, orgRepo, jwtManager
 }
 
-// TestRegister_Success menguji alur registrasi pengguna baru yang berhasil dengan pembuatan organisasi dan token JWT.
 func TestRegister_Success(t *testing.T) {
 	uc, _, _, _ := setupTestAuthUsecase()
 	ctx := context.Background()
@@ -241,7 +240,6 @@ func TestRegister_Success(t *testing.T) {
 	}
 }
 
-// TestRegister_DuplicateEmail menguji penolakan registrasi apabila alamat email sudah terdaftar.
 func TestRegister_DuplicateEmail(t *testing.T) {
 	uc, _, _, _ := setupTestAuthUsecase()
 	ctx := context.Background()
@@ -265,7 +263,6 @@ func TestRegister_DuplicateEmail(t *testing.T) {
 	}
 }
 
-// TestRegister_ShortPassword menguji penolakan registrasi apabila panjang kata sandi kurang dari 8 karakter.
 func TestRegister_ShortPassword(t *testing.T) {
 	uc, _, _, _ := setupTestAuthUsecase()
 	ctx := context.Background()
@@ -282,7 +279,6 @@ func TestRegister_ShortPassword(t *testing.T) {
 	}
 }
 
-// TestLogin_Success menguji alur login berhasil untuk akun aktif dengan kata sandi yang valid.
 func TestLogin_Success(t *testing.T) {
 	uc, userRepo, _, _ := setupTestAuthUsecase()
 	ctx := context.Background()
@@ -316,7 +312,6 @@ func TestLogin_Success(t *testing.T) {
 	}
 }
 
-// TestLogin_RefreshToken_Success menguji perpanjangan sesi melalui Refresh Token yang sah.
 func TestLogin_RefreshToken_Success(t *testing.T) {
 	uc, userRepo, _, _ := setupTestAuthUsecase()
 	ctx := context.Background()
@@ -351,7 +346,6 @@ func TestLogin_RefreshToken_Success(t *testing.T) {
 	}
 }
 
-// TestLogin_WrongPassword menguji penolakan login jika kata sandi salah.
 func TestLogin_WrongPassword(t *testing.T) {
 	uc, userRepo, _, _ := setupTestAuthUsecase()
 	ctx := context.Background()
@@ -377,7 +371,6 @@ func TestLogin_WrongPassword(t *testing.T) {
 	}
 }
 
-// TestLogin_UserNotFound menguji penolakan login jika akun pengguna tidak terdaftar.
 func TestLogin_UserNotFound(t *testing.T) {
 	uc, _, _, _ := setupTestAuthUsecase()
 	ctx := context.Background()
@@ -391,7 +384,6 @@ func TestLogin_UserNotFound(t *testing.T) {
 	}
 }
 
-// TestLogin_InactiveUser menguji penolakan login jika akun pengguna dalam status nonaktif.
 func TestLogin_InactiveUser(t *testing.T) {
 	uc, userRepo, _, _ := setupTestAuthUsecase()
 	ctx := context.Background()

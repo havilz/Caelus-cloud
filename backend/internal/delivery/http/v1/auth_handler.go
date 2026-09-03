@@ -23,10 +23,6 @@ type AuthHandler struct {
 	auditRepo   domain.AuditLogRepository
 }
 
-// NewAuthHandler menginisialisasi HTTP Handler untuk operasi autentikasi pengguna.
-// Parameter uc merupakan implementasi auth.Usecase.
-// Parameter auditRepo merupakan repositori audit log opsional untuk mencatat aktivitas autentikasi.
-// Mengembalikan pointer *AuthHandler.
 func NewAuthHandler(uc auth.Usecase, auditRepo domain.AuditLogRepository) *AuthHandler {
 	return &AuthHandler{
 		authUsecase: uc,
@@ -34,9 +30,6 @@ func NewAuthHandler(uc auth.Usecase, auditRepo domain.AuditLogRepository) *AuthH
 	}
 }
 
-// Register menangani HTTP POST /api/v1/auth/register untuk pendaftaran akun dan inisialisasi organisasi.
-// Parameter w merupakan HTTP response writer.
-// Parameter r merupakan pointer HTTP request yang memuat payload JSON auth.RegisterInput.
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	var input auth.RegisterInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
@@ -66,9 +59,6 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	response.Success(w, http.StatusCreated, "Registrasi akun berhasil", output)
 }
 
-// Login menangani HTTP POST /api/v1/auth/login untuk autentikasi kredensial pengguna dan penerbitan token JWT.
-// Parameter w merupakan HTTP response writer.
-// Parameter r merupakan pointer HTTP request yang memuat payload JSON auth.LoginInput.
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var input auth.LoginInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
@@ -94,7 +84,6 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	response.Success(w, http.StatusOK, "Login berhasil", output)
 }
 
-// recordAuthAudit mencatat aktivitas autentikasi (berhasil maupun gagal) ke tabel audit_logs (H-1).
 func (h *AuthHandler) recordAuthAudit(r *http.Request, action, email string, userID, orgID *uuid.UUID, statusCode int, message string) {
 	if h.auditRepo == nil {
 		return
@@ -124,7 +113,6 @@ func (h *AuthHandler) recordAuthAudit(r *http.Request, action, email string, use
 	_ = h.auditRepo.Create(context.Background(), auditEntry)
 }
 
-// extractIP mengekstrak IP address asli dari request.
 func extractIP(r *http.Request) string {
 	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
 		ips := strings.Split(xff, ",")
@@ -140,7 +128,6 @@ func extractIP(r *http.Request) string {
 	return host
 }
 
-// getAuthErrorStatusCode menentukan HTTP status code sesuai tipe error autentikasi.
 func getAuthErrorStatusCode(err error) int {
 	switch err {
 	case domain.ErrEmailAlreadyInUse:
@@ -162,9 +149,6 @@ type refreshTokenRequest struct {
 	RefreshToken string `json:"refresh_token"`
 }
 
-// RefreshToken menangani HTTP POST /api/v1/auth/refresh untuk perpanjangan masa aktif sesi pengguna.
-// Parameter w merupakan HTTP response writer.
-// Parameter r merupakan pointer HTTP request yang memuat payload JSON refreshTokenRequest.
 func (h *AuthHandler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 	var req refreshTokenRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.RefreshToken == "" {
@@ -181,9 +165,6 @@ func (h *AuthHandler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 	response.Success(w, http.StatusOK, "Token berhasil diperbarui", tokenPair)
 }
 
-// handleAuthError memetakan domain error autentikasi ke format respon HTTP standar.
-// Parameter w merupakan HTTP response writer.
-// Parameter err merupakan error domain yang terjadi.
 func handleAuthError(w http.ResponseWriter, err error) {
 	switch err {
 	case domain.ErrEmailAlreadyInUse:

@@ -159,7 +159,6 @@ export default function DeclarativeIaCPage() {
     fetchConfigs();
   }, [fetchConfigs]);
 
-  // Real-time YAML validation
   useEffect(() => {
     const timer = setTimeout(async () => {
       if (!rawYAML.trim()) {
@@ -184,7 +183,6 @@ export default function DeclarativeIaCPage() {
     return () => clearTimeout(timer);
   }, [rawYAML]);
 
-  // Load state history when tab changes
   useEffect(() => {
     if (selectedConfig && activeTab === 'history') {
       iacService.listStates(selectedConfig.id).then(setStatesHistory).catch(console.error);
@@ -344,15 +342,10 @@ export default function DeclarativeIaCPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#262626] pb-5">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold tracking-tight text-[#ededed]">Declarative Infrastructure as Code (IaC)</h1>
-            <span className="px-2 py-0.5 text-[10px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded">
-              Phase 6.2 Active
-            </span>
-          </div>
+          <h1 className="text-xl font-bold tracking-tight text-[#ededed]">Declarative Infrastructure as Code (IaC)</h1>
           <p className="text-xs text-[#a1a1a1] mt-1">
             Define, plan, diff, and apply multi-cloud infrastructure declaratively with automatic rollback safety.
           </p>
@@ -385,11 +378,11 @@ export default function DeclarativeIaCPage() {
         </div>
       </div>
 
-      {/* Main Grid */}
+      {}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Left Sidebar: Stacks & Templates */}
+        {}
         <div className="lg:col-span-1 space-y-4">
-          {/* Stacks List */}
+          {}
           <div className="bg-[#171717] border border-[#262626] rounded-xl p-4 space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-[#ededed] uppercase tracking-wider">Saved Stacks</span>
@@ -420,7 +413,7 @@ export default function DeclarativeIaCPage() {
             </div>
           </div>
 
-          {/* Starter Templates */}
+          {}
           <div className="bg-[#171717] border border-[#262626] rounded-xl p-4 space-y-3">
             <span className="text-xs font-bold text-[#ededed] uppercase tracking-wider">Starter Templates</span>
             <div className="space-y-2">
@@ -438,9 +431,9 @@ export default function DeclarativeIaCPage() {
           </div>
         </div>
 
-        {/* Right Area: Tabs & Workspaces */}
+        {}
         <div className="lg:col-span-3 space-y-4">
-          {/* Top Bar / Metadata */}
+          {}
           <div className="bg-[#171717] border border-[#262626] rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div className="flex-1 w-full sm:w-auto">
               <input
@@ -452,7 +445,7 @@ export default function DeclarativeIaCPage() {
               />
             </div>
 
-            {/* View Tabs */}
+            {}
             <div className="flex items-center bg-[#121212] p-1 border border-[#262626] rounded-lg">
               <button
                 onClick={() => setActiveTab('editor')}
@@ -496,7 +489,7 @@ export default function DeclarativeIaCPage() {
             </div>
           )}
 
-          {/* TAB 1: YAML EDITOR */}
+          {}
           {activeTab === 'editor' && (
             <div className="bg-[#171717] border border-[#262626] rounded-xl overflow-hidden shadow-sm">
               <div className="flex items-center justify-between px-4 py-2.5 bg-[#121212] border-b border-[#262626]">
@@ -547,12 +540,12 @@ export default function DeclarativeIaCPage() {
             </div>
           )}
 
-          {/* TAB 2: VISUAL DIFF VIEWER */}
+          {}
           {activeTab === 'diff' && (
             <div className="space-y-4">
               {currentPlan ? (
                 <div className="space-y-4">
-                  {/* Summary Cards */}
+                  {}
                   <div className="grid grid-cols-4 gap-3">
                     <div className="p-3 bg-[#171717] border border-emerald-500/20 rounded-xl text-center">
                       <p className="text-[10px] text-[#707070] uppercase font-bold">To Create</p>
@@ -572,7 +565,7 @@ export default function DeclarativeIaCPage() {
                     </div>
                   </div>
 
-                  {/* Changes List */}
+                  {}
                   <div className="bg-[#171717] border border-[#262626] rounded-xl overflow-hidden">
                     <div className="px-4 py-3 bg-[#121212] border-b border-[#262626] flex items-center justify-between">
                       <span className="text-xs font-bold text-[#ededed]">Planned Resource Changes</span>
@@ -601,7 +594,7 @@ export default function DeclarativeIaCPage() {
                             <p className="text-xs text-[#a1a1a1] italic">{change.reason}</p>
                           )}
 
-                          {/* Attribute Diff Breakdown */}
+                          {}
                           {change.action === 'update' && (
                             <div className="bg-[#101010] p-3 rounded-lg border border-[#222222] font-mono text-[11px] space-y-1">
                               <p className="text-[#707070] font-bold">Modified Fields: {change.changed_fields?.join(', ')}</p>
@@ -650,7 +643,7 @@ export default function DeclarativeIaCPage() {
             </div>
           )}
 
-          {/* TAB 3: STATE HISTORY & ROLLBACK */}
+          {}
           {activeTab === 'history' && (
             <div className="bg-[#171717] border border-[#262626] rounded-xl overflow-hidden">
               <div className="px-4 py-3 bg-[#121212] border-b border-[#262626]">

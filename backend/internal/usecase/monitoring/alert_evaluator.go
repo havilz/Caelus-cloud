@@ -9,13 +9,11 @@ import (
 	"github.com/havilz/caelus-cloud/backend/internal/domain"
 )
 
-// AlertEvaluator mengevaluasi metrik server terhadap aturan ambang batas (threshold rules).
 type AlertEvaluator struct {
 	alertRepo   domain.AlertRepository
 	broadcaster domain.TelemetryBroadcaster
 }
 
-// NewAlertEvaluator membuat instance baru evaluator ambang batas alert.
 func NewAlertEvaluator(alertRepo domain.AlertRepository, broadcaster domain.TelemetryBroadcaster) *AlertEvaluator {
 	return &AlertEvaluator{
 		alertRepo:   alertRepo,
@@ -23,7 +21,6 @@ func NewAlertEvaluator(alertRepo domain.AlertRepository, broadcaster domain.Tele
 	}
 }
 
-// EvaluateMetrics memeriksa metrik terkini server terhadap seluruh aturan yang relevan dan memicu insiden alert baru jika terlanggar.
 func (e *AlertEvaluator) EvaluateMetrics(ctx context.Context, server *domain.Server, metric *domain.ServerMetric) error {
 	rules, err := e.alertRepo.ListRulesForServer(ctx, server.OrganizationID, server.ID)
 	if err != nil {
@@ -54,7 +51,6 @@ func (e *AlertEvaluator) EvaluateMetrics(ctx context.Context, server *domain.Ser
 	return nil
 }
 
-// checkRuleCondition mengevaluasi apakah nilai metrik memenuhi kondisi pemicu aturan.
 func (e *AlertEvaluator) checkRuleCondition(rule *domain.AlertRule, metric *domain.ServerMetric) (float64, bool) {
 	var val float64
 	switch rule.MetricName {
@@ -84,7 +80,6 @@ func (e *AlertEvaluator) checkRuleCondition(rule *domain.AlertRule, metric *doma
 	}
 }
 
-// triggerAlert membuat entitas alert baru dan menyiarkannya via WebSocket Hub.
 func (e *AlertEvaluator) triggerAlert(ctx context.Context, server *domain.Server, rule *domain.AlertRule, currentVal float64) error {
 	alert := &domain.Alert{
 		OrganizationID: server.OrganizationID,

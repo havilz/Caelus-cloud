@@ -13,17 +13,14 @@ import (
 	"github.com/havilz/caelus-cloud/backend/internal/usecase/monitoring"
 )
 
-// AlertHandler menangani request HTTP untuk manajemen insiden peringatan dan aturan threshold.
 type AlertHandler struct {
 	usecase monitoring.MonitoringUsecase
 }
 
-// NewAlertHandler membuat instance baru HTTP AlertHandler.
 func NewAlertHandler(usecase monitoring.MonitoringUsecase) *AlertHandler {
 	return &AlertHandler{usecase: usecase}
 }
 
-// ListAlerts mengembalikan daftar alert milik organisasi dengan opsi filter status.
 func (h *AlertHandler) ListAlerts(w http.ResponseWriter, r *http.Request) {
 	orgID, ok := middleware.GetOrganizationIDFromContext(r.Context())
 	if !ok {
@@ -56,7 +53,6 @@ func (h *AlertHandler) ListAlerts(w http.ResponseWriter, r *http.Request) {
 	response.Paginated(w, http.StatusOK, "alerts retrieved successfully", alerts, page, limit, total)
 }
 
-// AcknowledgeAlert mengubah status alert menjadi acknowledged.
 func (h *AlertHandler) AcknowledgeAlert(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.GetUserIDFromContext(r.Context())
 	if !ok {
@@ -79,7 +75,6 @@ func (h *AlertHandler) AcknowledgeAlert(w http.ResponseWriter, r *http.Request) 
 	response.Success(w, http.StatusOK, "alert acknowledged successfully", map[string]any{"id": alertID})
 }
 
-// ResolveAlert mengubah status alert menjadi resolved.
 func (h *AlertHandler) ResolveAlert(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.GetUserIDFromContext(r.Context())
 	if !ok {
@@ -102,7 +97,6 @@ func (h *AlertHandler) ResolveAlert(w http.ResponseWriter, r *http.Request) {
 	response.Success(w, http.StatusOK, "alert resolved successfully", map[string]any{"id": alertID})
 }
 
-// ListRules mengembalikan daftar aturan alert milik organisasi.
 func (h *AlertHandler) ListRules(w http.ResponseWriter, r *http.Request) {
 	orgID, ok := middleware.GetOrganizationIDFromContext(r.Context())
 	if !ok {
@@ -119,7 +113,6 @@ func (h *AlertHandler) ListRules(w http.ResponseWriter, r *http.Request) {
 	response.Success(w, http.StatusOK, "alert rules retrieved successfully", rules)
 }
 
-// CreateRule membuat aturan evaluasi ambang batas alert baru.
 func (h *AlertHandler) CreateRule(w http.ResponseWriter, r *http.Request) {
 	orgID, ok := middleware.GetOrganizationIDFromContext(r.Context())
 	if !ok {
@@ -175,7 +168,6 @@ func (h *AlertHandler) CreateRule(w http.ResponseWriter, r *http.Request) {
 	response.Success(w, http.StatusCreated, "alert rule created successfully", rule)
 }
 
-// DeleteRule menghapus aturan alert berdasarkan ID.
 func (h *AlertHandler) DeleteRule(w http.ResponseWriter, r *http.Request) {
 	ruleIDStr := chi.URLParam(r, "id")
 	ruleID, err := uuid.Parse(ruleIDStr)

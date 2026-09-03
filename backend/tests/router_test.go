@@ -11,7 +11,6 @@ import (
 	"github.com/havilz/caelus-cloud/backend/pkg/config"
 )
 
-// TestHealthCheckEndpoints memverifikasi bahwa endpoint /health dan /api/v1/health mengembalikan status 200 OK dan struktur JSON yang valid.
 func TestHealthCheckEndpoints(t *testing.T) {
 	cfg := &config.Config{
 		App: config.AppConfig{

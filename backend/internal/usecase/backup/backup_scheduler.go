@@ -9,7 +9,6 @@ import (
 	"github.com/havilz/caelus-cloud/backend/internal/domain"
 )
 
-// Scheduler mengelola eksekusi otomatis kebijakan backup server dan pembersihan retensi berkas kedaluwarsa.
 type Scheduler struct {
 	backupRepo domain.BackupRepository
 	usecase    BackupUsecase
@@ -17,7 +16,6 @@ type Scheduler struct {
 	stopChan   chan struct{}
 }
 
-// NewScheduler membuat instance baru Scheduler background worker.
 func NewScheduler(backupRepo domain.BackupRepository, usecase BackupUsecase, logger *slog.Logger) *Scheduler {
 	return &Scheduler{
 		backupRepo: backupRepo,
@@ -27,7 +25,6 @@ func NewScheduler(backupRepo domain.BackupRepository, usecase BackupUsecase, log
 	}
 }
 
-// Start menjalankan loop ticker scheduler secara asinkron dalam goroutine.
 func (s *Scheduler) Start(interval time.Duration) {
 	if interval <= 0 {
 		interval = 60 * time.Second
@@ -52,12 +49,10 @@ func (s *Scheduler) Start(interval time.Duration) {
 	}()
 }
 
-// Stop menghentikan proses latar belakang scheduler.
 func (s *Scheduler) Stop() {
 	close(s.stopChan)
 }
 
-// processDueBackups memeriksa dan mengeksekusi kebijakan backup yang telah jatuh tempo.
 func (s *Scheduler) processDueBackups() {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
@@ -81,7 +76,6 @@ func (s *Scheduler) processDueBackups() {
 
 		s.logger.Info("Scheduled backup completed successfully", "record_id", record.ID, "status", record.Status, "size_bytes", record.SizeBytes)
 
-		// Perbarui jadwal eksekusi selanjutnya (contoh: 24 jam ke depan)
 		nextRun := now.Add(24 * time.Hour)
 		policy.LastRunAt = &now
 		policy.NextRunAt = &nextRun
@@ -89,7 +83,6 @@ func (s *Scheduler) processDueBackups() {
 	}
 }
 
-// cleanExpiredRetention menghapus berkas arsip backup yang telah melewati batas hari retensi.
 func (s *Scheduler) cleanExpiredRetention() {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
 	defer cancel()

@@ -10,26 +10,19 @@ import (
 	"github.com/havilz/caelus-cloud/backend/pkg/logger"
 )
 
-// HeartbeatWatchdog memantau liveness dan detak jantung (heartbeat) telemetri seluruh instance server.
 type HeartbeatWatchdog struct {
 	serverRepo    domain.ServerRepository
 	metricRepo    domain.MetricRepository
 	broadcaster   domain.TelemetryBroadcaster
-	eventEmitter   func(ctx context.Context, event domain.SystemEvent)
-	timeout        time.Duration
-	checkInterval  time.Duration
-	stopChan       chan struct{}
-	wg             sync.WaitGroup
-	mu             sync.Mutex
-	isRunning      bool
+	eventEmitter  func(ctx context.Context, event domain.SystemEvent)
+	timeout       time.Duration
+	checkInterval time.Duration
+	stopChan      chan struct{}
+	wg            sync.WaitGroup
+	mu            sync.Mutex
+	isRunning     bool
 }
 
-// NewHeartbeatWatchdog membuat instance baru HeartbeatWatchdog.
-// Parameter serverRepo merupakan repositori data server.
-// Parameter metricRepo merupakan repositori metrik telemetri time-series.
-// Parameter wsHub merupakan WebSocket Hub untuk real-time status broadcasting.
-// Parameter eventEmitter merupakan callback pengirim event ke Central Event Dispatcher.
-// Parameter timeout merupakan batas waktu tidak adanya metrik sebelum server ditandai offline/stopped.
 func NewHeartbeatWatchdog(
 	serverRepo domain.ServerRepository,
 	metricRepo domain.MetricRepository,
@@ -51,7 +44,6 @@ func NewHeartbeatWatchdog(
 	}
 }
 
-// Start menjalankan background loop watchdog secara asinkron.
 func (w *HeartbeatWatchdog) Start() {
 	w.mu.Lock()
 	if w.isRunning {
@@ -66,7 +58,6 @@ func (w *HeartbeatWatchdog) Start() {
 	logger.Info("Heartbeat Liveness Watchdog berhasil dijalankan", "timeout", w.timeout.String())
 }
 
-// Stop menghentikan background loop watchdog secara anggun.
 func (w *HeartbeatWatchdog) Stop() {
 	w.mu.Lock()
 	if !w.isRunning {
@@ -81,7 +72,6 @@ func (w *HeartbeatWatchdog) Stop() {
 	logger.Info("Heartbeat Liveness Watchdog berhasil dihentikan")
 }
 
-// runLoop merupakan loop periodik pengecekan status detak jantung seluruh server aktif.
 func (w *HeartbeatWatchdog) runLoop() {
 	defer w.wg.Done()
 
@@ -98,7 +88,6 @@ func (w *HeartbeatWatchdog) runLoop() {
 	}
 }
 
-// evaluateHeartbeats memeriksa seluruh server yang berstatus running dan menandai server mati jika timeout.
 func (w *HeartbeatWatchdog) evaluateHeartbeats() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -117,7 +106,6 @@ func (w *HeartbeatWatchdog) evaluateHeartbeats() {
 			continue
 		}
 
-		// Jika selisih waktu metrik terakhir melebihi batas timeout
 		if now.Sub(latestMetric.RecordedAt) > w.timeout {
 			logger.Warn("Server terdeteksi offline karena tidak mengirimkan heartbeat telemetri",
 				"server_id", srv.ID,
@@ -126,13 +114,11 @@ func (w *HeartbeatWatchdog) evaluateHeartbeats() {
 				"elapsed", now.Sub(latestMetric.RecordedAt).String(),
 			)
 
-			// Update status server di database
 			if err := w.serverRepo.UpdateStatus(ctx, srv.ID, domain.ServerStatusStopped); err != nil {
 				logger.Error("Gagal memperbarui status server menjadi stopped", "server_id", srv.ID, "error", err)
 				continue
 			}
 
-			// Broadcast realtime event ke frontend via WebSocket
 			if w.broadcaster != nil {
 				w.broadcaster.BroadcastToOrg(srv.OrganizationID, "server.status_changed", map[string]any{
 					"server_id":   srv.ID,
@@ -143,7 +129,6 @@ func (w *HeartbeatWatchdog) evaluateHeartbeats() {
 				})
 			}
 
-			// Dispatch system event ke Central Event Dispatcher (Rule Engine)
 			if w.eventEmitter != nil {
 				w.eventEmitter(ctx, domain.SystemEvent{
 					ID:             uuid.New(),

@@ -1,6 +1,6 @@
 -- 000009_create_networks_and_firewall.up.sql
 
--- 1. Tabel networks (VPC, Bridge, Overlay)
+-- 1. Networks Table (VPC, Bridge, Overlay)
 CREATE TABLE IF NOT EXISTS networks (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS networks (
 CREATE INDEX IF NOT EXISTS idx_networks_org ON networks(organization_id);
 CREATE INDEX IF NOT EXISTS idx_networks_status ON networks(status);
 
--- 2. Tabel firewall_rules
+-- 2. Firewall Rules Table
 CREATE TABLE IF NOT EXISTS firewall_rules (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,

@@ -1,9 +1,6 @@
-/**
- * Supabase-inspired Color Palette Tokens
- * Minimalist, high contrast, clean deep blacks and emerald greens.
- */
+
 export const AppColors = {
-  // Brand Accent Colors
+  
   brand: {
     primary: "bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-semibold shadow-sm",
     primaryLight: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20",
@@ -13,7 +10,6 @@ export const AppColors = {
     ring: "focus:ring-emerald-500",
   },
 
-  // Surfaces & Backgrounds
   bg: {
     canvas: "bg-[#0f0f0f] dark:bg-[#0f0f0f] light:bg-[#ffffff]",
     surface: "bg-[#171717] dark:bg-[#171717] light:bg-[#f9fafb]",
@@ -22,14 +18,12 @@ export const AppColors = {
     surfaceHover: "hover:bg-[#222222] dark:hover:bg-[#222222] light:hover:bg-[#f4f4f5]",
   },
 
-  // Borders
   border: {
     subtle: "border-[#262626] dark:border-[#262626] light:border-[#e5e7eb]",
     strong: "border-[#333333] dark:border-[#333333] light:border-[#d1d5db]",
     hover: "hover:border-[#404040] dark:hover:border-[#404040] light:hover:border-[#9ca3af]",
   },
 
-  // Typography Colors
   text: {
     primary: "text-[#ededed] dark:text-[#ededed] light:text-[#111827]",
     secondary: "text-[#a1a1a1] dark:text-[#a1a1a1] light:text-[#4b5563]",
@@ -37,7 +31,6 @@ export const AppColors = {
     inverse: "text-zinc-950 dark:text-zinc-950 light:text-white",
   },
 
-  // System & Status Badges
   status: {
     running: {
       bg: "bg-emerald-950/60 dark:bg-emerald-950/60 light:bg-emerald-50",

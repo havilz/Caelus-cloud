@@ -18,17 +18,15 @@ var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
 	CheckOrigin: func(_ *http.Request) bool {
-		return true // Diizinkan untuk komunikasi dashboard
+		return true
 	},
 }
 
-// Handler menangani endpoint koneksi masuk WebSocket dan Server-Sent Events (SSE).
 type Handler struct {
 	hub        *Hub
 	jwtManager jwt.Manager
 }
 
-// NewHandler membuat instance baru WebSocket & SSE Handler.
 func NewHandler(hub *Hub, jwtManager jwt.Manager) *Handler {
 	return &Handler{
 		hub:        hub,
@@ -36,7 +34,6 @@ func NewHandler(hub *Hub, jwtManager jwt.Manager) *Handler {
 	}
 }
 
-// HandleWebSocket meng-upgrade request HTTP ke protokol duplex WebSocket.
 func (h *Handler) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	token := r.URL.Query().Get("token")
 	if token == "" {
@@ -64,7 +61,6 @@ func (h *Handler) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	client := NewClient(clientID, claims.UserID, orgID, h.hub)
 	h.hub.Register(client)
 
-	// Otomatis subscribe ke topik organisasi jika ada
 	if orgID != uuid.Nil {
 		h.hub.Subscribe(client, fmt.Sprintf("org:%s", orgID))
 	}
@@ -73,8 +69,6 @@ func (h *Handler) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	go h.readPump(conn, client)
 }
 
-// HandleSSE menangani streaming data telemetri satu arah via Server-Sent Events (SSE).
-// Endpoint ini dilindungi middleware JWT Authenticate — hanya user terautentikasi yang bisa akses (C-1).
 func (h *Handler) HandleSSE(w http.ResponseWriter, r *http.Request) {
 	serverIDStr := chi.URLParam(r, "server_id")
 	serverID, err := uuid.Parse(serverIDStr)
@@ -92,7 +86,6 @@ func (h *Handler) HandleSSE(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")
 	w.Header().Set("Connection", "keep-alive")
-	// Header Access-Control-Allow-Origin dikelola secara terpusat oleh middleware CORS global (L-1)
 
 	clientID := uuid.New().String()
 	client := NewClient(clientID, uuid.Nil, uuid.Nil, h.hub)
@@ -118,7 +111,6 @@ func (h *Handler) HandleSSE(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// readPump membaca pesan subscribe/unsubscribe masuk dari client WebSocket.
 func (h *Handler) readPump(conn *websocket.Conn, client *Client) {
 	defer func() {
 		h.hub.Unregister(client)
@@ -152,7 +144,6 @@ func (h *Handler) readPump(conn *websocket.Conn, client *Client) {
 	}
 }
 
-// writePump mendistribusikan pesan dari channel Send client ke koneksi WebSocket aktif.
 func (h *Handler) writePump(conn *websocket.Conn, client *Client) {
 	ticker := time.NewTicker(30 * time.Second)
 	defer func() {

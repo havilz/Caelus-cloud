@@ -13,17 +13,14 @@ import (
 	"github.com/havilz/caelus-cloud/backend/internal/usecase/backup"
 )
 
-// BackupHandler menangani request HTTP untuk manajemen kebijakan dan riwayat backup server.
 type BackupHandler struct {
 	usecase backup.BackupUsecase
 }
 
-// NewBackupHandler membuat instance baru HTTP BackupHandler.
 func NewBackupHandler(usecase backup.BackupUsecase) *BackupHandler {
 	return &BackupHandler{usecase: usecase}
 }
 
-// CreatePolicyRequest payload request pembuatan kebijakan backup baru.
 type CreatePolicyRequest struct {
 	ServerID       uuid.UUID  `json:"server_id"`
 	BucketID       *uuid.UUID `json:"bucket_id,omitempty"`
@@ -33,7 +30,6 @@ type CreatePolicyRequest struct {
 	IncludeDisks   bool       `json:"include_disks"`
 }
 
-// CreatePolicy membuat kebijakan backup baru.
 func (h *BackupHandler) CreatePolicy(w http.ResponseWriter, r *http.Request) {
 	orgID, ok := middleware.GetOrganizationIDFromContext(r.Context())
 	if !ok || orgID == uuid.Nil {
@@ -64,7 +60,6 @@ func (h *BackupHandler) CreatePolicy(w http.ResponseWriter, r *http.Request) {
 	response.Success(w, http.StatusCreated, "backup policy created successfully", policy)
 }
 
-// ListPolicies mengambil seluruh kebijakan backup milik organisasi.
 func (h *BackupHandler) ListPolicies(w http.ResponseWriter, r *http.Request) {
 	orgID, ok := middleware.GetOrganizationIDFromContext(r.Context())
 	if !ok || orgID == uuid.Nil {
@@ -81,7 +76,6 @@ func (h *BackupHandler) ListPolicies(w http.ResponseWriter, r *http.Request) {
 	response.Success(w, http.StatusOK, "backup policies retrieved successfully", policies)
 }
 
-// DeletePolicy menghapus kebijakan backup berdasarkan ID.
 func (h *BackupHandler) DeletePolicy(w http.ResponseWriter, r *http.Request) {
 	orgID, ok := middleware.GetOrganizationIDFromContext(r.Context())
 	if !ok || orgID == uuid.Nil {
@@ -104,13 +98,11 @@ func (h *BackupHandler) DeletePolicy(w http.ResponseWriter, r *http.Request) {
 	response.Success(w, http.StatusOK, "backup policy deleted successfully", nil)
 }
 
-// TriggerBackupRequest payload pemicu backup on-demand.
 type TriggerBackupRequest struct {
 	BackupName string     `json:"backup_name,omitempty"`
 	PolicyID   *uuid.UUID `json:"policy_id,omitempty"`
 }
 
-// TriggerBackup mengeksekusi proses pembuatan backup snapshot server secara langsung.
 func (h *BackupHandler) TriggerBackup(w http.ResponseWriter, r *http.Request) {
 	orgID, ok := middleware.GetOrganizationIDFromContext(r.Context())
 	if !ok || orgID == uuid.Nil {
@@ -139,7 +131,6 @@ func (h *BackupHandler) TriggerBackup(w http.ResponseWriter, r *http.Request) {
 	response.Success(w, http.StatusCreated, "backup triggered successfully", record)
 }
 
-// ListRecords mengambil riwayat rekaman backup milik organisasi dengan paginasi.
 func (h *BackupHandler) ListRecords(w http.ResponseWriter, r *http.Request) {
 	orgID, ok := middleware.GetOrganizationIDFromContext(r.Context())
 	if !ok || orgID == uuid.Nil {
@@ -166,7 +157,6 @@ func (h *BackupHandler) ListRecords(w http.ResponseWriter, r *http.Request) {
 	response.Paginated(w, http.StatusOK, "backup records retrieved successfully", records, page, limit, int64(total))
 }
 
-// DeleteRecord menghapus riwayat rekaman backup dan berkas fisik di storage.
 func (h *BackupHandler) DeleteRecord(w http.ResponseWriter, r *http.Request) {
 	orgID, ok := middleware.GetOrganizationIDFromContext(r.Context())
 	if !ok || orgID == uuid.Nil {

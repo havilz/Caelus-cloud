@@ -25,14 +25,6 @@ type SyncEngine struct {
 	isRunning      bool
 }
 
-// NewSyncEngine menginisialisasi engine sinkronisasi status server antar provider pihak ketiga.
-// Parameter serverRepo merupakan repositori data server.
-// Parameter providerRepo merupakan repositori data provider cloud.
-// Parameter credRepo merupakan repositori kredensial provider.
-// Parameter factory merupakan factory driver provider.
-// Parameter eventPublisher merupakan callback publikasi kejadian sistem.
-// Parameter interval merupakan durasi interval eksekusi periodik.
-// Mengembalikan pointer *SyncEngine.
 func NewSyncEngine(
 	serverRepo domain.ServerRepository,
 	providerRepo domain.ProviderRepository,
@@ -56,7 +48,6 @@ func NewSyncEngine(
 	}
 }
 
-// Start menjalankan loop periodik background worker sinkronisasi resource.
 func (e *SyncEngine) Start(ctx context.Context) {
 	e.mu.Lock()
 	if e.isRunning {
@@ -92,7 +83,6 @@ func (e *SyncEngine) Start(ctx context.Context) {
 	}()
 }
 
-// Stop menghentikan proses worker sinkronisasi secara aman.
 func (e *SyncEngine) Stop() {
 	e.mu.Lock()
 	if !e.isRunning {
@@ -107,7 +97,6 @@ func (e *SyncEngine) Stop() {
 	logger.Info("SyncEngine Multi-Provider berhasil dihentikan")
 }
 
-// SyncOnce melakukan satu iterasi pemeriksaan status seluruh server yang terhubung dengan provider eksternal.
 func (e *SyncEngine) SyncOnce(ctx context.Context) error {
 	servers, err := e.serverRepo.ListAllRunning(ctx)
 	if err != nil {
@@ -153,7 +142,6 @@ func (e *SyncEngine) SyncOnce(ctx context.Context) error {
 			continue
 		}
 
-		// Reconcile status & IP
 		needsUpdate := false
 		if remoteServer.Status != "" && remoteServer.Status != srv.Status {
 			srv.Status = remoteServer.Status

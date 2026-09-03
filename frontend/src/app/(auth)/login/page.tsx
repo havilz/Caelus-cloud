@@ -53,7 +53,7 @@ export default function LoginPage() {
   return (
     <div className={AppContainers.authWrapper}>
       <div className={AppContainers.authCardWidth}>
-        {/* Brand Header */}
+        {}
         <div className="flex flex-col items-center text-center mb-6">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500 text-zinc-950 font-bold shadow-sm mb-3">
             <Cloud className="h-5 w-5" />
@@ -62,7 +62,7 @@ export default function LoginPage() {
           <p className={AppText.subtitle}>Unified Infrastructure & VPS Control Panel</p>
         </div>
 
-        {/* Login Card */}
+        {}
         <Card className="shadow-lg">
           <CardHeader className="text-center pb-2">
             <CardTitle className="text-base">Masuk ke Akun Anda</CardTitle>

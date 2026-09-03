@@ -10,19 +10,14 @@ import (
 	"github.com/havilz/caelus-cloud/backend/pkg/logger"
 )
 
-// EventSubscriber mendefinisikan fungsi penerima kejadian sistem.
 type EventSubscriber func(ctx context.Context, event domain.SystemEvent) error
 
-// EventDispatcher mendefinisikan antarmuka penyebar kejadian sistem terpusat.
 type EventDispatcher interface {
-	// Publish mendistribusikan event sistem ke seluruh subscriber yang terdaftar.
 	Publish(ctx context.Context, event domain.SystemEvent)
 
-	// Subscribe mendaftarkan subscriber baru untuk menerima event sistem.
 	Subscribe(subscriber EventSubscriber)
 }
 
-// CentralEventDispatcher mengimplementasikan EventDispatcher berbasis in-memory fan-out yang aman untuk goroutine.
 type CentralEventDispatcher struct {
 	subscribers []EventSubscriber
 	mu          sync.RWMutex
@@ -32,8 +27,6 @@ type CentralEventDispatcher struct {
 	isClosed    bool
 }
 
-// NewCentralEventDispatcher membuat dan menginisialisasi instance CentralEventDispatcher baru.
-// Mengembalikan pointer *CentralEventDispatcher.
 func NewCentralEventDispatcher() *CentralEventDispatcher {
 	d := &CentralEventDispatcher{
 		subscribers: make([]EventSubscriber, 0),
@@ -44,14 +37,12 @@ func NewCentralEventDispatcher() *CentralEventDispatcher {
 	return d
 }
 
-// Subscribe mendaftarkan fungsi penangan kejadian sistem baru.
 func (d *CentralEventDispatcher) Subscribe(subscriber EventSubscriber) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	d.subscribers = append(d.subscribers, subscriber)
 }
 
-// Publish memasukkan event baru ke antrean penyebaran asinkron.
 func (d *CentralEventDispatcher) Publish(ctx context.Context, event domain.SystemEvent) {
 	if event.ID == uuid.Nil {
 		event.ID = uuid.New()
@@ -69,7 +60,6 @@ func (d *CentralEventDispatcher) Publish(ctx context.Context, event domain.Syste
 	}
 }
 
-// start memulai loop penyebaran event di latar belakang.
 func (d *CentralEventDispatcher) start() {
 	d.wg.Add(1)
 	go func() {
@@ -85,7 +75,6 @@ func (d *CentralEventDispatcher) start() {
 	}()
 }
 
-// broadcast mengirimkan event ke seluruh subscriber yang terdaftar secara paralel.
 func (d *CentralEventDispatcher) broadcast(ctx context.Context, event domain.SystemEvent) {
 	d.mu.RLock()
 	subs := make([]EventSubscriber, len(d.subscribers))
@@ -103,7 +92,6 @@ func (d *CentralEventDispatcher) broadcast(ctx context.Context, event domain.Sys
 	}
 }
 
-// Stop menghentikan dispatcher secara anggun.
 func (d *CentralEventDispatcher) Stop() {
 	d.mu.Lock()
 	if d.isClosed {

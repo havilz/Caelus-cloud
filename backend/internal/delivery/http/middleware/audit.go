@@ -32,10 +32,6 @@ func (rec *statusRecorder) WriteHeader(code int) {
 	rec.ResponseWriter.WriteHeader(code)
 }
 
-// AuditLogInterceptor mengembalikan middleware HTTP yang secara otomatis mencatat riwayat aktivitas mutasi data oleh pengguna terautentikasi ke tabel audit_logs.
-// Parameter auditRepo merupakan implementasi domain.AuditLogRepository untuk persistensi log.
-// Parameter logger merupakan pointer *slog.Logger untuk pencatatan log kegagalan internal.
-// Mengembalikan fungsi middleware func(http.Handler) http.Handler.
 func AuditLogInterceptor(auditRepo domain.AuditLogRepository, logger *slog.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -61,10 +57,6 @@ func AuditLogInterceptor(auditRepo domain.AuditLogRepository, logger *slog.Logge
 	}
 }
 
-// SetAuditMetadata menyematkan informasi resource yang sedang dimodifikasi ke dalam konteks request untuk dicatat oleh AuditLogInterceptor.
-// Parameter ctx merupakan konteks request HTTP.
-// Parameter resourceType merupakan tipe resource yang diubah (misal: "server", "user", "organization").
-// Parameter resourceID merupakan identifier resource target.
 func SetAuditMetadata(ctx context.Context, resourceType, resourceID string) {
 	if meta, ok := ctx.Value(auditResourceKey).(*AuditResourceMetadata); ok {
 		meta.ResourceType = resourceType
@@ -72,13 +64,6 @@ func SetAuditMetadata(ctx context.Context, resourceType, resourceID string) {
 	}
 }
 
-// recordAuditEntry menyusun entitas AuditLog dan menyimpannya ke database repository.
-// Parameter ctx merupakan konteks request HTTP.
-// Parameter auditRepo merupakan repository audit logs.
-// Parameter logger merupakan structured logger.
-// Parameter r merupakan pointer request HTTP.
-// Parameter statusCode merupakan HTTP status code hasil respons.
-// Parameter meta merupakan metadata resource yang terlampir pada konteks.
 func recordAuditEntry(ctx context.Context, auditRepo domain.AuditLogRepository, logger *slog.Logger, r *http.Request, statusCode int, meta *AuditResourceMetadata) {
 	userID, hasUser := GetUserIDFromContext(ctx)
 	orgID, hasOrg := GetOrganizationIDFromContext(ctx)
@@ -136,9 +121,6 @@ func recordAuditEntry(ctx context.Context, auditRepo domain.AuditLogRepository, 
 	}
 }
 
-// isMutatingMethod memeriksa apakah metode HTTP melakukan perubahan state data (POST, PUT, PATCH, DELETE).
-// Parameter method merupakan nama metode HTTP.
-// Mengembalikan true jika metode termasuk mutasi data.
 func isMutatingMethod(method string) bool {
 	switch method {
 	case http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete:
@@ -148,22 +130,36 @@ func isMutatingMethod(method string) bool {
 	}
 }
 
-// extractClientIP mengambil alamat IP klien asli dari header proxy atau remote address.
-// Parameter r merupakan pointer request HTTP.
-// Mengembalikan string alamat IP bersih tanpa nomor port.
 func extractClientIP(r *http.Request) string {
-	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
-		ips := strings.Split(xff, ",")
-		return strings.TrimSpace(ips[0])
-	}
-
-	if xrip := r.Header.Get("X-Real-IP"); xrip != "" {
-		return strings.TrimSpace(xrip)
-	}
-
-	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	remoteIP, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
-		return r.RemoteAddr
+		remoteIP = r.RemoteAddr
 	}
-	return host
+
+	if isTrustedProxy(remoteIP) {
+		if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
+			ips := strings.Split(xff, ",")
+			clientIP := strings.TrimSpace(ips[0])
+			if parsed := net.ParseIP(clientIP); parsed != nil {
+				return clientIP
+			}
+		}
+
+		if xrip := r.Header.Get("X-Real-IP"); xrip != "" {
+			clientIP := strings.TrimSpace(xrip)
+			if parsed := net.ParseIP(clientIP); parsed != nil {
+				return clientIP
+			}
+		}
+	}
+
+	return remoteIP
+}
+
+func isTrustedProxy(ipStr string) bool {
+	ip := net.ParseIP(ipStr)
+	if ip == nil {
+		return false
+	}
+	return ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast()
 }

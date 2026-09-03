@@ -12,7 +12,6 @@ import (
 	"github.com/havilz/caelus-cloud/backend/internal/queue/mock"
 )
 
-// TestMockQueueEngine_Lifecycle menguji fungsionalitas dasar enqueue, pendaftaran handler, dan pemrosesan task.
 func TestMockQueueEngine_Lifecycle(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -41,7 +40,6 @@ func TestMockQueueEngine_Lifecycle(t *testing.T) {
 		t.Fatalf("failed to enqueue task: %v", err)
 	}
 
-	// Tunggu pemrosesan
 	time.Sleep(50 * time.Millisecond)
 
 	if atomic.LoadInt32(&processedCount) != 1 {
@@ -54,7 +52,6 @@ func TestMockQueueEngine_Lifecycle(t *testing.T) {
 	}
 }
 
-// TestDistributedScheduler_RegisterAndTrigger menguji registrasi dan eksekusi periodik scheduler terdistribusi.
 func TestDistributedScheduler_RegisterAndTrigger(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -74,7 +71,6 @@ func TestDistributedScheduler_RegisterAndTrigger(t *testing.T) {
 	scheduler.StartWithInterval(ctx, 10*time.Millisecond)
 	defer scheduler.Stop()
 
-	// Tunggu setidaknya 1 siklus
 	time.Sleep(50 * time.Millisecond)
 
 	if atomic.LoadInt32(&payloadCount) < 1 {

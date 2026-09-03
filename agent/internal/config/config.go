@@ -10,23 +10,21 @@ import (
 )
 
 var (
-	ErrMissingServerID   = errors.New("SERVER_ID is required and must not be empty")
-	ErrInvalidServerID   = errors.New("SERVER_ID must be a valid UUID")
+	ErrMissingServerID    = errors.New("SERVER_ID is required and must not be empty")
+	ErrInvalidServerID    = errors.New("SERVER_ID must be a valid UUID")
 	ErrMissingAgentSecret = errors.New("AGENT_SECRET is required and must not be empty")
 )
 
-// Config merepresentasikan parameter konfigurasi operasional caelus-agent.
 type Config struct {
-	ServerID               uuid.UUID
-	AgentSecret            string
-	APIEndpoint            string
+	ServerID              uuid.UUID
+	AgentSecret           string
+	APIEndpoint           string
 	CollectionIntervalSec int
-	DockerSocketPath       string
-	TLSSkipVerify          bool
-	LogLevel               string
+	DockerSocketPath      string
+	TLSSkipVerify         bool
+	LogLevel              string
 }
 
-// LoadConfig membaca variabel lingkungan dan memvalidasi konfigurasi agent.
 func LoadConfig() (*Config, error) {
 	serverIDStr := getFirstEnv("SERVER_ID", "CAELUS_SERVER_ID")
 	if serverIDStr == "" {
@@ -44,7 +42,7 @@ func LoadConfig() (*Config, error) {
 	}
 
 	apiEndpoint := getFirstEnvWithFallback("http://localhost:8080", "API_ENDPOINT", "CAELUS_API_ENDPOINT")
-	
+
 	intervalSec := 15
 	if intervalVal := getFirstEnv("COLLECTION_INTERVAL_SEC", "CAELUS_INTERVAL"); intervalVal != "" {
 		if sec, err := strconv.Atoi(intervalVal); err == nil && sec > 0 {
@@ -61,17 +59,16 @@ func LoadConfig() (*Config, error) {
 	logLevel := getFirstEnvWithFallback("info", "LOG_LEVEL", "CAELUS_LOG_LEVEL")
 
 	return &Config{
-		ServerID:               serverUUID,
-		AgentSecret:            agentSecret,
-		APIEndpoint:            apiEndpoint,
+		ServerID:              serverUUID,
+		AgentSecret:           agentSecret,
+		APIEndpoint:           apiEndpoint,
 		CollectionIntervalSec: intervalSec,
-		DockerSocketPath:       dockerSocketPath,
-		TLSSkipVerify:          tlsSkipVerify,
-		LogLevel:               logLevel,
+		DockerSocketPath:      dockerSocketPath,
+		TLSSkipVerify:         tlsSkipVerify,
+		LogLevel:              logLevel,
 	}, nil
 }
 
-// getFirstEnv mengembalikan nilai dari key pertama yang tidak kosong.
 func getFirstEnv(keys ...string) string {
 	for _, key := range keys {
 		if val := os.Getenv(key); val != "" {
@@ -81,7 +78,6 @@ func getFirstEnv(keys ...string) string {
 	return ""
 }
 
-// getFirstEnvWithFallback mengembalikan nilai dari key pertama yang tidak kosong atau fallback jika semua kosong.
 func getFirstEnvWithFallback(fallback string, keys ...string) string {
 	if val := getFirstEnv(keys...); val != "" {
 		return val
@@ -89,7 +85,6 @@ func getFirstEnvWithFallback(fallback string, keys ...string) string {
 	return fallback
 }
 
-// getEnvOrDefault mengambil nilai environment variable atau mengembalikan fallback default.
 func getEnvOrDefault(key, fallback string) string {
 	if val := os.Getenv(key); val != "" {
 		return val
@@ -97,7 +92,6 @@ func getEnvOrDefault(key, fallback string) string {
 	return fallback
 }
 
-// getEnvAsIntOrDefault mengonversi nilai environment variable menjadi integer atau mengembalikan fallback default.
 func getEnvAsIntOrDefault(key string, fallback int) int {
 	if val := os.Getenv(key); val != "" {
 		if intVal, err := strconv.Atoi(val); err == nil {
@@ -107,7 +101,6 @@ func getEnvAsIntOrDefault(key string, fallback int) int {
 	return fallback
 }
 
-// getEnvAsBoolOrDefault mengonversi nilai environment variable menjadi boolean atau mengembalikan fallback default.
 func getEnvAsBoolOrDefault(key string, fallback bool) bool {
 	if val := os.Getenv(key); val != "" {
 		if boolVal, err := strconv.ParseBool(val); err == nil {

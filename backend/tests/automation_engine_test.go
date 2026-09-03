@@ -16,7 +16,6 @@ import (
 	"github.com/havilz/caelus-cloud/backend/internal/queue/mock"
 )
 
-// mockAutomationRepo mengimplementasikan domain.AutomationRepository dalam memori untuk unit test.
 type mockAutomationRepo struct {
 	rules []domain.AutomationRule
 	logs  []domain.RuleExecutionLog
@@ -87,7 +86,6 @@ func (m *mockAutomationRepo) ListExecutionLogs(ctx context.Context, orgID uuid.U
 	return m.logs, len(m.logs), nil
 }
 
-// TestRuleEngine_ConditionEvaluationAndActionExecution menguji kecocokan operator logika kondisi dan eksekusi aksi.
 func TestRuleEngine_ConditionEvaluationAndActionExecution(t *testing.T) {
 	ctx := context.Background()
 
@@ -122,7 +120,6 @@ func TestRuleEngine_ConditionEvaluationAndActionExecution(t *testing.T) {
 	}
 	_ = repo.CreateRule(ctx, &rule)
 
-	// 1. Event yang TIDAK memenuhi kondisi (Memory 80% < 90%)
 	unmatchedEvent := domain.SystemEvent{
 		ID:             uuid.New(),
 		OrganizationID: orgID,
@@ -139,7 +136,6 @@ func TestRuleEngine_ConditionEvaluationAndActionExecution(t *testing.T) {
 		t.Errorf("expected webhook NOT to be called when conditions are not met")
 	}
 
-	// 2. Event yang MEMENUHI kondisi (Memory 95% >= 90%)
 	matchedEvent := domain.SystemEvent{
 		ID:             uuid.New(),
 		OrganizationID: orgID,
@@ -161,7 +157,6 @@ func TestRuleEngine_ConditionEvaluationAndActionExecution(t *testing.T) {
 	}
 }
 
-// TestCentralEventDispatcher_FanOut menguji publikasi event ke multiple subscribers.
 func TestCentralEventDispatcher_FanOut(t *testing.T) {
 	dispatcher := automation.NewCentralEventDispatcher()
 	defer dispatcher.Stop()

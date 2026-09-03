@@ -1,7 +1,7 @@
 -- Migration: 000007_create_sentinel_security.up.sql
 -- Subsystem: Phase 5 Sentinel Security Subsystem
 
--- 1. Tabel security_scans
+-- 1. Security Scans Table
 CREATE TABLE IF NOT EXISTS security_scans (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
@@ -26,7 +26,7 @@ CREATE INDEX IF NOT EXISTS idx_security_scans_server ON security_scans(server_id
 CREATE INDEX IF NOT EXISTS idx_security_scans_status ON security_scans(status);
 CREATE INDEX IF NOT EXISTS idx_security_scans_created ON security_scans(created_at DESC);
 
--- 2. Tabel security_findings
+-- 2. Security Findings Table
 CREATE TABLE IF NOT EXISTS security_findings (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
@@ -53,7 +53,7 @@ CREATE INDEX IF NOT EXISTS idx_security_findings_severity ON security_findings(s
 CREATE INDEX IF NOT EXISTS idx_security_findings_status ON security_findings(status);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_security_findings_fingerprint ON security_findings(organization_id, server_id, fingerprint) WHERE status != 'resolved';
 
--- 3. Tabel security_incidents
+-- 3. Security Incidents Table
 CREATE TABLE IF NOT EXISTS security_incidents (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,

@@ -19,7 +19,6 @@ func NewDomainHandler(uc domain.DomainUsecase) *DomainHandler {
 	return &DomainHandler{domainUsecase: uc}
 }
 
-// CreateDomain handles POST /api/v1/domains
 func (h *DomainHandler) CreateDomain(w http.ResponseWriter, r *http.Request) {
 	orgID, ok := middleware.GetOrganizationIDFromContext(r.Context())
 	if !ok {
@@ -42,7 +41,6 @@ func (h *DomainHandler) CreateDomain(w http.ResponseWriter, r *http.Request) {
 	response.Success(w, http.StatusCreated, "Custom domain registered successfully", d)
 }
 
-// ListDomains handles GET /api/v1/domains
 func (h *DomainHandler) ListDomains(w http.ResponseWriter, r *http.Request) {
 	orgID, ok := middleware.GetOrganizationIDFromContext(r.Context())
 	if !ok {
@@ -59,7 +57,6 @@ func (h *DomainHandler) ListDomains(w http.ResponseWriter, r *http.Request) {
 	response.Success(w, http.StatusOK, "Custom domains retrieved successfully", domains)
 }
 
-// GetDomain handles GET /api/v1/domains/{id}
 func (h *DomainHandler) GetDomain(w http.ResponseWriter, r *http.Request) {
 	orgID, ok := middleware.GetOrganizationIDFromContext(r.Context())
 	if !ok {
@@ -83,7 +80,6 @@ func (h *DomainHandler) GetDomain(w http.ResponseWriter, r *http.Request) {
 	response.Success(w, http.StatusOK, "Domain retrieved successfully", d)
 }
 
-// DeleteDomain handles DELETE /api/v1/domains/{id}
 func (h *DomainHandler) DeleteDomain(w http.ResponseWriter, r *http.Request) {
 	orgID, ok := middleware.GetOrganizationIDFromContext(r.Context())
 	if !ok {
@@ -106,7 +102,6 @@ func (h *DomainHandler) DeleteDomain(w http.ResponseWriter, r *http.Request) {
 	response.Success(w, http.StatusOK, "Custom domain deleted successfully", nil)
 }
 
-// VerifyDomain handles POST /api/v1/domains/{id}/verify
 func (h *DomainHandler) VerifyDomain(w http.ResponseWriter, r *http.Request) {
 	orgID, ok := middleware.GetOrganizationIDFromContext(r.Context())
 	if !ok {

@@ -45,11 +45,6 @@ type credentialUsecase struct {
 	encryptionKey []byte
 }
 
-// NewCredentialUsecase menginisialisasi use case manajemen kredensial provider dengan enkripsi data sensitif.
-// Parameter credRepo merupakan implementasi domain.CredentialRepository.
-// Parameter providerRepo merupakan implementasi domain.ProviderRepository.
-// Parameter encryptionKey merupakan byte slice 32-byte kunci enkripsi AES-256.
-// Mengembalikan instance interface CredentialUsecase.
 func NewCredentialUsecase(credRepo domain.CredentialRepository, providerRepo domain.ProviderRepository, encryptionKey []byte) CredentialUsecase {
 	return &credentialUsecase{
 		credRepo:      credRepo,
@@ -58,10 +53,6 @@ func NewCredentialUsecase(credRepo domain.CredentialRepository, providerRepo dom
 	}
 }
 
-// CreateCredential mengenkripsi kredensial API/SSH dan menyimpan entitas kredensial baru ke database.
-// Parameter ctx merupakan konteks eksekusi use case.
-// Parameter input memuat data kredensial provider baru.
-// Mengembalikan pointer *domain.Credential yang berhasil disimpan atau error jika validasi/enkripsi gagal.
 func (u *credentialUsecase) CreateCredential(ctx context.Context, input CreateCredentialInput) (*domain.Credential, error) {
 	input.Name = strings.TrimSpace(input.Name)
 	if input.Name == "" || input.OrganizationID == uuid.Nil || input.ProviderID == uuid.Nil {
@@ -100,11 +91,6 @@ func (u *credentialUsecase) CreateCredential(ctx context.Context, input CreateCr
 	return cred, nil
 }
 
-// GetCredential mengambil detail kredensial provider berdasarkan ID dan memastikan kepemilikan organisasi yang sah.
-// Parameter ctx merupakan konteks eksekusi use case.
-// Parameter orgID merupakan UUID organisasi pemilik kredensial.
-// Parameter credID merupakan UUID kredensial yang diminta.
-// Mengembalikan pointer *domain.Credential atau error jika kredensial tidak ditemukan atau tidak berhak diakses.
 func (u *credentialUsecase) GetCredential(ctx context.Context, orgID, credID uuid.UUID) (*domain.Credential, error) {
 	cred, err := u.credRepo.GetByID(ctx, credID)
 	if err != nil {
@@ -118,18 +104,10 @@ func (u *credentialUsecase) GetCredential(ctx context.Context, orgID, credID uui
 	return cred, nil
 }
 
-// ListCredentials mengambil seluruh daftar kredensial provider yang terdaftar pada organisasi tertentu.
-// Parameter ctx merupakan konteks eksekusi use case.
-// Parameter orgID merupakan UUID organisasi pemilik kredensial.
-// Mengembalikan slice []domain.Credential dan error jika query gagal.
 func (u *credentialUsecase) ListCredentials(ctx context.Context, orgID uuid.UUID) ([]domain.Credential, error) {
 	return u.credRepo.ListByOrg(ctx, orgID)
 }
 
-// UpdateCredential memperbarui informasi kredensial dan mengenkripsi ulang field rahasia jika terdapat pembaruan data.
-// Parameter ctx merupakan konteks eksekusi use case.
-// Parameter input memuat data pembaruan kredensial.
-// Mengembalikan pointer *domain.Credential yang diperbarui atau error jika operasi gagal.
 func (u *credentialUsecase) UpdateCredential(ctx context.Context, input UpdateCredentialInput) (*domain.Credential, error) {
 	existing, err := u.credRepo.GetByID(ctx, input.ID)
 	if err != nil {
@@ -160,11 +138,6 @@ func (u *credentialUsecase) UpdateCredential(ctx context.Context, input UpdateCr
 	return existing, nil
 }
 
-// DeleteCredential menghapus kredensial provider dan memverifikasi kepemilikan organisasi sebelum penghapusan.
-// Parameter ctx merupakan konteks eksekusi use case.
-// Parameter orgID merupakan UUID organisasi pemilik kredensial.
-// Parameter credID merupakan UUID kredensial yang akan dihapus.
-// Mengembalikan error jika kredensial tidak ditemukan atau kepemilikan tidak sesuai.
 func (u *credentialUsecase) DeleteCredential(ctx context.Context, orgID, credID uuid.UUID) error {
 	existing, err := u.credRepo.GetByID(ctx, credID)
 	if err != nil {
@@ -178,18 +151,10 @@ func (u *credentialUsecase) DeleteCredential(ctx context.Context, orgID, credID 
 	return u.credRepo.Delete(ctx, credID)
 }
 
-// ListSupportedProviders mengambil seluruh daftar provider cloud yang terdaftar dan didukung sistem.
-// Parameter ctx merupakan konteks eksekusi use case.
-// Mengembalikan slice []domain.Provider dan error jika terjadi kegagalan query.
 func (u *credentialUsecase) ListSupportedProviders(ctx context.Context) ([]domain.Provider, error) {
 	return u.providerRepo.List(ctx)
 }
 
-// encryptSecretFields mengenkripsi field APIKey, APISecret, dan SSHKey dengan kunci AES-256.
-// Parameter apiKey merupakan teks API key mentah.
-// Parameter apiSecret merupakan teks API secret mentah.
-// Parameter sshKey merupakan teks private SSH key mentah.
-// Mengembalikan pointer string terenkripsi untuk masing-masing field.
 func (u *credentialUsecase) encryptSecretFields(apiKey, apiSecret, sshKey string) (*string, *string, *string, error) {
 	var encKey, encSecret, encSSH *string
 
@@ -220,12 +185,6 @@ func (u *credentialUsecase) encryptSecretFields(apiKey, apiSecret, sshKey string
 	return encKey, encSecret, encSSH, nil
 }
 
-// applyEncryptedUpdates memperbarui field enkripsi pada entitas kredensial yang ada jika input teks rahasia baru diberikan.
-// Parameter existing merupakan entitas kredensial yang sedang dimodifikasi.
-// Parameter apiKey merupakan teks API key baru (opsional).
-// Parameter apiSecret merupakan teks API secret baru (opsional).
-// Parameter sshKey merupakan teks SSH key baru (opsional).
-// Mengembalikan error jika proses enkripsi gagal.
 func (u *credentialUsecase) applyEncryptedUpdates(existing *domain.Credential, apiKey, apiSecret, sshKey string) error {
 	if apiKey != "" {
 		encrypted, err := encryptor.Encrypt(apiKey, u.encryptionKey)

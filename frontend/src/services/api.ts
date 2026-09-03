@@ -2,11 +2,11 @@ import axios from "axios";
 
 export const getApiBaseURL = (): string => {
   if (typeof window !== "undefined") {
-    // Jika dibuka di browser lewat custom port 3000 (localhost, Tailscale IP 100.x, LAN IP 192.168.x)
+    
     if (window.location.port === "3000") {
       return `${window.location.protocol}//${window.location.hostname}:8080/api/v1`;
     }
-    // Jika dibuka via Tunnel, Ingress Proxy, atau Domain Publik (port 80/443)
+    
     return `${window.location.origin}/api/v1`;
   }
   return process.env.INTERNAL_API_URL ? `${process.env.INTERNAL_API_URL}/api/v1` : (process.env.NEXT_PUBLIC_API_URL || "http://caelus-api:8080/api/v1");

@@ -17,17 +17,14 @@ import (
 	"github.com/havilz/caelus-cloud/backend/internal/usecase/storage"
 )
 
-// StorageHandler menangani permintaan HTTP terkait manajemen Bucket dan Object Storage.
 type StorageHandler struct {
 	usecase storage.StorageUsecase
 }
 
-// NewStorageHandler membuat instance baru HTTP StorageHandler.
 func NewStorageHandler(usecase storage.StorageUsecase) *StorageHandler {
 	return &StorageHandler{usecase: usecase}
 }
 
-// CreateBucketRequest payload request pembuatan bucket baru.
 type CreateBucketRequest struct {
 	Name         string                     `json:"name"`
 	ProviderType domain.StorageProviderType `json:"provider_type"`
@@ -36,7 +33,6 @@ type CreateBucketRequest struct {
 	Versioning   bool                       `json:"versioning"`
 }
 
-// CreateBucket membuat bucket baru pada penyedia storage dan menyimpan metadatanya.
 func (h *StorageHandler) CreateBucket(w http.ResponseWriter, r *http.Request) {
 	orgID, ok := middleware.GetOrganizationIDFromContext(r.Context())
 	if !ok || orgID == uuid.Nil {
@@ -59,7 +55,6 @@ func (h *StorageHandler) CreateBucket(w http.ResponseWriter, r *http.Request) {
 	response.Success(w, http.StatusCreated, "bucket created successfully", bucket)
 }
 
-// ListBuckets mengambil daftar seluruh bucket milik organisasi dengan paginasi.
 func (h *StorageHandler) ListBuckets(w http.ResponseWriter, r *http.Request) {
 	orgID, ok := middleware.GetOrganizationIDFromContext(r.Context())
 	if !ok || orgID == uuid.Nil {
@@ -86,7 +81,6 @@ func (h *StorageHandler) ListBuckets(w http.ResponseWriter, r *http.Request) {
 	response.Paginated(w, http.StatusOK, "buckets retrieved successfully", buckets, page, limit, int64(total))
 }
 
-// SyncBuckets melakukan sinkronisasi dua arah (Two-Way Discovery Sync) antara Caelus dan penyedia storage aktif.
 func (h *StorageHandler) SyncBuckets(w http.ResponseWriter, r *http.Request) {
 	orgID, ok := middleware.GetOrganizationIDFromContext(r.Context())
 	if !ok || orgID == uuid.Nil {
@@ -103,7 +97,6 @@ func (h *StorageHandler) SyncBuckets(w http.ResponseWriter, r *http.Request) {
 	response.Success(w, http.StatusOK, fmt.Sprintf("synchronized %d buckets from active cloud storage providers", len(synced)), synced)
 }
 
-// GetBucket mengambil detail satu bucket berdasarkan nama.
 func (h *StorageHandler) GetBucket(w http.ResponseWriter, r *http.Request) {
 	orgID, ok := middleware.GetOrganizationIDFromContext(r.Context())
 	if !ok || orgID == uuid.Nil {
@@ -121,7 +114,6 @@ func (h *StorageHandler) GetBucket(w http.ResponseWriter, r *http.Request) {
 	response.Success(w, http.StatusOK, "bucket retrieved successfully", bucket)
 }
 
-// DeleteBucket menghapus bucket jika dalam keadaan kosong.
 func (h *StorageHandler) DeleteBucket(w http.ResponseWriter, r *http.Request) {
 	orgID, ok := middleware.GetOrganizationIDFromContext(r.Context())
 	if !ok || orgID == uuid.Nil {
@@ -138,7 +130,6 @@ func (h *StorageHandler) DeleteBucket(w http.ResponseWriter, r *http.Request) {
 	response.Success(w, http.StatusOK, "bucket deleted successfully", nil)
 }
 
-// ListObjects mengambil daftar objek dan folder di dalam bucket.
 func (h *StorageHandler) ListObjects(w http.ResponseWriter, r *http.Request) {
 	orgID, ok := middleware.GetOrganizationIDFromContext(r.Context())
 	if !ok || orgID == uuid.Nil {
@@ -165,7 +156,6 @@ func (h *StorageHandler) ListObjects(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// UploadObject menangani pengunggahan file via form-data multipart.
 func (h *StorageHandler) UploadObject(w http.ResponseWriter, r *http.Request) {
 	orgID, ok := middleware.GetOrganizationIDFromContext(r.Context())
 	if !ok || orgID == uuid.Nil {
@@ -175,7 +165,6 @@ func (h *StorageHandler) UploadObject(w http.ResponseWriter, r *http.Request) {
 
 	bucketName := chi.URLParam(r, "name")
 
-	// Limit 100MB per request
 	if err := r.ParseMultipartForm(100 << 20); err != nil {
 		response.Error(w, http.StatusBadRequest, "failed to parse multipart form data", nil)
 		return
@@ -205,7 +194,6 @@ func (h *StorageHandler) UploadObject(w http.ResponseWriter, r *http.Request) {
 	response.Success(w, http.StatusCreated, "object uploaded successfully", item)
 }
 
-// DownloadObject mengunduh stream berkas file secara langsung dari bucket.
 func (h *StorageHandler) DownloadObject(w http.ResponseWriter, r *http.Request) {
 	orgID, ok := middleware.GetOrganizationIDFromContext(r.Context())
 	if !ok || orgID == uuid.Nil {
@@ -240,7 +228,6 @@ func (h *StorageHandler) DownloadObject(w http.ResponseWriter, r *http.Request) 
 	_, _ = io.Copy(w, content.Body)
 }
 
-// DeleteObject menghapus objek tunggal atau batch objek dari bucket.
 func (h *StorageHandler) DeleteObject(w http.ResponseWriter, r *http.Request) {
 	orgID, ok := middleware.GetOrganizationIDFromContext(r.Context())
 	if !ok || orgID == uuid.Nil {
@@ -272,14 +259,12 @@ func (h *StorageHandler) DeleteObject(w http.ResponseWriter, r *http.Request) {
 	response.Success(w, http.StatusOK, "object(s) deleted successfully", nil)
 }
 
-// GenerateSignedURLRequest payload pembuatan Presigned URL.
 type GenerateSignedURLRequest struct {
-	Key           string                   `json:"key"`
-	Operation     domain.SignedURLOperation `json:"operation"` // download / upload
-	ExpiryMinutes int                      `json:"expiry_minutes"`
+	Key           string                    `json:"key"`
+	Operation     domain.SignedURLOperation `json:"operation"`
+	ExpiryMinutes int                       `json:"expiry_minutes"`
 }
 
-// GenerateSignedURL membuat URL bertanda tangan (Presigned URL) untuk unduh atau unggah file.
 func (h *StorageHandler) GenerateSignedURL(w http.ResponseWriter, r *http.Request) {
 	orgID, ok := middleware.GetOrganizationIDFromContext(r.Context())
 	if !ok || orgID == uuid.Nil {

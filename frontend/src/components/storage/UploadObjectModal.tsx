@@ -80,7 +80,7 @@ export const UploadObjectModal: React.FC<UploadObjectModalProps> = ({
   return (
     <div className={AppContainers.modalBackdrop}>
       <div className={`${AppContainers.modalDialog} max-w-md p-6`}>
-        {/* Header */}
+        {}
         <div className="flex items-center justify-between pb-4 border-b border-[#262626]">
           <div className="flex items-center space-x-3">
             <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
@@ -102,7 +102,7 @@ export const UploadObjectModal: React.FC<UploadObjectModalProps> = ({
           </button>
         </div>
 
-        {/* Form Body */}
+        {}
         <form onSubmit={handleSubmit} className="mt-5 space-y-4">
           {error && (
             <div className="p-3 rounded-lg bg-rose-950/60 border border-rose-800/40 text-rose-300 text-xs flex items-center space-x-2">
@@ -111,7 +111,7 @@ export const UploadObjectModal: React.FC<UploadObjectModalProps> = ({
             </div>
           )}
 
-          {/* Drag and Drop Zone */}
+          {}
           <div
             onDragOver={(e) => {
               e.preventDefault();
@@ -167,7 +167,7 @@ export const UploadObjectModal: React.FC<UploadObjectModalProps> = ({
             )}
           </div>
 
-          {/* Destination Path */}
+          {}
           <div>
             <label className={`${AppText.label} mb-1.5`}>
               Destination Path / Virtual Prefix
@@ -181,7 +181,7 @@ export const UploadObjectModal: React.FC<UploadObjectModalProps> = ({
             />
           </div>
 
-          {/* Progress Bar */}
+          {}
           {uploading && (
             <div className="space-y-1.5 pt-1">
               <div className="flex justify-between text-xs font-medium">
@@ -197,7 +197,7 @@ export const UploadObjectModal: React.FC<UploadObjectModalProps> = ({
             </div>
           )}
 
-          {/* Footer Actions */}
+          {}
           <div className="pt-4 flex items-center justify-end space-x-3 border-t border-[#262626]">
             <button
               type="button"

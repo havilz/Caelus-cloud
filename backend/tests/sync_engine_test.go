@@ -55,12 +55,10 @@ func TestSyncEngine(t *testing.T) {
 		10*time.Second,
 	)
 
-	// Run SyncOnce
 	if err := engine.SyncOnce(ctx); err != nil {
 		t.Fatalf("expected syncOnce to succeed, got %v", err)
 	}
 
-	// Verify server in mock repo was updated with DO driver's real IP and status
 	updatedServer, err := serverRepo.GetByID(ctx, srvID)
 	if err != nil {
 		t.Fatalf("expected to get updated server, got %v", err)
@@ -73,7 +71,6 @@ func TestSyncEngine(t *testing.T) {
 		t.Errorf("expected system event to be emitted on status/IP sync")
 	}
 
-	// Test Start and Stop
 	engine.Start(ctx)
 	time.Sleep(50 * time.Millisecond)
 	engine.Stop()

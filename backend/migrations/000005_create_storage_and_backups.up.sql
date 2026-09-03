@@ -1,7 +1,7 @@
 -- Migration: 000005_create_storage_and_backups.up.sql
--- Description: Membuat tabel buckets, backup_policies, dan backup_records dengan RLS dan indeks performa tinggi.
+-- Description: Create buckets, backup_policies, and backup_records tables with RLS and performance indexes.
 
--- 1. Tabel Buckets (Metadata Bucket Multi-Provider Tenant)
+-- 1. Buckets Table (Multi-Provider Tenant Bucket Metadata)
 CREATE TABLE IF NOT EXISTS buckets (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
@@ -18,14 +18,14 @@ CREATE INDEX IF NOT EXISTS idx_buckets_org_id ON buckets(organization_id);
 CREATE INDEX IF NOT EXISTS idx_buckets_name ON buckets(name);
 CREATE INDEX IF NOT EXISTS idx_buckets_created_at ON buckets(created_at DESC);
 
--- Trigger updated_at untuk tabel buckets
+-- Trigger updated_at for buckets table
 DROP TRIGGER IF EXISTS update_buckets_modtime ON buckets;
 CREATE TRIGGER update_buckets_modtime
     BEFORE UPDATE ON buckets
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
--- Enable Row Level Security (RLS) pada tabel buckets
+-- Enable Row Level Security (RLS) on buckets table
 ALTER TABLE buckets ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY buckets_tenant_isolation ON buckets
@@ -33,7 +33,7 @@ CREATE POLICY buckets_tenant_isolation ON buckets
     USING (organization_id = (current_setting('app.current_org_id', true))::uuid)
     WITH CHECK (organization_id = (current_setting('app.current_org_id', true))::uuid);
 
--- 2. Tabel Backup Policies (Konfigurasi Jadwal & Retensi Backup Server)
+-- 2. Backup Policies Table (Server Backup Schedule & Retention Configuration)
 CREATE TABLE IF NOT EXISTS backup_policies (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
@@ -54,14 +54,14 @@ CREATE INDEX IF NOT EXISTS idx_backup_policies_org_id ON backup_policies(organiz
 CREATE INDEX IF NOT EXISTS idx_backup_policies_server_id ON backup_policies(server_id);
 CREATE INDEX IF NOT EXISTS idx_backup_policies_active ON backup_policies(is_active) WHERE is_active = true;
 
--- Trigger updated_at untuk tabel backup_policies
+-- Trigger updated_at for backup_policies table
 DROP TRIGGER IF EXISTS update_backup_policies_modtime ON backup_policies;
 CREATE TRIGGER update_backup_policies_modtime
     BEFORE UPDATE ON backup_policies
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
--- Enable Row Level Security (RLS) pada tabel backup_policies
+-- Enable Row Level Security (RLS) on backup_policies table
 ALTER TABLE backup_policies ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY backup_policies_tenant_isolation ON backup_policies
@@ -69,7 +69,7 @@ CREATE POLICY backup_policies_tenant_isolation ON backup_policies
     USING (organization_id = (current_setting('app.current_org_id', true))::uuid)
     WITH CHECK (organization_id = (current_setting('app.current_org_id', true))::uuid);
 
--- 3. Tabel Backup Records (Riwayat Snapshot & File Arsip Backup)
+-- 3. Backup Records Table (Snapshot History & Backup Archive Files)
 CREATE TABLE IF NOT EXISTS backup_records (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
@@ -96,14 +96,14 @@ CREATE INDEX IF NOT EXISTS idx_backup_records_status ON backup_records(status);
 CREATE INDEX IF NOT EXISTS idx_backup_records_expires_at ON backup_records(expires_at) WHERE expires_at IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_backup_records_started_at ON backup_records(started_at DESC);
 
--- Trigger updated_at untuk tabel backup_records
+-- Trigger updated_at for backup_records table
 DROP TRIGGER IF EXISTS update_backup_records_modtime ON backup_records;
 CREATE TRIGGER update_backup_records_modtime
     BEFORE UPDATE ON backup_records
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
--- Enable Row Level Security (RLS) pada tabel backup_records
+-- Enable Row Level Security (RLS) on backup_records table
 ALTER TABLE backup_records ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY backup_records_tenant_isolation ON backup_records

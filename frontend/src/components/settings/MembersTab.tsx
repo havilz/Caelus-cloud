@@ -13,7 +13,6 @@ export const MembersTab: React.FC = () => {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
-  // Invite modal state
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<OrganizationRole>("member");
@@ -120,7 +119,7 @@ export const MembersTab: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header & Aksi */}
+      {}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h3 className="text-sm font-semibold text-zinc-100">Anggota Tim & Hak Akses (RBAC)</h3>
@@ -150,7 +149,7 @@ export const MembersTab: React.FC = () => {
         </div>
       )}
 
-      {/* Tabel Anggota Aktif */}
+      {}
       <div className={`${AppTheme.containers.card} overflow-hidden p-0`}>
         <div className="p-4 border-b border-[#262626] bg-[#161616]">
           <h4 className="text-xs font-semibold text-zinc-200 uppercase tracking-wider">Anggota Aktif ({members.length})</h4>
@@ -199,7 +198,7 @@ export const MembersTab: React.FC = () => {
         </div>
       </div>
 
-      {/* Undangan Tertunda */}
+      {}
       {invitations.length > 0 && (
         <div className={`${AppTheme.containers.card} overflow-hidden p-0`}>
           <div className="p-4 border-b border-[#262626] bg-[#161616]">
@@ -237,7 +236,7 @@ export const MembersTab: React.FC = () => {
         </div>
       )}
 
-      {/* Modal Undang Anggota */}
+      {}
       {isInviteModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-4">
           <div className="bg-[#141414] border border-[#2e2e2e] rounded-xl w-full max-w-md p-6 shadow-2xl space-y-4">

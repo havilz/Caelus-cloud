@@ -16,19 +16,12 @@ type MockDriver struct {
 	servers map[string]*domain.ProviderServer
 }
 
-// NewMockDriver menginisialisasi driver provider Mock untuk simulasi komputasi cloud secara lokal.
-// Mengembalikan implementasi interface domain.ProviderDriver.
 func NewMockDriver() domain.ProviderDriver {
 	return &MockDriver{
 		servers: make(map[string]*domain.ProviderServer),
 	}
 }
 
-// CreateServer menyimulasikan provisioning server VPS baru pada infrastruktur cloud tiruan.
-// Parameter ctx merupakan konteks eksekusi operasi.
-// Parameter cred merupakan kredensial provider yang digunakan.
-// Parameter req memuat spesifikasi dan konfigurasi server yang akan dibuat.
-// Mengembalikan pointer *domain.ProviderServer jika provisioning berhasil atau error jika parameter tidak valid.
 func (d *MockDriver) CreateServer(ctx context.Context, cred *domain.Credential, req domain.CreateServerRequest) (*domain.ProviderServer, error) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
@@ -54,11 +47,6 @@ func (d *MockDriver) CreateServer(ctx context.Context, cred *domain.Credential, 
 	return server, nil
 }
 
-// GetServer mengambil status dan detail informasi server dari provider tiruan berdasarkan identifier eksternal.
-// Parameter ctx merupakan konteks eksekusi operasi.
-// Parameter cred merupakan kredensial provider.
-// Parameter externalID merupakan identifier eksternal unik server pada provider.
-// Mengembalikan pointer *domain.ProviderServer atau domain.ErrNotFound jika server tidak ditemukan.
 func (d *MockDriver) GetServer(ctx context.Context, cred *domain.Credential, externalID string) (*domain.ProviderServer, error) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
@@ -71,10 +59,6 @@ func (d *MockDriver) GetServer(ctx context.Context, cred *domain.Credential, ext
 	return server, nil
 }
 
-// ListServers mengambil seluruh daftar instance server yang terdaftar pada provider tiruan.
-// Parameter ctx merupakan konteks eksekusi operasi.
-// Parameter cred merupakan kredensial provider.
-// Mengembalikan slice []domain.ProviderServer dan error jika terjadi kegagalan.
 func (d *MockDriver) ListServers(ctx context.Context, cred *domain.Credential) ([]domain.ProviderServer, error) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
@@ -87,38 +71,18 @@ func (d *MockDriver) ListServers(ctx context.Context, cred *domain.Credential) (
 	return list, nil
 }
 
-// RebootServer menyimulasikan restart sistem operasi server pada provider tiruan.
-// Parameter ctx merupakan konteks eksekusi operasi.
-// Parameter cred merupakan kredensial provider.
-// Parameter externalID merupakan identifier eksternal server.
-// Mengembalikan domain.ErrNotFound jika server tidak ditemukan.
 func (d *MockDriver) RebootServer(ctx context.Context, cred *domain.Credential, externalID string) error {
 	return d.updateServerStatus(externalID, domain.ServerStatusRunning)
 }
 
-// ShutdownServer menyimulasikan pematian daya (power off / stop) pada instance server tiruan.
-// Parameter ctx merupakan konteks eksekusi operasi.
-// Parameter cred merupakan kredensial provider.
-// Parameter externalID merupakan identifier eksternal server.
-// Mengembalikan domain.ErrNotFound jika server tidak ditemukan.
 func (d *MockDriver) ShutdownServer(ctx context.Context, cred *domain.Credential, externalID string) error {
 	return d.updateServerStatus(externalID, domain.ServerStatusStopped)
 }
 
-// StartServer menyimulasikan penyalaan daya (power on / start) pada instance server tiruan yang sedang berhenti.
-// Parameter ctx merupakan konteks eksekusi operasi.
-// Parameter cred merupakan kredensial provider.
-// Parameter externalID merupakan identifier eksternal server.
-// Mengembalikan domain.ErrNotFound jika server tidak ditemukan.
 func (d *MockDriver) StartServer(ctx context.Context, cred *domain.Credential, externalID string) error {
 	return d.updateServerStatus(externalID, domain.ServerStatusRunning)
 }
 
-// ResizeServer menyimulasikan pengubahan kapasitas spesifikasi vCPU, RAM, dan Disk instance server.
-// Parameter ctx merupakan konteks eksekusi operasi.
-// Parameter cred merupakan kredensial provider.
-// Parameter req memuat identifier server dan spesifikasi target baru.
-// Mengembalikan domain.ErrNotFound jika server tidak ditemukan.
 func (d *MockDriver) ResizeServer(ctx context.Context, cred *domain.Credential, req domain.ResizeServerRequest) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
@@ -141,11 +105,6 @@ func (d *MockDriver) ResizeServer(ctx context.Context, cred *domain.Credential, 
 	return nil
 }
 
-// DeleteServer menyimulasikan terminasi dan penghapusan permanen instance server dari provider.
-// Parameter ctx merupakan konteks eksekusi operasi.
-// Parameter cred merupakan kredensial provider.
-// Parameter externalID merupakan identifier eksternal server.
-// Mengembalikan domain.ErrNotFound jika server tidak ditemukan.
 func (d *MockDriver) DeleteServer(ctx context.Context, cred *domain.Credential, externalID string) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
@@ -158,10 +117,6 @@ func (d *MockDriver) DeleteServer(ctx context.Context, cred *domain.Credential, 
 	return nil
 }
 
-// updateServerStatus memperbarui status operasional server secara thread-safe.
-// Parameter externalID merupakan identifier unik server.
-// Parameter targetStatus merupakan status baru yang akan diterapkan.
-// Mengembalikan domain.ErrNotFound jika server tidak ditemukan.
 func (d *MockDriver) updateServerStatus(externalID string, targetStatus domain.ServerStatus) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()

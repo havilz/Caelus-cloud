@@ -9,7 +9,7 @@ import {
 } from '@/types/automation';
 
 export const automationService = {
-  // Rules
+  
   async listRules(page = 1, limit = 50): Promise<PaginatedResponse<AutomationRule>> {
     const res = await apiClient.get<PaginatedResponse<AutomationRule>>('/automation/rules', {
       params: { page, limit },
@@ -43,7 +43,6 @@ export const automationService = {
     return res.data.data!;
   },
 
-  // Execution Logs
   async listLogs(
     page = 1,
     limit = 20,

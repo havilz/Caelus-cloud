@@ -51,7 +51,6 @@ func (u *UseCase) CreateNetwork(ctx context.Context, orgID uuid.UUID, req domain
 		AttachedServers: 0,
 	}
 
-	// Materialisasi Bridge Jaringan Fisik ke Docker daemon host jika tersedia
 	if _, err := exec.LookPath("docker"); err == nil {
 		dockerNetName := fmt.Sprintf("caelus-%s", name)
 		_ = exec.CommandContext(ctx, "docker", "network", "create", "--driver", "bridge", "--subnet", req.CIDR, dockerNetName).Run()

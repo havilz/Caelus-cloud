@@ -18,7 +18,6 @@ import (
 	"github.com/havilz/caelus-cloud/backend/internal/domain"
 )
 
-// Config merepresentasikan parameter konfigurasi koneksi ke layanan S3-compatible storage.
 type Config struct {
 	Endpoint        string
 	Region          string
@@ -28,7 +27,6 @@ type Config struct {
 	ProviderType    domain.StorageProviderType
 }
 
-// Adapter mengimplementasikan domain.ObjectStorageAdapter menggunakan AWS SDK Go v2.
 type Adapter struct {
 	client       *s3.Client
 	presign      *s3.PresignClient
@@ -36,7 +34,6 @@ type Adapter struct {
 	region       string
 }
 
-// NewAdapter membuat instance baru S3-compatible Object Storage Adapter.
 func NewAdapter(cfg Config) (*Adapter, error) {
 	if cfg.Region == "" {
 		cfg.Region = "us-east-1"
@@ -71,7 +68,6 @@ func NewAdapter(cfg Config) (*Adapter, error) {
 	}, nil
 }
 
-// CreateBucket membuat bucket baru pada penyedia storage dengan nama dan region yang ditentukan.
 func (a *Adapter) CreateBucket(ctx context.Context, bucketName, region string) error {
 	input := &s3.CreateBucketInput{
 		Bucket: aws.String(bucketName),
@@ -81,7 +77,6 @@ func (a *Adapter) CreateBucket(ctx context.Context, bucketName, region string) e
 		region = a.region
 	}
 
-	// AWS S3 standard tidak memerlukan LocationConstraint untuk region us-east-1
 	if region != "" && region != "us-east-1" && a.providerType == domain.StorageProviderS3 {
 		input.CreateBucketConfiguration = &s3types.CreateBucketConfiguration{
 			LocationConstraint: s3types.BucketLocationConstraint(region),
@@ -96,7 +91,6 @@ func (a *Adapter) CreateBucket(ctx context.Context, bucketName, region string) e
 	return nil
 }
 
-// ListBuckets mengambil daftar seluruh bucket yang tersedia di bawah kredensial storage.
 func (a *Adapter) ListBuckets(ctx context.Context) ([]domain.Bucket, error) {
 	output, err := a.client.ListBuckets(ctx, &s3.ListBucketsInput{})
 	if err != nil {
@@ -128,9 +122,8 @@ func (a *Adapter) ListBuckets(ctx context.Context) ([]domain.Bucket, error) {
 	return buckets, nil
 }
 
-// DeleteBucket menghapus bucket berdasarkan nama (otomatis membersihkan objek yang tersisa jika ada).
 func (a *Adapter) DeleteBucket(ctx context.Context, bucketName string) error {
-	// 1. Bersihkan seluruh objek yang ada di dalam bucket secara batch
+
 	paginator := s3.NewListObjectsV2Paginator(a.client, &s3.ListObjectsV2Input{
 		Bucket: aws.String(bucketName),
 	})
@@ -151,7 +144,6 @@ func (a *Adapter) DeleteBucket(ctx context.Context, bucketName string) error {
 		}
 	}
 
-	// 2. Eksekusi penghapusan bucket fisik
 	_, err := a.client.DeleteBucket(ctx, &s3.DeleteBucketInput{
 		Bucket: aws.String(bucketName),
 	})
@@ -168,7 +160,6 @@ func (a *Adapter) DeleteBucket(ctx context.Context, bucketName string) error {
 	return nil
 }
 
-// BucketExists memeriksa apakah bucket dengan nama tertentu telah ada pada storage.
 func (a *Adapter) BucketExists(ctx context.Context, bucketName string) (bool, error) {
 	_, err := a.client.HeadBucket(ctx, &s3.HeadBucketInput{
 		Bucket: aws.String(bucketName),
@@ -186,7 +177,6 @@ func (a *Adapter) BucketExists(ctx context.Context, bucketName string) (bool, er
 	return true, nil
 }
 
-// ListObjects mengambil daftar objek di dalam bucket dengan filter prefix, delimiter direktori, dan batasan limit.
 func (a *Adapter) ListObjects(ctx context.Context, bucketName, prefix, delimiter string, maxKeys int32) ([]domain.ObjectItem, []string, error) {
 	if maxKeys <= 0 || maxKeys > 1000 {
 		maxKeys = 1000
@@ -257,7 +247,6 @@ func (a *Adapter) ListObjects(ctx context.Context, bucketName, prefix, delimiter
 	return objects, folders, nil
 }
 
-// UploadObject mengunggah stream objek baru ke dalam bucket.
 func (a *Adapter) UploadObject(ctx context.Context, input domain.UploadObjectInput) (*domain.ObjectItem, error) {
 	contentType := input.ContentType
 	if contentType == "" {
@@ -304,7 +293,6 @@ func (a *Adapter) UploadObject(ctx context.Context, input domain.UploadObjectInp
 	}, nil
 }
 
-// DownloadObject mengambil stream konten objek beserta metadatanya dari bucket.
 func (a *Adapter) DownloadObject(ctx context.Context, bucketName, key string) (*domain.ObjectContent, error) {
 	output, err := a.client.GetObject(ctx, &s3.GetObjectInput{
 		Bucket: aws.String(bucketName),
@@ -343,7 +331,6 @@ func (a *Adapter) DownloadObject(ctx context.Context, bucketName, key string) (*
 	}, nil
 }
 
-// DeleteObject menghapus sebuah objek berdasarkan kunci spesifik dari bucket.
 func (a *Adapter) DeleteObject(ctx context.Context, bucketName, key string) error {
 	_, err := a.client.DeleteObject(ctx, &s3.DeleteObjectInput{
 		Bucket: aws.String(bucketName),
@@ -356,7 +343,6 @@ func (a *Adapter) DeleteObject(ctx context.Context, bucketName, key string) erro
 	return nil
 }
 
-// DeleteObjects menghapus beberapa objek sekaligus dalam satu operasi batch.
 func (a *Adapter) DeleteObjects(ctx context.Context, bucketName string, keys []string) error {
 	if len(keys) == 0 {
 		return nil
@@ -383,7 +369,6 @@ func (a *Adapter) DeleteObjects(ctx context.Context, bucketName string, keys []s
 	return nil
 }
 
-// GetObjectMetadata mengambil metadata dari sebuah objek tanpa mengunduh konten body-nya.
 func (a *Adapter) GetObjectMetadata(ctx context.Context, bucketName, key string) (*domain.ObjectItem, error) {
 	output, err := a.client.HeadObject(ctx, &s3.HeadObjectInput{
 		Bucket: aws.String(bucketName),
@@ -424,7 +409,6 @@ func (a *Adapter) GetObjectMetadata(ctx context.Context, bucketName, key string)
 	}, nil
 }
 
-// GenerateSignedURL membuat URL bertanda tangan (Presigned URL) untuk operasi unduh (GET) atau unggah (PUT).
 func (a *Adapter) GenerateSignedURL(ctx context.Context, bucketName, key string, operation domain.SignedURLOperation, expiry time.Duration) (string, error) {
 	if expiry <= 0 {
 		expiry = 15 * time.Minute
@@ -460,7 +444,6 @@ func (a *Adapter) GenerateSignedURL(ctx context.Context, bucketName, key string,
 	}
 }
 
-// mapError menerjemahkan error dari AWS SDK API ke domain error terstandarisasi.
 func (a *Adapter) mapError(err error, contextMsg string) error {
 	if err == nil {
 		return nil

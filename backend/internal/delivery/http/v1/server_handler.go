@@ -22,16 +22,10 @@ type ServerHandler struct {
 	serverUsecase server.ServerUsecase
 }
 
-// NewServerHandler menginisialisasi HTTP Handler untuk operasi manajemen dan siklus hidup server VPS.
-// Parameter uc merupakan implementasi server.ServerUsecase.
-// Mengembalikan pointer *ServerHandler.
 func NewServerHandler(uc server.ServerUsecase) *ServerHandler {
 	return &ServerHandler{serverUsecase: uc}
 }
 
-// ListServers menangani HTTP GET /api/v1/servers untuk mengambil daftar server organisasi dengan paginasi.
-// Parameter w merupakan HTTP response writer.
-// Parameter r merupakan pointer HTTP request.
 func (h *ServerHandler) ListServers(w http.ResponseWriter, r *http.Request) {
 	orgID, ok := middleware.GetOrganizationIDFromContext(r.Context())
 	if !ok {
@@ -57,9 +51,6 @@ func (h *ServerHandler) ListServers(w http.ResponseWriter, r *http.Request) {
 	response.Paginated(w, http.StatusOK, "Daftar server berhasil diambil", servers, page, limit, total)
 }
 
-// CreateServer menangani HTTP POST /api/v1/servers untuk provisioning server VPS baru.
-// Parameter w merupakan HTTP response writer.
-// Parameter r merupakan pointer HTTP request yang memuat payload JSON server.CreateServerInput.
 func (h *ServerHandler) CreateServer(w http.ResponseWriter, r *http.Request) {
 	orgID, ok := middleware.GetOrganizationIDFromContext(r.Context())
 	if !ok {
@@ -84,9 +75,6 @@ func (h *ServerHandler) CreateServer(w http.ResponseWriter, r *http.Request) {
 	response.Success(w, http.StatusCreated, "Server berhasil dibuat dan dalam proses running", created)
 }
 
-// GetServer menangani HTTP GET /api/v1/servers/{id} untuk mengambil data detail server.
-// Parameter w merupakan HTTP response writer.
-// Parameter r merupakan pointer HTTP request.
 func (h *ServerHandler) GetServer(w http.ResponseWriter, r *http.Request) {
 	orgID, serverID, err := extractOrgAndServerID(r)
 	if err != nil {
@@ -103,9 +91,6 @@ func (h *ServerHandler) GetServer(w http.ResponseWriter, r *http.Request) {
 	response.Success(w, http.StatusOK, "Detail server berhasil diambil", srv)
 }
 
-// RebootServer menangani HTTP POST /api/v1/servers/{id}/reboot untuk melakukan reboot server VPS.
-// Parameter w merupakan HTTP response writer.
-// Parameter r merupakan pointer HTTP request.
 func (h *ServerHandler) RebootServer(w http.ResponseWriter, r *http.Request) {
 	orgID, serverID, err := extractOrgAndServerID(r)
 	if err != nil {
@@ -122,9 +107,6 @@ func (h *ServerHandler) RebootServer(w http.ResponseWriter, r *http.Request) {
 	response.Success(w, http.StatusOK, "Perintah reboot server berhasil dikirim", nil)
 }
 
-// ShutdownServer menangani HTTP POST /api/v1/servers/{id}/shutdown untuk mematikan instance server VPS.
-// Parameter w merupakan HTTP response writer.
-// Parameter r merupakan pointer HTTP request.
 func (h *ServerHandler) ShutdownServer(w http.ResponseWriter, r *http.Request) {
 	orgID, serverID, err := extractOrgAndServerID(r)
 	if err != nil {
@@ -141,9 +123,6 @@ func (h *ServerHandler) ShutdownServer(w http.ResponseWriter, r *http.Request) {
 	response.Success(w, http.StatusOK, "Perintah shutdown server berhasil dikirim", nil)
 }
 
-// StartServer menangani HTTP POST /api/v1/servers/{id}/start untuk menyalakan instance server VPS yang berhenti.
-// Parameter w merupakan HTTP response writer.
-// Parameter r merupakan pointer HTTP request.
 func (h *ServerHandler) StartServer(w http.ResponseWriter, r *http.Request) {
 	orgID, serverID, err := extractOrgAndServerID(r)
 	if err != nil {
@@ -160,9 +139,6 @@ func (h *ServerHandler) StartServer(w http.ResponseWriter, r *http.Request) {
 	response.Success(w, http.StatusOK, "Perintah start server berhasil dikirim", nil)
 }
 
-// ResizeServer menangani HTTP PATCH /api/v1/servers/{id}/resize untuk mengubah spesifikasi vCPU/RAM/Disk server.
-// Parameter w merupakan HTTP response writer.
-// Parameter r merupakan pointer HTTP request yang memuat payload JSON server.ResizeServerInput.
 func (h *ServerHandler) ResizeServer(w http.ResponseWriter, r *http.Request) {
 	orgID, serverID, err := extractOrgAndServerID(r)
 	if err != nil {
@@ -185,9 +161,6 @@ func (h *ServerHandler) ResizeServer(w http.ResponseWriter, r *http.Request) {
 	response.Success(w, http.StatusOK, "Perubahan spesifikasi server berhasil diterapkan", nil)
 }
 
-// DeleteServer menangani HTTP DELETE /api/v1/servers/{id} untuk menterminasi dan menghapus server dari sistem.
-// Parameter w merupakan HTTP response writer.
-// Parameter r merupakan pointer HTTP request.
 func (h *ServerHandler) DeleteServer(w http.ResponseWriter, r *http.Request) {
 	orgID, serverID, err := extractOrgAndServerID(r)
 	if err != nil {
@@ -204,9 +177,6 @@ func (h *ServerHandler) DeleteServer(w http.ResponseWriter, r *http.Request) {
 	response.Success(w, http.StatusOK, "Server berhasil dihapus", nil)
 }
 
-// extractOrgAndServerID mengambil OrganizationID dari context dan ServerID dari parameter URL.
-// Parameter r merupakan pointer HTTP request.
-// Mengembalikan UUID organisasi, UUID server, dan error jika format ID tidak valid.
 func extractOrgAndServerID(r *http.Request) (uuid.UUID, uuid.UUID, error) {
 	orgID, ok := middleware.GetOrganizationIDFromContext(r.Context())
 	if !ok {
@@ -222,9 +192,6 @@ func extractOrgAndServerID(r *http.Request) (uuid.UUID, uuid.UUID, error) {
 	return orgID, serverID, nil
 }
 
-// handleServerError memetakan domain error server ke format respon HTTP standar.
-// Parameter w merupakan HTTP response writer.
-// Parameter err merupakan error domain yang terjadi.
 func handleServerError(w http.ResponseWriter, err error) {
 	switch err {
 	case domain.ErrNotFound:

@@ -65,4 +65,3 @@ type OrganizationRepository interface {
 	ListInvitations(ctx context.Context, orgID uuid.UUID) ([]OrganizationInvitation, error)
 	DeleteInvitation(ctx context.Context, id uuid.UUID) error
 }
-

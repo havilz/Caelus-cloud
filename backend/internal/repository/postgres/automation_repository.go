@@ -13,22 +13,14 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// AutomationRepository mengimplementasikan domain.AutomationRepository menggunakan PostgreSQL.
 type AutomationRepository struct {
 	pool *pgxpool.Pool
 }
 
-// NewAutomationRepository membuat dan menginisialisasi instance AutomationRepository baru.
-// Parameter pool merupakan connection pool PostgreSQL aktif.
-// Mengembalikan pointer *AutomationRepository.
 func NewAutomationRepository(pool *pgxpool.Pool) *AutomationRepository {
 	return &AutomationRepository{pool: pool}
 }
 
-// CreateRule membuat aturan otomasi baru di database PostgreSQL.
-// Parameter ctx merupakan context pemanggilan.
-// Parameter rule merupakan pointer objek AutomationRule yang akan disimpan.
-// Mengembalikan error jika query SQL gagal dieksekusi.
 func (r *AutomationRepository) CreateRule(ctx context.Context, rule *domain.AutomationRule) error {
 	query := `
 		INSERT INTO automation_rules (
@@ -87,11 +79,6 @@ func (r *AutomationRepository) CreateRule(ctx context.Context, rule *domain.Auto
 	return nil
 }
 
-// GetRuleByID mengambil satu aturan otomasi berdasarkan ID dan ID organisasi.
-// Parameter ctx merupakan context pemanggilan.
-// Parameter orgID merupakan UUID organisasi pemilik.
-// Parameter id merupakan UUID aturan yang dicari.
-// Mengembalikan pointer *domain.AutomationRule atau error jika tidak ditemukan.
 func (r *AutomationRepository) GetRuleByID(ctx context.Context, orgID, id uuid.UUID) (*domain.AutomationRule, error) {
 	query := `
 		SELECT
@@ -138,11 +125,6 @@ func (r *AutomationRepository) GetRuleByID(ctx context.Context, orgID, id uuid.U
 	return &rule, nil
 }
 
-// ListRules mengambil seluruh aturan otomasi milik organisasi secara terpaginasi.
-// Parameter ctx merupakan context pemanggilan.
-// Parameter orgID merupakan UUID organisasi.
-// Parameter page dan limit untuk pembagian halaman.
-// Mengembalikan slice []AutomationRule, total items, dan error.
 func (r *AutomationRepository) ListRules(ctx context.Context, orgID uuid.UUID, page, limit int) ([]domain.AutomationRule, int, error) {
 	if page < 1 {
 		page = 1
@@ -212,10 +194,6 @@ func (r *AutomationRepository) ListRules(ctx context.Context, orgID uuid.UUID, p
 	return rules, total, nil
 }
 
-// ListActiveRulesByTriggerType mengambil aturan aktif berdasarkan tipe trigger.
-// Parameter ctx merupakan context pemanggilan.
-// Parameter triggerType merupakan jenis pemicu aturan.
-// Mengembalikan slice []AutomationRule dan error.
 func (r *AutomationRepository) ListActiveRulesByTriggerType(ctx context.Context, triggerType domain.RuleTriggerType) ([]domain.AutomationRule, error) {
 	query := `
 		SELECT
@@ -269,10 +247,6 @@ func (r *AutomationRepository) ListActiveRulesByTriggerType(ctx context.Context,
 	return rules, nil
 }
 
-// UpdateRule memperbarui data aturan otomasi pada PostgreSQL.
-// Parameter ctx merupakan context pemanggilan.
-// Parameter rule merupakan pointer entitas aturan yang diperbarui.
-// Mengembalikan error jika query gagal atau aturan tidak ditemukan.
 func (r *AutomationRepository) UpdateRule(ctx context.Context, rule *domain.AutomationRule) error {
 	query := `
 		UPDATE automation_rules
@@ -326,22 +300,12 @@ func (r *AutomationRepository) UpdateRule(ctx context.Context, rule *domain.Auto
 	return nil
 }
 
-// UpdateLastTriggered memperbarui stempel waktu terakhir aturan dieksekusi.
-// Parameter ctx merupakan context pemanggilan.
-// Parameter ruleID merupakan UUID aturan.
-// Parameter triggeredAt merupakan waktu eksekusi.
-// Mengembalikan error jika update gagal.
 func (r *AutomationRepository) UpdateLastTriggered(ctx context.Context, ruleID uuid.UUID, triggeredAt time.Time) error {
 	query := `UPDATE automation_rules SET last_triggered_at = $2 WHERE id = $1;`
 	_, err := r.pool.Exec(ctx, query, ruleID, triggeredAt)
 	return err
 }
 
-// DeleteRule menghapus aturan otomasi dari database.
-// Parameter ctx merupakan context pemanggilan.
-// Parameter orgID merupakan UUID organisasi pemilik.
-// Parameter id merupakan UUID aturan yang dihapus.
-// Mengembalikan error jika penghapusan gagal.
 func (r *AutomationRepository) DeleteRule(ctx context.Context, orgID, id uuid.UUID) error {
 	query := `DELETE FROM automation_rules WHERE id = $1 AND organization_id = $2;`
 	res, err := r.pool.Exec(ctx, query, id, orgID)
@@ -354,10 +318,6 @@ func (r *AutomationRepository) DeleteRule(ctx context.Context, orgID, id uuid.UU
 	return nil
 }
 
-// CreateExecutionLog mencatat log riwayat audit eksekusi aturan otomasi ke database.
-// Parameter ctx merupakan context pemanggilan.
-// Parameter log merupakan pointer entitas RuleExecutionLog.
-// Mengembalikan error jika insert gagal.
 func (r *AutomationRepository) CreateExecutionLog(ctx context.Context, log *domain.RuleExecutionLog) error {
 	query := `
 		INSERT INTO automation_execution_logs (
@@ -408,13 +368,6 @@ func (r *AutomationRepository) CreateExecutionLog(ctx context.Context, log *doma
 	return nil
 }
 
-// ListExecutionLogs mengambil daftar riwayat log eksekusi berpaginasi.
-// Parameter ctx merupakan context pemanggilan.
-// Parameter orgID merupakan UUID organisasi.
-// Parameter ruleID merupakan filter opsional berdasarkan aturan tertentu.
-// Parameter status merupakan filter opsional berdasarkan status eksekusi.
-// Parameter page dan limit untuk pembagian halaman.
-// Mengembalikan slice []RuleExecutionLog, total items, dan error.
 func (r *AutomationRepository) ListExecutionLogs(
 	ctx context.Context,
 	orgID uuid.UUID,

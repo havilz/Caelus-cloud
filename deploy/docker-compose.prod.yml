@@ -52,12 +52,12 @@ services:
     container_name: caelus-migrate
     restart: "no"
     environment:
-      - DB_HOST=postgres
-      - DB_PORT=5432
-      - DB_USER=caelus_user
-      - DB_PASSWORD=caelus_password
-      - DB_NAME=caelus_cloud_db
-      - DB_SSLMODE=disable
+      - DB_HOST=${DB_HOST:-postgres}
+      - DB_PORT=${DB_PORT:-5432}
+      - DB_USER=${DB_USER:-caelus_user}
+      - DB_PASSWORD=${DB_PASSWORD:-caelus_password}
+      - DB_NAME=${DB_NAME:-caelus_cloud_db}
+      - DB_SSLMODE=${DB_SSL_MODE:-disable}
     depends_on:
       postgres:
         condition: service_healthy

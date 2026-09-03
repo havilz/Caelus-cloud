@@ -24,7 +24,6 @@ const (
 	NetworkStatusError        NetworkStatus = "error"
 )
 
-// Network merepresentasikan konfigurasi Virtual Private Cloud atau software-defined network.
 type Network struct {
 	ID              uuid.UUID     `json:"id"`
 	OrganizationID  uuid.UUID     `json:"organization_id"`
@@ -49,17 +48,16 @@ type CreateNetworkRequest struct {
 	Driver  string      `json:"driver"`
 }
 
-// FirewallRule merepresentasikan aturan filtering lalu lintas paket jaringan (Security Group).
 type FirewallRule struct {
 	ID             uuid.UUID  `json:"id"`
 	OrganizationID uuid.UUID  `json:"organization_id"`
 	NetworkID      *uuid.UUID `json:"network_id,omitempty"`
 	Name           string     `json:"name"`
-	Direction      string     `json:"direction"` // 'inbound', 'outbound'
-	Protocol       string     `json:"protocol"`  // 'tcp', 'udp', 'icmp', 'all'
+	Direction      string     `json:"direction"`
+	Protocol       string     `json:"protocol"`
 	PortRange      string     `json:"port_range"`
 	Source         string     `json:"source"`
-	Action         string     `json:"action"` // 'allow', 'deny'
+	Action         string     `json:"action"`
 	Status         string     `json:"status"`
 	CreatedAt      time.Time  `json:"created_at"`
 	UpdatedAt      time.Time  `json:"updated_at"`
@@ -75,7 +73,6 @@ type CreateFirewallRuleRequest struct {
 	Action    string     `json:"action" validate:"required,oneof=allow deny"`
 }
 
-// NetworkRepository mendefinisikan kontrak persistensi basis data untuk jaringan.
 type NetworkRepository interface {
 	CreateNetwork(ctx context.Context, net *Network) error
 	GetNetworkByID(ctx context.Context, id uuid.UUID) (*Network, error)

@@ -12,13 +12,11 @@ import (
 	"github.com/havilz/caelus-cloud/backend/internal/domain"
 )
 
-// Client mengimplementasikan domain.LogQueryAdapter untuk mengambil stream log dari Grafana Loki.
 type Client struct {
 	baseURL    string
 	httpClient *http.Client
 }
 
-// NewClient membuat instance baru adapter Loki Client.
 func NewClient(baseURL string) domain.LogQueryAdapter {
 	if baseURL == "" {
 		baseURL = "http://localhost:3100"
@@ -31,7 +29,6 @@ func NewClient(baseURL string) domain.LogQueryAdapter {
 	}
 }
 
-// QueryLogs mengeksekusi query LogQL ke endpoint /loki/api/v1/query_range.
 func (c *Client) QueryLogs(ctx context.Context, query string, start, end time.Time, limit int) ([]domain.LokiLogEntry, error) {
 	if limit <= 0 || limit > 1000 {
 		limit = 100

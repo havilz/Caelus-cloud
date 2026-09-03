@@ -22,7 +22,6 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-// main menginisialisasi worker terdistribusi caelus-worker, koneksi Redis broker, PostgreSQL, dan menjalankan task consumer pool.
 func main() {
 	cfg, err := config.Load()
 	if err != nil {
@@ -40,7 +39,6 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// 1. Koneksi PostgreSQL
 	dbCtx, dbCancel := context.WithTimeout(ctx, 15*time.Second)
 	defer dbCancel()
 
@@ -53,7 +51,6 @@ func main() {
 
 	automationRepo := postgres.NewAutomationRepository(client.Pool)
 
-	// 2. Koneksi Redis Client
 	redisAddr := fmt.Sprintf("%s:%s", cfg.Redis.Host, cfg.Redis.Port)
 	if cfg.Redis.Host == "" {
 		redisAddr = "localhost:6379"
@@ -74,7 +71,6 @@ func main() {
 	}
 	defer rdb.Close()
 
-	// 3. Inisialisasi Notification Dispatcher
 	webhookClient := webhook.NewClient(os.Getenv("WEBHOOK_SIGNING_SECRET"))
 	emailClient := email.NewClient(email.Config{
 		Host:     os.Getenv("SMTP_HOST"),
@@ -85,20 +81,16 @@ func main() {
 	})
 	notifier := notification.NewUnifiedDispatcher(webhookClient, emailClient)
 
-	// 4. Inisialisasi Task Queue Engine
 	queueEngine := redisQueue.NewRedisQueueEngine(redisQueue.Config{
 		Client:      rdb,
 		Concurrency: 5,
 		PollTimeout: 2 * time.Second,
 	})
 
-	// 5. Inisialisasi Rule Engine
 	ruleEngine := automation.NewEngine(automationRepo, queueEngine, notifier, nil, nil)
 
-	// 6. Daftarkan Task Handlers
 	registerWorkerHandlers(queueEngine, ruleEngine, notifier)
 
-	// 7. Mulai Task Queue Engine Consumer
 	if err := queueEngine.Start(ctx); err != nil {
 		logger.Error("Gagal menjalankan worker queue engine", "error", err)
 		os.Exit(1)
@@ -106,7 +98,6 @@ func main() {
 
 	logger.Info("Caelus Worker siap memproses antrean pekerjaan terdistribusi")
 
-	// 8. Graceful Shutdown Listener
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 
@@ -118,9 +109,8 @@ func main() {
 	logger.Info("Caelus Worker berhasil dimatikan secara aman")
 }
 
-// registerWorkerHandlers mendaftarkan fungsi pemroses untuk setiap tipe pekerjaan asinkron.
 func registerWorkerHandlers(q queue.QueueEngine, engine automation.RuleEngine, notifier notification.Dispatcher) {
-	// Handler: Eksekusi Webhook Notifikasi
+
 	q.RegisterHandler(queue.TaskTypeSendWebhookNotification, func(ctx context.Context, task *queue.TaskPayload) error {
 		var payload struct {
 			URL  string                 `json:"url"`
@@ -132,7 +122,6 @@ func registerWorkerHandlers(q queue.QueueEngine, engine automation.RuleEngine, n
 		return notifier.SendWebhook(ctx, payload.URL, payload.Data)
 	})
 
-	// Handler: Eksekusi Email Notifikasi
 	q.RegisterHandler(queue.TaskTypeSendEmailNotification, func(ctx context.Context, task *queue.TaskPayload) error {
 		var payload email.EmailMessage
 		if err := json.Unmarshal(task.Data, &payload); err != nil {
@@ -141,7 +130,6 @@ func registerWorkerHandlers(q queue.QueueEngine, engine automation.RuleEngine, n
 		return notifier.SendEmail(ctx, payload)
 	})
 
-	// Handler: Eksekusi Aksi Rule Otomasi
 	q.RegisterHandler(queue.TaskTypeExecuteRuleAction, func(ctx context.Context, task *queue.TaskPayload) error {
 		var payload struct {
 			Rule      domain.AutomationRule `json:"rule"`

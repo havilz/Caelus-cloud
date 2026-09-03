@@ -10,7 +10,6 @@ import (
 	"github.com/havilz/caelus-cloud/backend/internal/queue"
 )
 
-// MockQueueEngine menyediakan implementasi in-memory QueueEngine yang aman untuk goroutines/testing.
 type MockQueueEngine struct {
 	tasks      []*queue.TaskPayload
 	deadLetter []*queue.TaskPayload
@@ -23,8 +22,6 @@ type MockQueueEngine struct {
 	isClosed bool
 }
 
-// NewMockQueueEngine membuat instance MockQueueEngine baru.
-// Mengembalikan pointer *MockQueueEngine.
 func NewMockQueueEngine() *MockQueueEngine {
 	return &MockQueueEngine{
 		tasks:      make([]*queue.TaskPayload, 0),
@@ -35,10 +32,6 @@ func NewMockQueueEngine() *MockQueueEngine {
 	}
 }
 
-// Enqueue memasukkan tugas ke antrean memory.
-// Parameter ctx merupakan context pemanggilan.
-// Parameter task merupakan payload tugas.
-// Mengembalikan error jika task nil atau engine telah ditutup.
 func (m *MockQueueEngine) Enqueue(ctx context.Context, task *queue.TaskPayload) error {
 	if task == nil {
 		return errors.New("task payload cannot be nil")
@@ -68,11 +61,6 @@ func (m *MockQueueEngine) Enqueue(ctx context.Context, task *queue.TaskPayload) 
 	return nil
 }
 
-// EnqueueDelayed memasukkan tugas ke antrean dengan jeda waktu in-memory timer.
-// Parameter ctx merupakan context pemanggilan.
-// Parameter task merupakan payload tugas.
-// Parameter delay merupakan durasi waktu tunda.
-// Mengembalikan error jika task nil.
 func (m *MockQueueEngine) EnqueueDelayed(ctx context.Context, task *queue.TaskPayload, delay time.Duration) error {
 	if task == nil {
 		return errors.New("task payload cannot be nil")
@@ -90,18 +78,12 @@ func (m *MockQueueEngine) EnqueueDelayed(ctx context.Context, task *queue.TaskPa
 	return nil
 }
 
-// RegisterHandler mendaftarkan fungsi pemroses untuk tipe tugas tertentu.
-// Parameter taskType merupakan tipe tugas.
-// Parameter handler merupakan fungsi eksekutor tugas.
 func (m *MockQueueEngine) RegisterHandler(taskType queue.TaskType, handler queue.TaskHandler) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.handlers[taskType] = handler
 }
 
-// Start menjalankan loop pemrosesan in-memory.
-// Parameter ctx merupakan context pemanggilan.
-// Mengembalikan error jika engine telah ditutup.
 func (m *MockQueueEngine) Start(ctx context.Context) error {
 	m.mu.Lock()
 	if m.isClosed {
@@ -134,8 +116,6 @@ func (m *MockQueueEngine) Start(ctx context.Context) error {
 	return nil
 }
 
-// Stop menghentikan worker mock in-memory secara aman.
-// Mengembalikan error jika ada kendala penutupan.
 func (m *MockQueueEngine) Stop() error {
 	m.mu.Lock()
 	if m.isClosed {
@@ -150,7 +130,6 @@ func (m *MockQueueEngine) Stop() error {
 	return nil
 }
 
-// GetAllTasks mengembalikan seluruh tugas yang pernah dimasukkan (berguna untuk pengujian unit).
 func (m *MockQueueEngine) GetAllTasks() []*queue.TaskPayload {
 	m.mu.Lock()
 	defer m.mu.Unlock()

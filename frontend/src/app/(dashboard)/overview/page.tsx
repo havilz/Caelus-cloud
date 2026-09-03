@@ -37,7 +37,7 @@ export default function OverviewPage() {
 
   return (
     <div className={AppContainers.pageWrapper}>
-      {/* Top Greeting & Action Header */}
+      {}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
@@ -76,9 +76,9 @@ export default function OverviewPage() {
         </div>
       </div>
 
-      {/* Aggregate Metric Stats Grid */}
+      {}
       <div className={AppContainers.metricsGrid}>
-        {/* Card 1: Total Servers */}
+        {}
         <Card className={AppContainers.cardHover}>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
@@ -102,7 +102,7 @@ export default function OverviewPage() {
           </CardContent>
         </Card>
 
-        {/* Card 2: Total CPU Allocation */}
+        {}
         <Card className={AppContainers.cardHover}>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
@@ -122,7 +122,7 @@ export default function OverviewPage() {
           </CardContent>
         </Card>
 
-        {/* Card 3: Memory & Storage Allocation */}
+        {}
         <Card className={AppContainers.cardHover}>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
@@ -142,7 +142,7 @@ export default function OverviewPage() {
           </CardContent>
         </Card>
 
-        {/* Card 4: Sentinel Security Score */}
+        {}
         <Card className={AppContainers.cardHover}>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
@@ -163,9 +163,9 @@ export default function OverviewPage() {
         </Card>
       </div>
 
-      {/* Main Content Split: Server List Summary & System Health */}
+      {}
       <div className={AppContainers.overviewSplitGrid}>
-        {/* Left 2 Cols: Recent Servers */}
+        {}
         <div className="lg:col-span-2 space-y-3">
           <div className="flex items-center justify-between">
             <div>
@@ -247,7 +247,7 @@ export default function OverviewPage() {
           </Card>
         </div>
 
-        {/* Right 1 Col: Sentinel & System Status */}
+        {}
         <div className="space-y-4">
           <Card>
             <CardHeader className="pb-3">

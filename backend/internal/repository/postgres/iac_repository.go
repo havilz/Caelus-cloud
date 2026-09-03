@@ -191,7 +191,7 @@ func (r *IaCRepository) GetLatestStateByConfigID(ctx context.Context, configID u
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, nil // No state exists yet
+			return nil, nil
 		}
 		return nil, err
 	}

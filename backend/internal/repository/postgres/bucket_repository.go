@@ -6,21 +6,19 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/havilz/caelus-cloud/backend/internal/domain"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/havilz/caelus-cloud/backend/internal/domain"
 )
 
 type bucketRepository struct {
 	pool *pgxpool.Pool
 }
 
-// NewBucketRepository membuat instance baru PostgreSQL BucketRepository.
 func NewBucketRepository(pool *pgxpool.Pool) domain.BucketRepository {
 	return &bucketRepository{pool: pool}
 }
 
-// Create menyimpan rekaman metadata bucket baru ke basis data PostgreSQL.
 func (r *bucketRepository) Create(ctx context.Context, bucket *domain.Bucket) error {
 	query := `
 		INSERT INTO buckets (id, organization_id, name, provider_type, region, is_public, versioning, created_at, updated_at)
@@ -51,7 +49,6 @@ func (r *bucketRepository) Create(ctx context.Context, bucket *domain.Bucket) er
 	return nil
 }
 
-// GetByID mengambil data bucket berdasarkan ID unik.
 func (r *bucketRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Bucket, error) {
 	query := `
 		SELECT id, organization_id, name, provider_type, region, is_public, versioning, created_at, updated_at
@@ -82,7 +79,6 @@ func (r *bucketRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.B
 	return &b, nil
 }
 
-// GetByName mengambil data bucket berdasarkan nama uniknya.
 func (r *bucketRepository) GetByName(ctx context.Context, name string) (*domain.Bucket, error) {
 	query := `
 		SELECT id, organization_id, name, provider_type, region, is_public, versioning, created_at, updated_at
@@ -113,7 +109,6 @@ func (r *bucketRepository) GetByName(ctx context.Context, name string) (*domain.
 	return &b, nil
 }
 
-// ListByOrgID mengambil daftar seluruh bucket milik organisasi tertentu dengan paginasi.
 func (r *bucketRepository) ListByOrgID(ctx context.Context, orgID uuid.UUID, limit, offset int) ([]domain.Bucket, int, error) {
 	countQuery := `SELECT COUNT(*) FROM buckets WHERE organization_id = $1`
 	var total int
@@ -164,7 +159,6 @@ func (r *bucketRepository) ListByOrgID(ctx context.Context, orgID uuid.UUID, lim
 	return buckets, total, nil
 }
 
-// Delete menghapus rekaman metadata bucket dari basis data.
 func (r *bucketRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	query := `DELETE FROM buckets WHERE id = $1`
 	result, err := r.pool.Exec(ctx, query, id)
@@ -177,7 +171,6 @@ func (r *bucketRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
-// CountByOrgID menghitung total jumlah bucket milik organisasi.
 func (r *bucketRepository) CountByOrgID(ctx context.Context, orgID uuid.UUID) (int, error) {
 	query := `SELECT COUNT(*) FROM buckets WHERE organization_id = $1`
 	var count int

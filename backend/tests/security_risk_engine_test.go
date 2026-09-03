@@ -23,7 +23,6 @@ import (
 func TestRiskEngine_CalculateScoreAndGrades(t *testing.T) {
 	engine := sentinel.NewRiskEngine()
 
-	// 1. Tanpa temuan -> Skor 100, Grade A
 	score, crit, high, med, low := engine.CalculateScore([]domain.SecurityFinding{})
 	if score != 100 || crit != 0 || high != 0 || med != 0 || low != 0 {
 		t.Fatalf("skor awal tanpa temuan harus 100, dapat: %d", score)
@@ -32,17 +31,16 @@ func TestRiskEngine_CalculateScoreAndGrades(t *testing.T) {
 		t.Fatalf("grade harus A, dapat: %s", grade)
 	}
 
-	// 2. 1 Critical (-20), 1 High (-10), 1 Medium (-5), 1 Low (-2) -> Skor 63, Grade D
 	findings := []domain.SecurityFinding{
 		{Severity: domain.SeverityCritical, Status: domain.FindingStatusOpen},
 		{Severity: domain.SeverityHigh, Status: domain.FindingStatusOpen},
 		{Severity: domain.SeverityMedium, Status: domain.FindingStatusAcknowledged},
 		{Severity: domain.SeverityLow, Status: domain.FindingStatusOpen},
-		{Severity: domain.SeverityCritical, Status: domain.FindingStatusResolved}, // Resolved tidak boleh mengurangi skor
+		{Severity: domain.SeverityCritical, Status: domain.FindingStatusResolved},
 	}
 
 	score, crit, high, med, low = engine.CalculateScore(findings)
-	expectedScore := 100 - 20 - 10 - 5 - 2 // 63
+	expectedScore := 100 - 20 - 10 - 5 - 2
 	if score != expectedScore {
 		t.Fatalf("skor diharapkan %d, dapat %d", expectedScore, score)
 	}
@@ -54,7 +52,6 @@ func TestRiskEngine_CalculateScoreAndGrades(t *testing.T) {
 	}
 }
 
-// mockSecurityRepo untuk unit testing
 type mockSecurityRepo struct {
 	scans     map[uuid.UUID]*domain.SecurityScan
 	findings  map[uuid.UUID]*domain.SecurityFinding
@@ -192,7 +189,6 @@ func TestSecurityHTTP_Endpoints(t *testing.T) {
 	}
 	router := deliveryHttp.NewRouter(routerConfig)
 
-	// 1. Test GET /api/v1/security/overview
 	req, _ := http.NewRequest(http.MethodGet, "/api/v1/security/overview", nil)
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 	rr := httptest.NewRecorder()
@@ -202,7 +198,6 @@ func TestSecurityHTTP_Endpoints(t *testing.T) {
 		t.Fatalf("GET /api/v1/security/overview expected 200, got %d: %s", rr.Code, rr.Body.String())
 	}
 
-	// 2. Test POST /api/v1/security/scans
 	scanBody := `{"scan_type":"full"}`
 	req, _ = http.NewRequest(http.MethodPost, "/api/v1/security/scans", strings.NewReader(scanBody))
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
@@ -214,10 +209,8 @@ func TestSecurityHTTP_Endpoints(t *testing.T) {
 		t.Fatalf("POST /api/v1/security/scans expected 202, got %d: %s", rr.Code, rr.Body.String())
 	}
 
-	// Tunggu scan asynchronous selesai
 	time.Sleep(200 * time.Millisecond)
 
-	// 3. Test GET /api/v1/security/scans
 	req, _ = http.NewRequest(http.MethodGet, "/api/v1/security/scans", nil)
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 	rr = httptest.NewRecorder()

@@ -20,7 +20,6 @@ export const WebhooksTab: React.FC = () => {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
-  // Create Modal
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [name, setName] = useState("");
   const [url, setUrl] = useState("");
@@ -33,7 +32,6 @@ export const WebhooksTab: React.FC = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [modalError, setModalError] = useState<string | null>(null);
 
-  // Testing Webhook state
   const [testingId, setTestingId] = useState<string | null>(null);
 
   const fetchWebhooks = async () => {
@@ -130,7 +128,7 @@ export const WebhooksTab: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header & Aksi */}
+      {}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h3 className="text-sm font-semibold text-zinc-100">Outgoing Webhooks & Alert Dispatchers</h3>
@@ -162,7 +160,7 @@ export const WebhooksTab: React.FC = () => {
         </div>
       )}
 
-      {/* Daftar Webhook */}
+      {}
       {webhooks.length === 0 ? (
         <div className={`${AppTheme.containers.card} text-center py-12 space-y-3`}>
           <div className="mx-auto w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-500">
@@ -227,7 +225,7 @@ export const WebhooksTab: React.FC = () => {
         </div>
       )}
 
-      {/* Modal Tambah Webhook */}
+      {}
       {isCreateModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-4">
           <div className="bg-[#141414] border border-[#2e2e2e] rounded-xl w-full max-w-md p-6 shadow-2xl space-y-4">

@@ -21,10 +21,6 @@ func NewSettingsHandler(uc settings.Usecase) *SettingsHandler {
 	return &SettingsHandler{settingsUsecase: uc}
 }
 
-// ----------------------------------------------------------------------------
-// Profile & Account Settings Handlers
-// ----------------------------------------------------------------------------
-
 func (h *SettingsHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.GetUserIDFromContext(r.Context())
 	if !ok {
@@ -83,10 +79,6 @@ func (h *SettingsHandler) ChangePassword(w http.ResponseWriter, r *http.Request)
 
 	response.Success(w, http.StatusOK, "Kata sandi berhasil diperbarui", nil)
 }
-
-// ----------------------------------------------------------------------------
-// Organization & Team Handlers
-// ----------------------------------------------------------------------------
 
 func (h *SettingsHandler) GetOrganization(w http.ResponseWriter, r *http.Request) {
 	orgID, ok := middleware.GetOrganizationIDFromContext(r.Context())
@@ -238,10 +230,6 @@ func (h *SettingsHandler) DeleteInvitation(w http.ResponseWriter, r *http.Reques
 	response.Success(w, http.StatusOK, "Undangan berhasil dibatalkan", nil)
 }
 
-// ----------------------------------------------------------------------------
-// API Keys (Personal Access Tokens) Handlers
-// ----------------------------------------------------------------------------
-
 func (h *SettingsHandler) ListAPIKeys(w http.ResponseWriter, r *http.Request) {
 	orgID, ok := middleware.GetOrganizationIDFromContext(r.Context())
 	if !ok {
@@ -302,10 +290,6 @@ func (h *SettingsHandler) DeleteAPIKey(w http.ResponseWriter, r *http.Request) {
 
 	response.Success(w, http.StatusOK, "API key berhasil dihapus / direvoke", nil)
 }
-
-// ----------------------------------------------------------------------------
-// Webhook Integrations Handlers
-// ----------------------------------------------------------------------------
 
 func (h *SettingsHandler) ListWebhooks(w http.ResponseWriter, r *http.Request) {
 	orgID, ok := middleware.GetOrganizationIDFromContext(r.Context())
@@ -420,10 +404,6 @@ func (h *SettingsHandler) DeleteWebhook(w http.ResponseWriter, r *http.Request) 
 
 	response.Success(w, http.StatusOK, "Webhook berhasil dihapus", nil)
 }
-
-// ----------------------------------------------------------------------------
-// Audit Logs Handler
-// ----------------------------------------------------------------------------
 
 func (h *SettingsHandler) ListAuditLogs(w http.ResponseWriter, r *http.Request) {
 	orgID, ok := middleware.GetOrganizationIDFromContext(r.Context())

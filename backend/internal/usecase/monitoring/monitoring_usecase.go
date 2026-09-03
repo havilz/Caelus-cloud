@@ -12,7 +12,6 @@ import (
 	"github.com/havilz/caelus-cloud/backend/internal/usecase/actionqueue"
 )
 
-// MonitoringUsecase mendefinisikan interface logika bisnis ingestion telemetri, metrik history, dan pengelolaan alert.
 type MonitoringUsecase interface {
 	IngestTelemetry(ctx context.Context, payload *domain.TelemetryReportPayload) error
 	GetPendingActions(serverID uuid.UUID) []domain.AgentAction
@@ -41,7 +40,6 @@ type monitoringUsecase struct {
 	actionQueue    actionqueue.ActionQueue
 }
 
-// NewMonitoringUsecase membuat instance baru implementasi MonitoringUsecase.
 func NewMonitoringUsecase(
 	metricRepo domain.MetricRepository,
 	alertRepo domain.AlertRepository,
@@ -64,7 +62,6 @@ func NewMonitoringUsecase(
 	}
 }
 
-// SetDiscoveryRepos menghubungkan repositori deployment, network, dan volume untuk sinkronisasi auto-discovery infrastruktur.
 func (u *monitoringUsecase) SetDiscoveryRepos(
 	deploymentRepo domain.DeploymentRepository,
 	networkRepo domain.NetworkRepository,
@@ -75,22 +72,24 @@ func (u *monitoringUsecase) SetDiscoveryRepos(
 	u.volumeRepo = volumeRepo
 }
 
-// IngestTelemetry memproses laporan telemetri yang dikirimkan oleh caelus-agent dan menyinkronkan infrastruktur yang ditemukan.
 func (u *monitoringUsecase) IngestTelemetry(ctx context.Context, payload *domain.TelemetryReportPayload) error {
 	server, err := u.serverRepo.GetByID(ctx, payload.ServerID)
 	if err != nil {
 		return fmt.Errorf("server not found for telemetry ingestion: %w", err)
 	}
 
+	for i := range payload.Containers {
+		for j := range payload.Containers[i].Logs {
+			payload.Containers[i].Logs[j] = strings.ReplaceAll(payload.Containers[i].Logs[j], "\x00", "")
+			payload.Containers[i].Logs[j] = strings.ReplaceAll(payload.Containers[i].Logs[j], "\\u0000", "")
+		}
+	}
+
 	containersJSONBytes, _ := json.Marshal(payload.Containers)
 
-	// Hapus karakter Unicode tidak valid (termasuk null byte \u0000) yang ditolak PostgreSQL (SQLSTATE 22P05)
-	containersJSONStr := strings.Map(func(r rune) rune {
-		if r == 0 {
-			return -1
-		}
-		return r
-	}, string(containersJSONBytes))
+	containersJSONStr := string(containersJSONBytes)
+	containersJSONStr = strings.ReplaceAll(containersJSONStr, "\\u0000", "")
+	containersJSONStr = strings.ReplaceAll(containersJSONStr, "\x00", "")
 
 	metric := &domain.ServerMetric{
 		ServerID:           payload.ServerID,
@@ -146,7 +145,6 @@ func (u *monitoringUsecase) IngestTelemetry(ctx context.Context, payload *domain
 		_ = u.serverRepo.Update(ctx, server)
 	}
 
-	// Menjalankan Auto-Discovery Reverse-Sync untuk Containers, Networks, dan Volumes
 	u.syncDiscoveredInfrastructure(ctx, server, payload)
 
 	if u.evaluator != nil {
@@ -167,9 +165,8 @@ func (u *monitoringUsecase) IngestTelemetry(ctx context.Context, payload *domain
 	return nil
 }
 
-// syncDiscoveredInfrastructure secara otomatis menyinkronkan container, network, dan volume yang ditemukan pada host ke database Caelus.
 func (u *monitoringUsecase) syncDiscoveredInfrastructure(ctx context.Context, server *domain.Server, payload *domain.TelemetryReportPayload) {
-	// 1. Sinkronisasi Containers ke Tabel Deployments
+
 	if u.deploymentRepo != nil && len(payload.Containers) > 0 {
 		existingDeps, _ := u.deploymentRepo.ListDeploymentsByServer(ctx, server.ID)
 		depMap := make(map[string]*domain.Deployment)
@@ -179,7 +176,7 @@ func (u *monitoringUsecase) syncDiscoveredInfrastructure(ctx context.Context, se
 
 		discoveredNames := make(map[string]bool)
 		for _, c := range payload.Containers {
-			// Lewati kontainer builder sementara (image sha256 tanpa tag)
+
 			if strings.HasPrefix(c.Image, "sha256:") {
 				continue
 			}
@@ -267,19 +264,19 @@ func (u *monitoringUsecase) syncDiscoveredInfrastructure(ctx context.Context, se
 					existingMsgs[el.Message] = true
 				}
 				for _, logLine := range c.Logs {
-					if !existingMsgs[logLine] {
+					cleanLog := strings.ReplaceAll(strings.ReplaceAll(logLine, "\x00", ""), "\\u0000", "")
+					if cleanLog != "" && !existingMsgs[cleanLog] {
 						_ = u.deploymentRepo.AppendLog(ctx, &domain.DeploymentLog{
 							DeploymentID: targetDepID,
 							Timestamp:    time.Now().UTC(),
 							Stream:       "stdout",
-							Message:      logLine,
+							Message:      cleanLog,
 						})
 					}
 				}
 			}
 		}
 
-		// Otomatis hapus kontainer yang sudah diprune / dihapus dari Docker host
 		for name, dep := range depMap {
 			if !discoveredNames[name] {
 				_ = u.deploymentRepo.DeleteDeployment(ctx, dep.ID)
@@ -287,7 +284,6 @@ func (u *monitoringUsecase) syncDiscoveredInfrastructure(ctx context.Context, se
 		}
 	}
 
-	// 2. Sinkronisasi Networks ke Tabel Networks
 	if u.networkRepo != nil && len(payload.Networks) > 0 {
 		existingNets, _ := u.networkRepo.ListNetworksByOrg(ctx, server.OrganizationID)
 		netMap := make(map[string]bool)
@@ -324,7 +320,6 @@ func (u *monitoringUsecase) syncDiscoveredInfrastructure(ctx context.Context, se
 		}
 	}
 
-	// 3. Sinkronisasi Persistent Volumes ke Tabel Volumes
 	if u.volumeRepo != nil && len(payload.Volumes) > 0 {
 		existingVols, _ := u.volumeRepo.ListVolumesByOrg(ctx, server.OrganizationID)
 		volMap := make(map[string]bool)
@@ -335,7 +330,7 @@ func (u *monitoringUsecase) syncDiscoveredInfrastructure(ctx context.Context, se
 		}
 
 		for _, v := range payload.Volumes {
-			// Cegah re-discovery jika volume sedang dalam antrean hapus fisik (DELETE_VOLUME)
+
 			if u.actionQueue != nil && (u.actionQueue.HasPendingAction(server.ID, "DELETE_VOLUME", v.Name) || u.actionQueue.HasPendingAction(server.ID, "DELETE_VOLUME", strings.TrimPrefix(v.Name, "caelus-"))) {
 				continue
 			}
@@ -381,7 +376,6 @@ func (u *monitoringUsecase) syncDiscoveredInfrastructure(ctx context.Context, se
 	}
 }
 
-// GetPendingActions mengambil dan menghapus seluruh instruksi yang tertunda untuk server tertentu.
 func (u *monitoringUsecase) GetPendingActions(serverID uuid.UUID) []domain.AgentAction {
 	if u.actionQueue == nil {
 		return nil
@@ -389,19 +383,16 @@ func (u *monitoringUsecase) GetPendingActions(serverID uuid.UUID) []domain.Agent
 	return u.actionQueue.PopAll(serverID)
 }
 
-// GetServerLiveMetrics mengambil snapshot metrik terbaru dari database.
 func (u *monitoringUsecase) GetServerLiveMetrics(ctx context.Context, serverID uuid.UUID) (*domain.ServerMetric, error) {
 	return u.metricRepo.GetLatestByServerID(ctx, serverID)
 }
 
-// GetServerMetricHistory mengambil riwayat deret waktu metrik server dari database.
 func (u *monitoringUsecase) GetServerMetricHistory(ctx context.Context, serverID uuid.UUID, duration time.Duration) ([]domain.ServerMetric, error) {
 	to := time.Now().UTC()
 	from := to.Add(-duration)
 	return u.metricRepo.GetHistoryByServerID(ctx, serverID, from, to, 100)
 }
 
-// ListAlerts mengambil daftar notifikasi insiden alert pada organisasi.
 func (u *monitoringUsecase) ListAlerts(ctx context.Context, orgID uuid.UUID, status *domain.AlertStatus, page, limit int) ([]domain.Alert, int64, error) {
 	if limit <= 0 {
 		limit = 20
@@ -412,19 +403,16 @@ func (u *monitoringUsecase) ListAlerts(ctx context.Context, orgID uuid.UUID, sta
 	return u.alertRepo.ListAlertsByOrg(ctx, orgID, status, page, limit)
 }
 
-// AcknowledgeAlert mengubah status alert menjadi acknowledged oleh user.
 func (u *monitoringUsecase) AcknowledgeAlert(ctx context.Context, alertID, userID uuid.UUID) error {
 	now := time.Now().UTC()
 	return u.alertRepo.UpdateAlertStatus(ctx, alertID, domain.AlertStatusAcknowledged, &userID, &now)
 }
 
-// ResolveAlert menyelesaikan dan menutup status insiden alert.
 func (u *monitoringUsecase) ResolveAlert(ctx context.Context, alertID, userID uuid.UUID) error {
 	now := time.Now().UTC()
 	return u.alertRepo.UpdateAlertStatus(ctx, alertID, domain.AlertStatusResolved, &userID, &now)
 }
 
-// CreateAlertRule mendaftarkan aturan threshold metrik baru.
 func (u *monitoringUsecase) CreateAlertRule(ctx context.Context, rule *domain.AlertRule) error {
 	if rule.ID == uuid.Nil {
 		rule.ID = uuid.New()
@@ -435,12 +423,10 @@ func (u *monitoringUsecase) CreateAlertRule(ctx context.Context, rule *domain.Al
 	return u.alertRepo.CreateRule(ctx, rule)
 }
 
-// ListAlertRules mengambil daftar aturan monitoring alert organisasi.
 func (u *monitoringUsecase) ListAlertRules(ctx context.Context, orgID uuid.UUID) ([]domain.AlertRule, error) {
 	return u.alertRepo.ListRulesByOrg(ctx, orgID)
 }
 
-// DeleteAlertRule menghapus aturan alert berdasarkan ID.
 func (u *monitoringUsecase) DeleteAlertRule(ctx context.Context, ruleID uuid.UUID) error {
 	return u.alertRepo.DeleteRule(ctx, ruleID)
 }

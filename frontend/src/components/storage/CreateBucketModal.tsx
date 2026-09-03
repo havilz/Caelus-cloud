@@ -47,7 +47,6 @@ export const CreateBucketModal: React.FC<CreateBucketModalProps> = ({
     setLoading(true);
     setError(null);
 
-    // Validasi nama bucket S3
     const bucketNameRegex = /^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$/;
     if (!bucketNameRegex.test(formData.name)) {
       setError(
@@ -72,7 +71,7 @@ export const CreateBucketModal: React.FC<CreateBucketModalProps> = ({
   return (
     <div className={AppContainers.modalBackdrop}>
       <div className={`${AppContainers.modalDialog} max-w-lg overflow-hidden`}>
-        {/* Header */}
+        {}
         <div className="flex items-center justify-between p-5 border-b border-[#262626] bg-[#171717]">
           <div className="flex items-center space-x-3">
             <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
@@ -93,9 +92,9 @@ export const CreateBucketModal: React.FC<CreateBucketModalProps> = ({
           </button>
         </div>
 
-        {/* Form */}
+        {}
         <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
-          {/* Scrollable Body */}
+          {}
           <div className="p-5 overflow-y-auto max-h-[58vh] space-y-4 custom-scrollbar">
             {error && (
               <div className="p-3 rounded-lg bg-rose-950/60 border border-rose-800/40 text-rose-300 text-xs flex items-center space-x-2">
@@ -103,7 +102,7 @@ export const CreateBucketModal: React.FC<CreateBucketModalProps> = ({
               </div>
             )}
 
-            {/* 1. Storage Provider Selection (Top) */}
+            {}
             <div>
               <label className={`${AppText.label} mb-1.5 block`}>
                 Storage Provider
@@ -140,7 +139,7 @@ export const CreateBucketModal: React.FC<CreateBucketModalProps> = ({
               </div>
             </div>
 
-            {/* 2. Target Storage Host / Node (Hanya Muncul Jika Provider = MinIO) */}
+            {}
             {formData.provider_type === 'minio' ? (
               <div className="p-3.5 rounded-xl bg-[#141414] border border-[#262626] space-y-2">
                 <label className={`${AppText.label} block`}>
@@ -174,7 +173,7 @@ export const CreateBucketModal: React.FC<CreateBucketModalProps> = ({
               </div>
             )}
 
-            {/* 3. Bucket Name */}
+            {}
             <div>
               <label className={`${AppText.label} mb-1.5 block`}>
                 Bucket Name
@@ -194,7 +193,7 @@ export const CreateBucketModal: React.FC<CreateBucketModalProps> = ({
               </p>
             </div>
 
-            {/* 4. Region (Hanya jika bukan R2) */}
+            {}
             {formData.provider_type !== 'r2' ? (
               <div>
                 <label className={`${AppText.label} mb-1.5 block`}>
@@ -224,9 +223,9 @@ export const CreateBucketModal: React.FC<CreateBucketModalProps> = ({
               </div>
             )}
 
-            {/* Toggles */}
+            {}
             <div className="space-y-2.5 pt-1">
-              {/* Public Access */}
+              {}
               <div className="flex items-center justify-between p-3 rounded-lg bg-[#141414] border border-[#262626]">
                 <div className="flex items-center space-x-2.5">
                   {formData.is_public ? (
@@ -249,7 +248,7 @@ export const CreateBucketModal: React.FC<CreateBucketModalProps> = ({
                 />
               </div>
 
-              {/* Versioning */}
+              {}
               <div className="flex items-center justify-between p-3 rounded-lg bg-[#141414] border border-[#262626]">
                 <div className="flex items-center space-x-2.5">
                   <ShieldCheck className="w-4 h-4 text-cyan-400" />
@@ -270,7 +269,7 @@ export const CreateBucketModal: React.FC<CreateBucketModalProps> = ({
             </div>
           </div>
 
-          {/* Sticky Footer Actions */}
+          {}
           <div className="p-4 px-5 flex items-center justify-end space-x-3 border-t border-[#262626] bg-[#141414]">
             <button
               type="button"

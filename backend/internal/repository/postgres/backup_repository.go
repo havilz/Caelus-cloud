@@ -7,21 +7,19 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/havilz/caelus-cloud/backend/internal/domain"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/havilz/caelus-cloud/backend/internal/domain"
 )
 
 type backupRepository struct {
 	pool *pgxpool.Pool
 }
 
-// NewBackupRepository membuat instance baru PostgreSQL BackupRepository.
 func NewBackupRepository(pool *pgxpool.Pool) domain.BackupRepository {
 	return &backupRepository{pool: pool}
 }
 
-// CreatePolicy menyimpan kebijakan backup baru ke basis data.
 func (r *backupRepository) CreatePolicy(ctx context.Context, policy *domain.BackupPolicy) error {
 	query := `
 		INSERT INTO backup_policies (
@@ -58,7 +56,6 @@ func (r *backupRepository) CreatePolicy(ctx context.Context, policy *domain.Back
 	return nil
 }
 
-// GetPolicyByID mengambil detail kebijakan backup berdasarkan ID beserta nama server & bucket-nya.
 func (r *backupRepository) GetPolicyByID(ctx context.Context, id uuid.UUID) (*domain.BackupPolicy, error) {
 	query := `
 		SELECT 
@@ -102,7 +99,6 @@ func (r *backupRepository) GetPolicyByID(ctx context.Context, id uuid.UUID) (*do
 	return &p, nil
 }
 
-// ListPoliciesByOrgID mengambil seluruh kebijakan backup milik organisasi.
 func (r *backupRepository) ListPoliciesByOrgID(ctx context.Context, orgID uuid.UUID) ([]domain.BackupPolicy, error) {
 	query := `
 		SELECT 
@@ -152,7 +148,6 @@ func (r *backupRepository) ListPoliciesByOrgID(ctx context.Context, orgID uuid.U
 	return policies, nil
 }
 
-// ListPoliciesByServerID mengambil kebijakan backup untuk server tertentu.
 func (r *backupRepository) ListPoliciesByServerID(ctx context.Context, serverID uuid.UUID) ([]domain.BackupPolicy, error) {
 	query := `
 		SELECT 
@@ -202,7 +197,6 @@ func (r *backupRepository) ListPoliciesByServerID(ctx context.Context, serverID 
 	return policies, nil
 }
 
-// ListDuePolicies mengambil daftar kebijakan aktif yang jadwal eksekusinya telah jatuh tempo.
 func (r *backupRepository) ListDuePolicies(ctx context.Context, now time.Time) ([]domain.BackupPolicy, error) {
 	query := `
 		SELECT 
@@ -252,7 +246,6 @@ func (r *backupRepository) ListDuePolicies(ctx context.Context, now time.Time) (
 	return policies, nil
 }
 
-// UpdatePolicy memperbarui konfigurasi kebijakan backup.
 func (r *backupRepository) UpdatePolicy(ctx context.Context, policy *domain.BackupPolicy) error {
 	query := `
 		UPDATE backup_policies
@@ -289,7 +282,6 @@ func (r *backupRepository) UpdatePolicy(ctx context.Context, policy *domain.Back
 	return nil
 }
 
-// DeletePolicy menghapus kebijakan backup.
 func (r *backupRepository) DeletePolicy(ctx context.Context, id uuid.UUID) error {
 	query := `DELETE FROM backup_policies WHERE id = $1`
 	result, err := r.pool.Exec(ctx, query, id)
@@ -302,7 +294,6 @@ func (r *backupRepository) DeletePolicy(ctx context.Context, id uuid.UUID) error
 	return nil
 }
 
-// CreateRecord membuat entri rekaman backup baru.
 func (r *backupRepository) CreateRecord(ctx context.Context, record *domain.BackupRecord) error {
 	query := `
 		INSERT INTO backup_records (
@@ -343,7 +334,6 @@ func (r *backupRepository) CreateRecord(ctx context.Context, record *domain.Back
 	return nil
 }
 
-// GetRecordByID mengambil rekaman backup berdasarkan ID.
 func (r *backupRepository) GetRecordByID(ctx context.Context, id uuid.UUID) (*domain.BackupRecord, error) {
 	query := `
 		SELECT 
@@ -390,7 +380,6 @@ func (r *backupRepository) GetRecordByID(ctx context.Context, id uuid.UUID) (*do
 	return &rec, nil
 }
 
-// UpdateRecordStatus memperbarui status proses, ukuran, dan error rekaman backup.
 func (r *backupRepository) UpdateRecordStatus(ctx context.Context, id uuid.UUID, status domain.BackupStatus, sizeBytes int64, checksum, errMsg *string, completedAt *time.Time) error {
 	query := `
 		UPDATE backup_records
@@ -415,7 +404,6 @@ func (r *backupRepository) UpdateRecordStatus(ctx context.Context, id uuid.UUID,
 	return nil
 }
 
-// ListRecordsByOrgID mengambil daftar riwayat backup milik organisasi dengan paginasi.
 func (r *backupRepository) ListRecordsByOrgID(ctx context.Context, orgID uuid.UUID, limit, offset int) ([]domain.BackupRecord, int, error) {
 	countQuery := `SELECT COUNT(*) FROM backup_records WHERE organization_id = $1`
 	var total int
@@ -482,7 +470,6 @@ func (r *backupRepository) ListRecordsByOrgID(ctx context.Context, orgID uuid.UU
 	return records, total, nil
 }
 
-// ListRecordsByServerID mengambil riwayat backup untuk server tertentu.
 func (r *backupRepository) ListRecordsByServerID(ctx context.Context, serverID uuid.UUID, limit, offset int) ([]domain.BackupRecord, int, error) {
 	countQuery := `SELECT COUNT(*) FROM backup_records WHERE server_id = $1`
 	var total int
@@ -549,7 +536,6 @@ func (r *backupRepository) ListRecordsByServerID(ctx context.Context, serverID u
 	return records, total, nil
 }
 
-// ListExpiredRecords mengambil daftar arsip backup yang masa retensinya telah kedaluwarsa.
 func (r *backupRepository) ListExpiredRecords(ctx context.Context, now time.Time, limit int) ([]domain.BackupRecord, error) {
 	if limit <= 0 {
 		limit = 50
@@ -606,7 +592,6 @@ func (r *backupRepository) ListExpiredRecords(ctx context.Context, now time.Time
 	return records, nil
 }
 
-// DeleteRecord menghapus rekaman metadata backup dari basis data.
 func (r *backupRepository) DeleteRecord(ctx context.Context, id uuid.UUID) error {
 	query := `DELETE FROM backup_records WHERE id = $1`
 	result, err := r.pool.Exec(ctx, query, id)

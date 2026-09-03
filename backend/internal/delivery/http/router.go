@@ -9,7 +9,6 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
-	"github.com/jackc/pgx/v5/pgxpool"
 	customMiddleware "github.com/havilz/caelus-cloud/backend/internal/delivery/http/middleware"
 	"github.com/havilz/caelus-cloud/backend/internal/delivery/http/response"
 	v1 "github.com/havilz/caelus-cloud/backend/internal/delivery/http/v1"
@@ -17,6 +16,7 @@ import (
 	"github.com/havilz/caelus-cloud/backend/internal/domain"
 	"github.com/havilz/caelus-cloud/backend/pkg/config"
 	"github.com/havilz/caelus-cloud/backend/pkg/jwt"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Handlers struct {
@@ -44,13 +44,12 @@ type RouterConfig struct {
 	JWTManager jwt.Manager
 	AuditRepo  domain.AuditLogRepository
 	ServerRepo domain.ServerRepository
-	// PgxPool digunakan oleh middleware InjectOrgContext untuk menyuntikkan app.current_org_id ke sesi DB (C-3).
-	PgxPool    *pgxpool.Pool
-	Logger     *slog.Logger
-	Handlers   Handlers
+
+	PgxPool  *pgxpool.Pool
+	Logger   *slog.Logger
+	Handlers Handlers
 }
 
-// NewRouter menginisialisasi router Chi dengan middleware global, endpoint kesehatan, rute publik auth, telemetri, dan rute terproteksi server/provider/alert.
 func NewRouter(rc RouterConfig) *chi.Mux {
 	r := chi.NewRouter()
 
@@ -68,7 +67,6 @@ func NewRouter(rc RouterConfig) *chi.Mux {
 	return r
 }
 
-// registerHealthRoutes mendaftarkan endpoint pemantauan kesehatan aplikasi (/health dan /api/v1/health).
 func registerHealthRoutes(r *chi.Mux, cfg *config.Config) {
 	serviceName := "caelus-cloud-api"
 	envName := "development"
@@ -202,11 +200,10 @@ echo "=== Caelus Cloud Agent Berhasil Diinstal dan Berjalan! ==="
 	})
 }
 
-// registerAPIRoutes mendaftarkan seluruh rute prefix /api/v1 (Auth, Server, Metrics, Providers, Alerts, Storage, Backup, Automation, Security, IaC, Deployments).
 func registerAPIRoutes(r *chi.Mux, rc RouterConfig) {
 	r.Route("/api/v1", func(apiRouter chi.Router) {
 		if rc.Handlers.AuthHandler != nil {
-			// AuthRateLimiter: Batas maksimum 5 percoban per menit per IP/email (H-1)
+
 			authLimiter := customMiddleware.NewAuthRateLimiter(5, 1*time.Minute)
 			apiRouter.With(authLimiter.Limit()).Post("/auth/register", rc.Handlers.AuthHandler.Register)
 			apiRouter.With(authLimiter.Limit()).Post("/auth/login", rc.Handlers.AuthHandler.Login)
@@ -218,11 +215,9 @@ func registerAPIRoutes(r *chi.Mux, rc RouterConfig) {
 		}
 
 		if rc.Handlers.TelemetryHandler != nil {
-			// POST /telemetry/report dilindungi RequireAgentAuth: validasi Bearer token secret agen (C-1)
+
 			if rc.ServerRepo != nil {
 				apiRouter.With(customMiddleware.RequireAgentAuth(rc.ServerRepo)).Post("/telemetry/report", rc.Handlers.TelemetryHandler.IngestReport)
-			} else {
-				apiRouter.Post("/telemetry/report", rc.Handlers.TelemetryHandler.IngestReport)
 			}
 		}
 
@@ -233,10 +228,8 @@ func registerAPIRoutes(r *chi.Mux, rc RouterConfig) {
 		if rc.JWTManager != nil {
 			apiRouter.Group(func(protectedRouter chi.Router) {
 				protectedRouter.Use(customMiddleware.Authenticate(rc.JWTManager))
-				// InjectOrgContext: injeksi SET LOCAL app.current_org_id ke sesi PostgreSQL per request (C-3)
-				if rc.PgxPool != nil {
-					protectedRouter.Use(customMiddleware.InjectOrgContext(rc.PgxPool))
-				}
+
+				protectedRouter.Use(customMiddleware.InjectOrgContext())
 				if rc.AuditRepo != nil {
 					protectedRouter.Use(customMiddleware.AuditLogInterceptor(rc.AuditRepo, rc.Logger))
 				}
@@ -245,7 +238,6 @@ func registerAPIRoutes(r *chi.Mux, rc RouterConfig) {
 					registerServerRoutes(protectedRouter, rc.Handlers.ServerHandler, rc.Handlers.TelemetryHandler)
 				}
 
-				// GET /telemetry/stream/{server_id} dipindahkan ke dalam grup terautentikasi JWT (C-1)
 				if rc.Handlers.WSHandler != nil {
 					protectedRouter.Get("/telemetry/stream/{server_id}", rc.Handlers.WSHandler.HandleSSE)
 				}
@@ -302,7 +294,6 @@ func registerAPIRoutes(r *chi.Mux, rc RouterConfig) {
 	})
 }
 
-// registerSettingsRoutes mendaftarkan rute endpoint Pengaturan Profil, Organisasi, Anggota Tim, API Keys, Webhooks, dan Audit Logs.
 func registerSettingsRoutes(r chi.Router, sh *v1.SettingsHandler) {
 	r.Route("/settings", func(sr chi.Router) {
 		sr.Get("/profile", sh.GetProfile)
@@ -332,7 +323,6 @@ func registerSettingsRoutes(r chi.Router, sh *v1.SettingsHandler) {
 	})
 }
 
-// registerDomainRoutes mendaftarkan rute endpoint Custom Domain dan Ingress Routing.
 func registerDomainRoutes(r chi.Router, dh *v1.DomainHandler) {
 	r.Route("/domains", func(domainRouter chi.Router) {
 		domainRouter.Get("/", dh.ListDomains)
@@ -343,7 +333,6 @@ func registerDomainRoutes(r chi.Router, dh *v1.DomainHandler) {
 	})
 }
 
-// registerVolumeRoutes mendaftarkan rute endpoint Cloud Block Volumes.
 func registerVolumeRoutes(r chi.Router, volH *v1.VolumeHandler) {
 	r.Route("/volumes", func(volRouter chi.Router) {
 		volRouter.Get("/stats", volH.GetStoragePoolStats)
@@ -353,7 +342,6 @@ func registerVolumeRoutes(r chi.Router, volH *v1.VolumeHandler) {
 	})
 }
 
-// registerIaCRoutes mendaftarkan rute endpoint Declarative Infrastructure as Code.
 func registerIaCRoutes(r chi.Router, iacH *v1.IaCHandler) {
 	r.Route("/iac", func(iacRouter chi.Router) {
 		iacRouter.Post("/validate", iacH.ValidateYAML)
@@ -370,7 +358,6 @@ func registerIaCRoutes(r chi.Router, iacH *v1.IaCHandler) {
 	})
 }
 
-// registerDeploymentRoutes mendaftarkan rute endpoint Container Deployment & Orchestration.
 func registerDeploymentRoutes(r chi.Router, depH *v1.DeploymentHandler) {
 	r.Route("/deployments", func(depRouter chi.Router) {
 		depRouter.Post("/", depH.CreateDeployment)
@@ -385,7 +372,6 @@ func registerDeploymentRoutes(r chi.Router, depH *v1.DeploymentHandler) {
 	})
 }
 
-// registerNetworkRoutes mendaftarkan rute endpoint Virtual Networks (VPC) dan Cloud Firewall Rules.
 func registerNetworkRoutes(r chi.Router, netH *v1.NetworkHandler) {
 	r.Route("/networks", func(netRouter chi.Router) {
 		netRouter.Post("/", netH.CreateNetwork)
@@ -400,7 +386,6 @@ func registerNetworkRoutes(r chi.Router, netH *v1.NetworkHandler) {
 	})
 }
 
-// registerSecurityRoutes mendaftarkan rute endpoint manajemen keamanan Sentinel.
 func registerSecurityRoutes(r chi.Router, secH *v1.SecurityHandler) {
 	r.Route("/security", func(secRouter chi.Router) {
 		secRouter.Get("/overview", secH.GetPostureOverview)
@@ -418,7 +403,6 @@ func registerSecurityRoutes(r chi.Router, secH *v1.SecurityHandler) {
 	})
 }
 
-// registerServerRoutes mendaftarkan seluruh rute endpoint manajemen server VPS dan telemetri metrik.
 func registerServerRoutes(r chi.Router, h *v1.ServerHandler, th *v1.TelemetryHandler) {
 	r.Route("/servers", func(serverRouter chi.Router) {
 		if h != nil {
@@ -439,7 +423,6 @@ func registerServerRoutes(r chi.Router, h *v1.ServerHandler, th *v1.TelemetryHan
 	})
 }
 
-// registerAlertRoutes mendaftarkan rute endpoint manajemen insiden alert dan aturan threshold.
 func registerAlertRoutes(r chi.Router, ah *v1.AlertHandler) {
 	r.Route("/alerts", func(alertRouter chi.Router) {
 		alertRouter.Get("/", ah.ListAlerts)
@@ -451,7 +434,6 @@ func registerAlertRoutes(r chi.Router, ah *v1.AlertHandler) {
 	})
 }
 
-// registerStorageRoutes mendaftarkan rute endpoint pengelolaan bucket dan file object storage.
 func registerStorageRoutes(r chi.Router, sh *v1.StorageHandler) {
 	r.Route("/storage", func(storageRouter chi.Router) {
 		storageRouter.Get("/buckets", sh.ListBuckets)
@@ -468,7 +450,6 @@ func registerStorageRoutes(r chi.Router, sh *v1.StorageHandler) {
 	})
 }
 
-// registerBackupRoutes mendaftarkan rute endpoint kebijakan dan riwayat backup server.
 func registerBackupRoutes(r chi.Router, bh *v1.BackupHandler) {
 	r.Route("/backups", func(backupRouter chi.Router) {
 		backupRouter.Get("/policies", bh.ListPolicies)
@@ -481,7 +462,6 @@ func registerBackupRoutes(r chi.Router, bh *v1.BackupHandler) {
 	})
 }
 
-// registerAutomationRoutes mendaftarkan rute endpoint aturan otomasi dan riwayat log eksekusi.
 func registerAutomationRoutes(r chi.Router, autoH *v1.AutomationHandler) {
 	r.Route("/automation", func(autoRouter chi.Router) {
 		autoRouter.Get("/rules", autoH.ListRules)
@@ -495,7 +475,6 @@ func registerAutomationRoutes(r chi.Router, autoH *v1.AutomationHandler) {
 	})
 }
 
-// registerCredentialRoutes mendaftarkan rute endpoint manajemen kredensial multi-provider cloud.
 func registerCredentialRoutes(r chi.Router, ch *v1.CredentialHandler) {
 	r.Route("/credentials", func(credRouter chi.Router) {
 		credRouter.Get("/", ch.ListCredentials)

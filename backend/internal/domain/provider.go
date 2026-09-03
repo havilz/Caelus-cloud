@@ -30,16 +30,16 @@ type Credential struct {
 }
 
 type CreateServerRequest struct {
-	Name      string            `json:"name"`
-	Region    string            `json:"region"`
-	OSType    string            `json:"os_type"`
-	PlanID    string            `json:"plan_id"`
-	CPUCores  int               `json:"cpu_cores"`
-	MemoryMB  int               `json:"memory_mb"`
-	DiskGB    int               `json:"disk_gb"`
-	SSHKey    string            `json:"ssh_key,omitempty"`
-	UserData  string            `json:"user_data,omitempty"`
-	Tags      map[string]string `json:"tags,omitempty"`
+	Name     string            `json:"name"`
+	Region   string            `json:"region"`
+	OSType   string            `json:"os_type"`
+	PlanID   string            `json:"plan_id"`
+	CPUCores int               `json:"cpu_cores"`
+	MemoryMB int               `json:"memory_mb"`
+	DiskGB   int               `json:"disk_gb"`
+	SSHKey   string            `json:"ssh_key,omitempty"`
+	UserData string            `json:"user_data,omitempty"`
+	Tags     map[string]string `json:"tags,omitempty"`
 }
 
 type ResizeServerRequest struct {

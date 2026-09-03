@@ -19,9 +19,6 @@ type HetznerDriver struct {
 	servers       map[string]*domain.ProviderServer
 }
 
-// NewHetznerDriver menginisialisasi driver provider Hetzner Cloud dengan enkripsi token API.
-// Parameter encryptionKey merupakan byte slice 32-byte kunci enkripsi AES-256.
-// Mengembalikan implementasi interface domain.ProviderDriver.
 func NewHetznerDriver(encryptionKey []byte) domain.ProviderDriver {
 	return &HetznerDriver{
 		encryptionKey: encryptionKey,
@@ -30,7 +27,6 @@ func NewHetznerDriver(encryptionKey []byte) domain.ProviderDriver {
 	}
 }
 
-// CreateServer membuat server VPS baru pada infrastruktur Hetzner Cloud.
 func (d *HetznerDriver) CreateServer(ctx context.Context, cred *domain.Credential, req domain.CreateServerRequest) (*domain.ProviderServer, error) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
@@ -73,7 +69,6 @@ func (d *HetznerDriver) CreateServer(ctx context.Context, cred *domain.Credentia
 	return server, nil
 }
 
-// GetServer mengambil status dan detail informasi server Hetzner berdasarkan externalID.
 func (d *HetznerDriver) GetServer(ctx context.Context, cred *domain.Credential, externalID string) (*domain.ProviderServer, error) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
@@ -96,7 +91,6 @@ func (d *HetznerDriver) GetServer(ctx context.Context, cred *domain.Credential, 
 	return server, nil
 }
 
-// ListServers mengambil seluruh daftar server Hetzner Cloud yang terdaftar pada token API terkait.
 func (d *HetznerDriver) ListServers(ctx context.Context, cred *domain.Credential) ([]domain.ProviderServer, error) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
@@ -108,7 +102,6 @@ func (d *HetznerDriver) ListServers(ctx context.Context, cred *domain.Credential
 	return list, nil
 }
 
-// RebootServer mengirim perintah restart (action reboot) ke server Hetzner Cloud.
 func (d *HetznerDriver) RebootServer(ctx context.Context, cred *domain.Credential, externalID string) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
@@ -119,7 +112,6 @@ func (d *HetznerDriver) RebootServer(ctx context.Context, cred *domain.Credentia
 	return nil
 }
 
-// ShutdownServer mengirim perintah shutdown ke server Hetzner Cloud.
 func (d *HetznerDriver) ShutdownServer(ctx context.Context, cred *domain.Credential, externalID string) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
@@ -130,7 +122,6 @@ func (d *HetznerDriver) ShutdownServer(ctx context.Context, cred *domain.Credent
 	return nil
 }
 
-// StartServer mengirim perintah poweron ke server Hetzner Cloud.
 func (d *HetznerDriver) StartServer(ctx context.Context, cred *domain.Credential, externalID string) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
@@ -141,7 +132,6 @@ func (d *HetznerDriver) StartServer(ctx context.Context, cred *domain.Credential
 	return nil
 }
 
-// ResizeServer mengubah tipe server (change_type) pada Hetzner Cloud.
 func (d *HetznerDriver) ResizeServer(ctx context.Context, cred *domain.Credential, req domain.ResizeServerRequest) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
@@ -160,7 +150,6 @@ func (d *HetznerDriver) ResizeServer(ctx context.Context, cred *domain.Credentia
 	return nil
 }
 
-// DeleteServer menghapus instance server dari Hetzner Cloud.
 func (d *HetznerDriver) DeleteServer(ctx context.Context, cred *domain.Credential, externalID string) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
