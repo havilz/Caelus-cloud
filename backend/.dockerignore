@@ -1,5 +1,4 @@
 bin
-caelus-agent-linux
 .git
 .env*
 *.log
