@@ -64,11 +64,23 @@ func resolveOrganizationID(r *http.Request) (uuid.UUID, error) {
 		return uuid.Parse(header)
 	}
 
+	if orgID, ok := GetOrgIDFromContext(r.Context()); ok && orgID != uuid.Nil {
+		return orgID, nil
+	}
+
 	if orgID, ok := GetOrganizationIDFromContext(r.Context()); ok && orgID != uuid.Nil {
 		return orgID, nil
 	}
 
 	return uuid.Nil, domain.ErrNotFound
+}
+
+func RequireAdmin(orgRepo domain.OrganizationRepository) func(http.Handler) http.Handler {
+	return RequireOrganizationRole(orgRepo, domain.RoleAdmin)
+}
+
+func RequireOwner(orgRepo domain.OrganizationRepository) func(http.Handler) http.Handler {
+	return RequireOrganizationRole(orgRepo, domain.RoleOwner)
 }
 
 func isRoleAuthorized(userRole domain.OrganizationRole, allowedRoles []domain.OrganizationRole) bool {

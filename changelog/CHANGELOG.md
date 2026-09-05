@@ -8,16 +8,16 @@ Format penulisan mengacu pada standar formal dengan pencatatan stempel tanggal d
 
 ## [Unreleased]
 
-### [2026-09-03 11:55:00] - Frontend UI Hardening & Layout Refinement
+### [2026-09-05 09:45:00] - Security Hardening: Intra-Organization Role Enforcement (Audit M-4)
 
-- **Perbaikan Modal Detail Volume (`frontend/src/app/(dashboard)/infrastructure/volumes/page.tsx`)**:
-  - Memperbaiki tata letak modal dialog detail volume dengan struktur card yang responsif (`maxWidth="lg"`).
-  - Menambahkan pembungkusan teks (`break-all`, `select-all`) untuk identifier panjang seperti UUID, Docker Volume Hash, dan Mount Path direktori agar tidak merusak margin horizontal layout.
-  - Memperbaiki hierarki tipografi dan kontras warna status container dan performance IOPS.
-- **Penyelarasan Kartu Ringkasan Storage Pool (`frontend/src/app/(dashboard)/infrastructure/volumes/page.tsx`)**:
-  - Merestrukturisasi grid kartu ringkasan telemetri storage menjadi layout yang kompak dan seimbang (`grid-cols-1 sm:grid-cols-2 lg:grid-cols-4`).
-  - Menyelaraskan padding, container icon, dan dimensi kartu agar tidak merenggang secara berlebihan pada resolusi layar lebar.
-- **Pembersihan Badge Phase pada Antarmuka Pengguna (`frontend/src/app/(dashboard)/infrastructure/containers/page.tsx`, `iac/page.tsx`)**:
-  - Menghapus seluruh tampilan label internal seperti `Phase 6.2 Active` dan `Phase 6.3 Active` pada header halaman Containers dan Declarative IaC untuk menjaga standar antarmuka produksi enterprise.
-- **Pembaruan Skema Migrasi Deployments (`backend/migrations/000008_create_iac_and_deployments.up.sql`)**:
-  - Menambahkan kolom `network_name VARCHAR(255)` dan `command TEXT` pada tabel `deployments` agar sinkronisasi auto-discovery container berjalan konsisten tanpa error query database.
+- **Middleware RBAC & Proteksi Rute Backend (`backend/internal/delivery/http/router.go`, `middleware/rbac.go`)**:
+  - Mengintegrasikan `RequireOrganizationRole` pada seluruh endpoint kredensial cloud provider (`/credentials`) sehingga hanya pengguna dengan role `admin` atau `owner` yang berhak melihat dan mengelola kredensial.
+  - Membatasi operasi mutasi dan kontrol destruktif server (`CreateServer`, `DeleteServer`, `RebootServer`, `ShutdownServer`, `ResizeServer`) dengan izin minimal role `admin`.
+  - Mengamankan manajemen keanggotaan dan API keys/webhooks pada `/settings` (khusus perubahan role `UpdateMemberRole` diwajibkan role `owner`).
+  - Menambahkan helper `RequireAdmin` dan `RequireOwner` serta integrasi context organisasi dari `GetOrgIDFromContext`.
+- **Penyesuaian Antarmuka Pengguna Frontend (`frontend/src/hooks/useRoleGuard.ts`, `providers/page.tsx`, `vps/page.tsx`, `MembersTab.tsx`)**:
+  - Mengimplementasikan custom React hook `useRoleGuard` untuk mengevaluasi hak akses pengguna secara reaktif berbasis peran organisasi.
+  - Menyembunyikan form dan tombol penambahan kredensial serta menampilkan banner peringatan akses terbatas pada halaman Cloud Providers jika pengguna berstatus non-admin.
+  - Membatasi tombol terminasi dan kontrol daya server pada halaman VPS Management dan VPS Detail untuk role `member` dan `viewer`.
+  - Membatasi aksi undang anggota tim dan pembatalan undangan untuk role non-admin, serta mengunci dropdown perubahan role khusus untuk role `owner`.
+

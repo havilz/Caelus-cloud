@@ -27,8 +27,10 @@ import { ConnectAgentModal } from "@/components/server/ConnectAgentModal";
 import { useServerStore } from "@/stores/useServerStore";
 import { Server } from "@/types/server";
 import { AppContainers, AppText } from "@/core/theme";
+import { useRoleGuard } from "@/hooks/useRoleGuard";
 
 export default function VPSManagementPage() {
+  const { canManageServers, canDeleteServer } = useRoleGuard();
   const {
     servers,
     totalServers,
@@ -103,14 +105,16 @@ export default function VPSManagementPage() {
             <span>Refresh</span>
           </Button>
 
-          <Button
-            size="sm"
-            onClick={() => setIsCreateOpen(true)}
-            className="cursor-pointer"
-          >
-            <Plus className="h-4 w-4" />
-            <span>Tambah / Hubungkan Server</span>
-          </Button>
+          {canManageServers && (
+            <Button
+              size="sm"
+              onClick={() => setIsCreateOpen(true)}
+              className="cursor-pointer"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Tambah / Hubungkan Server</span>
+            </Button>
+          )}
         </div>
       </div>
 
@@ -233,10 +237,9 @@ export default function VPSManagementPage() {
                         <span className={AppText.caption}>{server.os_type}</span>
                       </td>
 
-                      {}
+                      {/* Action Controls */}
                       <td className="px-5 py-4 text-right">
                         <div className="flex items-center justify-end gap-1.5">
-                          {}
                           <button
                             type="button"
                             onClick={() => setConnectTarget(server)}
@@ -246,65 +249,73 @@ export default function VPSManagementPage() {
                             <Terminal className="h-3.5 w-3.5" />
                           </button>
 
-                          {}
-                          <button
-                            type="button"
-                            disabled={isActionLoading || server.status !== "running"}
-                            onClick={() => handleAction(server.id, rebootServer)}
-                            className="p-1.5 rounded-md text-[#a1a1a1] hover:text-emerald-400 hover:bg-[#202020] disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
-                            title="Reboot Server"
-                          >
-                            <RotateCcw className="h-3.5 w-3.5" />
-                          </button>
+                          {canManageServers ? (
+                            <>
+                              {/* Reboot Action */}
+                              <button
+                                type="button"
+                                disabled={isActionLoading || server.status !== "running"}
+                                onClick={() => handleAction(server.id, rebootServer)}
+                                className="p-1.5 rounded-md text-[#a1a1a1] hover:text-emerald-400 hover:bg-[#202020] disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                                title="Reboot Server"
+                              >
+                                <RotateCcw className="h-3.5 w-3.5" />
+                              </button>
 
-                          {}
-                          {server.status === "running" ? (
-                            <button
-                              type="button"
-                              disabled={isActionLoading}
-                              onClick={() => handleAction(server.id, shutdownServer)}
-                              className="p-1.5 rounded-md text-[#a1a1a1] hover:text-amber-400 hover:bg-[#202020] disabled:opacity-30 transition-colors cursor-pointer"
-                              title="Shutdown Server"
-                            >
-                              <PowerOff className="h-3.5 w-3.5" />
-                            </button>
+                              {/* Power State */}
+                              {server.status === "running" ? (
+                                <button
+                                  type="button"
+                                  disabled={isActionLoading}
+                                  onClick={() => handleAction(server.id, shutdownServer)}
+                                  className="p-1.5 rounded-md text-[#a1a1a1] hover:text-amber-400 hover:bg-[#202020] disabled:opacity-30 transition-colors cursor-pointer"
+                                  title="Shutdown Server"
+                                >
+                                  <PowerOff className="h-3.5 w-3.5" />
+                                </button>
+                              ) : (
+                                <button
+                                  type="button"
+                                  disabled={isActionLoading}
+                                  onClick={() => handleAction(server.id, startServer)}
+                                  className="p-1.5 rounded-md text-[#a1a1a1] hover:text-emerald-400 hover:bg-[#202020] disabled:opacity-30 transition-colors cursor-pointer"
+                                  title="Start Server"
+                                >
+                                  <Power className="h-3.5 w-3.5" />
+                                </button>
+                              )}
+
+                              {/* Resize Action */}
+                              <button
+                                type="button"
+                                disabled={isActionLoading}
+                                onClick={() => setResizeTarget(server)}
+                                className="p-1.5 rounded-md text-[#a1a1a1] hover:text-[#ededed] hover:bg-[#202020] transition-colors cursor-pointer"
+                                title="Resize Spesifikasi"
+                              >
+                                <Sliders className="h-3.5 w-3.5" />
+                              </button>
+
+                              {/* Terminate Action */}
+                              {canDeleteServer && (
+                                <button
+                                  type="button"
+                                  disabled={isActionLoading}
+                                  onClick={() => {
+                                    if (confirm(`Apakah Anda yakin ingin menterminasi server ${server.name}?`)) {
+                                      handleAction(server.id, deleteServer);
+                                    }
+                                  }}
+                                  className="p-1.5 rounded-md text-[#a1a1a1] hover:text-rose-400 hover:bg-rose-950/40 transition-colors cursor-pointer"
+                                  title="Hapus / Terminate Server"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </button>
+                              )}
+                            </>
                           ) : (
-                            <button
-                              type="button"
-                              disabled={isActionLoading}
-                              onClick={() => handleAction(server.id, startServer)}
-                              className="p-1.5 rounded-md text-[#a1a1a1] hover:text-emerald-400 hover:bg-[#202020] disabled:opacity-30 transition-colors cursor-pointer"
-                              title="Start Server"
-                            >
-                              <Power className="h-3.5 w-3.5" />
-                            </button>
+                            <span className="text-[11px] text-[#707070] italic font-mono px-2">Read-only</span>
                           )}
-
-                          {}
-                          <button
-                            type="button"
-                            disabled={isActionLoading}
-                            onClick={() => setResizeTarget(server)}
-                            className="p-1.5 rounded-md text-[#a1a1a1] hover:text-[#ededed] hover:bg-[#202020] transition-colors cursor-pointer"
-                            title="Resize Spesifikasi"
-                          >
-                            <Sliders className="h-3.5 w-3.5" />
-                          </button>
-
-                          {}
-                          <button
-                            type="button"
-                            disabled={isActionLoading}
-                            onClick={() => {
-                              if (confirm(`Apakah Anda yakin ingin menterminasi server ${server.name}?`)) {
-                                handleAction(server.id, deleteServer);
-                              }
-                            }}
-                            className="p-1.5 rounded-md text-[#a1a1a1] hover:text-rose-400 hover:bg-rose-950/40 transition-colors cursor-pointer"
-                            title="Hapus / Terminate Server"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
                         </div>
                       </td>
                     </tr>

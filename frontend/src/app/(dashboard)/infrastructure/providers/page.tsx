@@ -21,6 +21,7 @@ import { providerService } from "@/services/provider.service";
 import { credentialService } from "@/services/credential.service";
 import { Provider } from "@/types/server";
 import { Credential } from "@/types/credential";
+import { useRoleGuard } from "@/hooks/useRoleGuard";
 
 interface ProviderPreset {
   slug: string;
@@ -91,6 +92,7 @@ const PROVIDER_PRESETS: ProviderPreset[] = [
 ];
 
 export default function CloudProvidersPage() {
+  const { canManageCredentials } = useRoleGuard();
   const [providers, setProviders] = useState<Provider[]>([]);
   const [credentials, setCredentials] = useState<Credential[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -268,16 +270,27 @@ export default function CloudProvidersPage() {
             <span>Sinkronisasi</span>
           </button>
 
-          <button
-            type="button"
-            onClick={() => handleOpenAddModal()}
-            className={AppTheme.controls.buttonPrimary}
-          >
-            <Plus className="h-4 w-4" />
-            <span>Tambah Kredensial</span>
-          </button>
+          {canManageCredentials && (
+            <button
+              type="button"
+              onClick={() => handleOpenAddModal()}
+              className={AppTheme.controls.buttonPrimary}
+            >
+              <Plus className="h-4 w-4" />
+              <span>Tambah Kredensial</span>
+            </button>
+          )}
         </div>
       </div>
+
+      {!canManageCredentials && (
+        <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300 flex items-center gap-3 text-sm">
+          <Lock className="h-5 w-5 shrink-0 text-amber-400" />
+          <span>
+            <strong>Akses Dibatasi:</strong> Hanya pengguna dengan role <strong>Admin</strong> atau <strong>Owner</strong> organisasi yang berwenang untuk menambah, menguji, atau menghapus kredensial cloud provider.
+          </span>
+        </div>
+      )}
 
       {}
       <div className={`p-4 rounded-xl ${AppTheme.colors.brand.primaryLight} flex flex-col sm:flex-row sm:items-center justify-between gap-3`}>
@@ -387,14 +400,18 @@ export default function CloudProvidersPage() {
                       <span>Belum terhubung</span>
                     )}
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => handleOpenAddModal(preset.slug)}
-                    className={AppTheme.controls.buttonSecondary}
-                  >
-                    <Plus className="h-3 w-3" />
-                    <span>Hubungkan</span>
-                  </button>
+                  {canManageCredentials ? (
+                    <button
+                      type="button"
+                      onClick={() => handleOpenAddModal(preset.slug)}
+                      className={AppTheme.controls.buttonSecondary}
+                    >
+                      <Plus className="h-3 w-3" />
+                      <span>Hubungkan</span>
+                    </button>
+                  ) : (
+                    <span className="text-xs text-zinc-500">Terkunci</span>
+                  )}
                 </div>
               </div>
             );
@@ -495,23 +512,29 @@ export default function CloudProvidersPage() {
                         </td>
                         <td className="py-3 px-4 text-right">
                           <div className="flex items-center justify-end gap-2">
-                            <button
-                              type="button"
-                              onClick={() => handleTestConnection(cred.id)}
-                              disabled={testState?.testing}
-                              className={AppTheme.controls.buttonAction}
-                            >
-                              <Zap className="h-3 w-3" />
-                              <span>Uji</span>
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteCredential(cred.id)}
-                              className={AppTheme.controls.iconButtonDanger}
-                              title="Hapus kredensial"
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </button>
+                            {canManageCredentials ? (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => handleTestConnection(cred.id)}
+                                  disabled={testState?.testing}
+                                  className={AppTheme.controls.buttonAction}
+                                >
+                                  <Zap className="h-3 w-3" />
+                                  <span>Uji</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteCredential(cred.id)}
+                                  className={AppTheme.controls.iconButtonDanger}
+                                  title="Hapus kredensial"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </button>
+                              </>
+                            ) : (
+                              <span className="text-[11px] text-zinc-500 italic font-mono">Read-only</span>
+                            )}
                           </div>
                         </td>
                       </tr>

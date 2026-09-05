@@ -216,3 +216,97 @@ func TestRequireOrganizationRole_AuthorizedRole(t *testing.T) {
 		t.Errorf("status harus %d, didapat %d", http.StatusOK, rec.Code)
 	}
 }
+
+func TestRequireAdmin_RejectsMember(t *testing.T) {
+	jwtManager, orgRepo, user, orgID := setupMiddlewareTest()
+	authMiddleware := middleware.Authenticate(jwtManager)
+	adminMiddleware := middleware.RequireAdmin(orgRepo)
+
+	_ = orgRepo.AddMember(context.Background(), &domain.OrganizationMember{
+		ID:             uuid.New(),
+		OrganizationID: orgID,
+		UserID:         user.ID,
+		Role:           domain.RoleMember,
+		CreatedAt:      time.Now(),
+		UpdatedAt:      time.Now(),
+	})
+
+	tokens, _ := jwtManager.GenerateTokenPair(user, &orgID)
+
+	handler := authMiddleware(adminMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})))
+
+	req := httptest.NewRequest(http.MethodGet, "/credentials", nil)
+	req.Header.Set("Authorization", "Bearer "+tokens.AccessToken)
+	rec := httptest.NewRecorder()
+
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusForbidden {
+		t.Errorf("status harus %d untuk role member, didapat %d", http.StatusForbidden, rec.Code)
+	}
+}
+
+func TestRequireOwner_RejectsAdmin(t *testing.T) {
+	jwtManager, orgRepo, user, orgID := setupMiddlewareTest()
+	authMiddleware := middleware.Authenticate(jwtManager)
+	ownerMiddleware := middleware.RequireOwner(orgRepo)
+
+	_ = orgRepo.AddMember(context.Background(), &domain.OrganizationMember{
+		ID:             uuid.New(),
+		OrganizationID: orgID,
+		UserID:         user.ID,
+		Role:           domain.RoleAdmin,
+		CreatedAt:      time.Now(),
+		UpdatedAt:      time.Now(),
+	})
+
+	tokens, _ := jwtManager.GenerateTokenPair(user, &orgID)
+
+	handler := authMiddleware(ownerMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})))
+
+	req := httptest.NewRequest(http.MethodPut, "/settings/members/123/role", nil)
+	req.Header.Set("Authorization", "Bearer "+tokens.AccessToken)
+	rec := httptest.NewRecorder()
+
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusForbidden {
+		t.Errorf("status harus %d untuk role admin pada endpoint khusus owner, didapat %d", http.StatusForbidden, rec.Code)
+	}
+}
+
+func TestRequireOwner_AllowsOwner(t *testing.T) {
+	jwtManager, orgRepo, user, orgID := setupMiddlewareTest()
+	authMiddleware := middleware.Authenticate(jwtManager)
+	ownerMiddleware := middleware.RequireOwner(orgRepo)
+
+	_ = orgRepo.AddMember(context.Background(), &domain.OrganizationMember{
+		ID:             uuid.New(),
+		OrganizationID: orgID,
+		UserID:         user.ID,
+		Role:           domain.RoleOwner,
+		CreatedAt:      time.Now(),
+		UpdatedAt:      time.Now(),
+	})
+
+	tokens, _ := jwtManager.GenerateTokenPair(user, &orgID)
+
+	handler := authMiddleware(ownerMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})))
+
+	req := httptest.NewRequest(http.MethodPut, "/settings/members/123/role", nil)
+	req.Header.Set("Authorization", "Bearer "+tokens.AccessToken)
+	rec := httptest.NewRecorder()
+
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("status harus %d untuk role owner, didapat %d", http.StatusOK, rec.Code)
+	}
+}
+

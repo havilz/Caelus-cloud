@@ -37,6 +37,7 @@ import { useRealtimeTelemetry } from "@/hooks/useRealtimeTelemetry";
 import { Server } from "@/types/server";
 import { ServerMetric, Alert, AlertRule, LogEntry } from "@/types/monitoring";
 import { AppContainers, AppText, AppColors } from "@/core/theme";
+import { useRoleGuard } from "@/hooks/useRoleGuard";
 
 export default function ServerDetailPage({
   params,
@@ -46,6 +47,7 @@ export default function ServerDetailPage({
   const resolvedParams = use(params);
   const router = useRouter();
   const serverId = resolvedParams.id;
+  const { canManageServers, canDeleteServer } = useRoleGuard();
 
   const [server, setServer] = useState<Server | null>(null);
   const [activeTab, setActiveTab] = useState<"overview" | "metrics" | "logs" | "alerts">("overview");
@@ -264,64 +266,74 @@ export default function ServerDetailPage({
           </div>
         </div>
 
-        {}
+        {/* Action Controls */}
         <div className="flex items-center gap-1.5 self-start sm:self-auto flex-wrap">
-          {server.status === "stopped" ? (
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={isActionLoading}
-              onClick={() => handleAction(serverService.startServer)}
-              className={`${AppColors.brand.accent} ${AppColors.brand.border} hover:bg-emerald-950/30`}
-            >
-              <Power className="h-3.5 w-3.5 mr-1" />
-              Start
-            </Button>
+          {canManageServers ? (
+            <>
+              {server.status === "stopped" ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={isActionLoading}
+                  onClick={() => handleAction(serverService.startServer)}
+                  className={`${AppColors.brand.accent} ${AppColors.brand.border} hover:bg-emerald-950/30`}
+                >
+                  <Power className="h-3.5 w-3.5 mr-1" />
+                  Start
+                </Button>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={isActionLoading || server.status !== "running"}
+                  onClick={() => handleAction(serverService.shutdownServer)}
+                  className={`${AppColors.status.restarting.text} ${AppColors.status.restarting.border} hover:bg-amber-950/30`}
+                >
+                  <PowerOff className="h-3.5 w-3.5 mr-1" />
+                  Shutdown
+                </Button>
+              )}
+
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={isActionLoading || server.status !== "running"}
+                onClick={() => handleAction(serverService.rebootServer)}
+                className={`${AppColors.text.secondary} ${AppColors.border.subtle} hover:${AppColors.text.primary}`}
+              >
+                <RotateCcw className="h-3.5 w-3.5 mr-1" />
+                Reboot
+              </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={isActionLoading}
+                onClick={() => setIsResizeOpen(true)}
+                className={`${AppColors.text.secondary} ${AppColors.border.subtle} hover:${AppColors.text.primary}`}
+              >
+                <Sliders className="h-3.5 w-3.5 mr-1" />
+                Resize
+              </Button>
+
+              {canDeleteServer && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={isActionLoading}
+                  onClick={handleDelete}
+                  className={`${AppColors.status.danger.text} ${AppColors.status.danger.border} hover:bg-rose-950/30`}
+                >
+                  <Trash2 className="h-3.5 w-3.5 mr-1" />
+                  Terminate
+                </Button>
+              )}
+            </>
           ) : (
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={isActionLoading || server.status !== "running"}
-              onClick={() => handleAction(serverService.shutdownServer)}
-              className={`${AppColors.status.restarting.text} ${AppColors.status.restarting.border} hover:bg-amber-950/30`}
-            >
-              <PowerOff className="h-3.5 w-3.5 mr-1" />
-              Shutdown
-            </Button>
+            <span className="text-xs text-zinc-400 font-mono px-2.5 py-1 bg-zinc-900/60 border border-zinc-800 rounded-lg">
+              Read-only Member
+            </span>
           )}
-
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={isActionLoading || server.status !== "running"}
-            onClick={() => handleAction(serverService.rebootServer)}
-            className={`${AppColors.text.secondary} ${AppColors.border.subtle} hover:${AppColors.text.primary}`}
-          >
-            <RotateCcw className="h-3.5 w-3.5 mr-1" />
-            Reboot
-          </Button>
-
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={isActionLoading}
-            onClick={() => setIsResizeOpen(true)}
-            className={`${AppColors.text.secondary} ${AppColors.border.subtle} hover:${AppColors.text.primary}`}
-          >
-            <Sliders className="h-3.5 w-3.5 mr-1" />
-            Resize
-          </Button>
-
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={isActionLoading}
-            onClick={handleDelete}
-            className={`${AppColors.status.danger.text} ${AppColors.status.danger.border} hover:bg-rose-950/30`}
-          >
-            <Trash2 className="h-3.5 w-3.5 mr-1" />
-            Terminate
-          </Button>
         </div>
       </div>
 

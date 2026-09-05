@@ -18,7 +18,7 @@ Caelus operates as an independent control layer on top of your server infrastruc
 
 ## To start using Caelus
 
-See our documentation and usage guides on [Setup & Usage Guide (HOW_TO_SETUP.md)](HOW_TO_SETUP.md).
+See our documentation and usage guides on [Caelus Tools Docs](https://havilzlating.vercel.app/project/caelus-tools/docs).
 
 ----
 

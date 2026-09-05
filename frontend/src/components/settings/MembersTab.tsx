@@ -5,8 +5,10 @@ import { Users, UserPlus, Mail, Shield, Trash2, Check, AlertCircle, RefreshCw, X
 import { AppTheme } from "@/core/theme";
 import { settingsService } from "@/services/settings.service";
 import { OrganizationMember, OrganizationInvitation, OrganizationRole } from "@/types/settings";
+import { useRoleGuard } from "@/hooks/useRoleGuard";
 
 export const MembersTab: React.FC = () => {
+  const { canManageTeam, canChangeRoles } = useRoleGuard();
   const [members, setMembers] = useState<OrganizationMember[]>([]);
   const [invitations, setInvitations] = useState<OrganizationInvitation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -125,14 +127,16 @@ export const MembersTab: React.FC = () => {
           <h3 className="text-sm font-semibold text-zinc-100">Anggota Tim & Hak Akses (RBAC)</h3>
           <p className="text-xs text-zinc-400 mt-0.5">Kelola kolaborator yang memiliki akses ke workspace organisasi ini</p>
         </div>
-        <button
-          type="button"
-          onClick={() => setIsInviteModalOpen(true)}
-          className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-zinc-950 font-semibold text-xs rounded-lg transition-colors flex items-center gap-2 cursor-pointer shrink-0"
-        >
-          <UserPlus className="h-4 w-4" />
-          <span>Undang Anggota</span>
-        </button>
+        {canManageTeam && (
+          <button
+            type="button"
+            onClick={() => setIsInviteModalOpen(true)}
+            className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-zinc-950 font-semibold text-xs rounded-lg transition-colors flex items-center gap-2 cursor-pointer shrink-0"
+          >
+            <UserPlus className="h-4 w-4" />
+            <span>Undang Anggota</span>
+          </button>
+        )}
       </div>
 
       {successMsg && (
@@ -168,7 +172,7 @@ export const MembersTab: React.FC = () => {
               </div>
 
               <div className="flex items-center gap-3">
-                {member.role === "owner" ? (
+                {!canChangeRoles || member.role === "owner" ? (
                   getRoleBadge(member.role)
                 ) : (
                   <select
@@ -182,7 +186,7 @@ export const MembersTab: React.FC = () => {
                   </select>
                 )}
 
-                {member.role !== "owner" && (
+                {canManageTeam && member.role !== "owner" && (
                   <button
                     type="button"
                     onClick={() => handleRemoveMember(member.user_id, member.user?.full_name || member.user?.email || "")}
@@ -221,14 +225,16 @@ export const MembersTab: React.FC = () => {
 
                 <div className="flex items-center gap-3">
                   {getRoleBadge(inv.role)}
-                  <button
-                    type="button"
-                    onClick={() => handleDeleteInvitation(inv.id)}
-                    className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
-                    title="Batalkan Undangan"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
+                  {canManageTeam && (
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteInvitation(inv.id)}
+                      className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                      title="Batalkan Undangan"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  )}
                 </div>
               </div>
             ))}

@@ -217,6 +217,7 @@ func main() {
 		JWTManager: jwtManager,
 		AuditRepo:  auditRepo,
 		ServerRepo: serverRepo,
+		OrgRepo:    orgRepo,
 		PgxPool:    client.Pool,
 		Logger:     logger.Get(),
 		Handlers: deliveryHttp.Handlers{
