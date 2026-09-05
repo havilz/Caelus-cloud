@@ -101,7 +101,7 @@ export default function MonitoringPage() {
   };
 
   const handleDeleteRule = async (ruleId: string) => {
-    if (confirm("Apakah Anda yakin ingin menghapus aturan alert ini?")) {
+    if (confirm("Are you sure you want to delete this alert rule?")) {
       try {
         await monitoringService.deleteAlertRule(ruleId);
         await fetchData();
@@ -140,7 +140,6 @@ export default function MonitoringPage() {
 
   return (
     <div className={AppContainers.pageWrapper}>
-      {}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
@@ -163,7 +162,7 @@ export default function MonitoringPage() {
             )}
           </div>
           <p className={AppText.subtitle}>
-            Pusat pemantauan metrik telemetri, deteksi anomali, dan manajemen insiden alert organisasi.
+            Centralized hub for telemetry metrics, anomaly detection, and organization incident management.
           </p>
         </div>
 
@@ -175,7 +174,7 @@ export default function MonitoringPage() {
             className={`${AppColors.text.secondary} ${AppColors.border.subtle} hover:${AppColors.text.primary}`}
           >
             <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${isRefreshing ? "animate-spin" : ""}`} />
-            Segarkan
+            Refresh
           </Button>
           <Button
             size="sm"
@@ -183,19 +182,18 @@ export default function MonitoringPage() {
             className={`${AppColors.brand.primary} text-xs`}
           >
             <Plus className="h-3.5 w-3.5 mr-1.5" />
-            Tambah Aturan Alert
+            Add Alert Rule
           </Button>
         </div>
       </div>
 
-      {}
       <div className={AppContainers.metricsGrid}>
         <Card className={`${AppContainers.card} ${AppContainers.cardHover}`}>
           <CardContent className="p-4 flex items-center justify-between">
             <div>
-              <p className={AppText.bodySm}>Total Server Terpantau</p>
+              <p className={AppText.bodySm}>Monitored Servers</p>
               <p className={`text-2xl font-bold ${AppColors.text.primary} font-mono mt-1`}>{servers.length}</p>
-              <p className={`text-[11px] ${AppColors.brand.accent} font-mono mt-0.5`}>{runningServersCount} Running Host</p>
+              <p className={`text-[11px] ${AppColors.brand.accent} font-mono mt-0.5`}>{runningServersCount} Running Hosts</p>
             </div>
             <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${AppColors.brand.primaryLight}`}>
               <Server className="h-5 w-5" />
@@ -206,9 +204,9 @@ export default function MonitoringPage() {
         <Card className={`${AppContainers.card} ${AppContainers.cardHover}`}>
           <CardContent className="p-4 flex items-center justify-between">
             <div>
-              <p className={AppText.bodySm}>Alert Aktif Saat Ini</p>
+              <p className={AppText.bodySm}>Active Alerts</p>
               <p className={`text-2xl font-bold ${AppColors.status.danger.text} font-mono mt-1`}>{activeAlertsCount}</p>
-              <p className={`text-[11px] ${AppColors.text.muted} font-mono mt-0.5`}>{criticalCount} Tingkat Kritis</p>
+              <p className={`text-[11px] ${AppColors.text.muted} font-mono mt-0.5`}>{criticalCount} Critical Level</p>
             </div>
             <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${AppColors.status.danger.bg} ${AppColors.status.danger.text} border ${AppColors.status.danger.border}`}>
               <Bell className="h-5 w-5" />
@@ -219,7 +217,7 @@ export default function MonitoringPage() {
         <Card className={`${AppContainers.card} ${AppContainers.cardHover}`}>
           <CardContent className="p-4 flex items-center justify-between">
             <div>
-              <p className={AppText.bodySm}>Aturan Threshold Aktif</p>
+              <p className={AppText.bodySm}>Active Threshold Rules</p>
               <p className={`text-2xl font-bold ${AppColors.text.primary} font-mono mt-1`}>{rules.length}</p>
               <p className={AppText.caption}>Auto-evaluator 60s</p>
             </div>
@@ -234,7 +232,7 @@ export default function MonitoringPage() {
             <div>
               <p className={AppText.bodySm}>Sentinel Status</p>
               <p className={`text-2xl font-bold ${AppColors.brand.accent} font-mono mt-1`}>100%</p>
-              <p className={AppText.caption}>Seluruh node terlindungi</p>
+              <p className={AppText.caption}>All nodes protected</p>
             </div>
             <div className={`flex h-10 w-10 items-center justify-center rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20`}>
               <ShieldCheck className="h-5 w-5" />
@@ -243,24 +241,21 @@ export default function MonitoringPage() {
         </Card>
       </div>
 
-      {}
       <div className={AppContainers.overviewSplitGrid}>
-        {}
         <div className="lg:col-span-2 space-y-4">
           <Card className={AppContainers.card}>
             <CardHeader className={`${AppContainers.cardHeader} flex flex-col sm:flex-row sm:items-center justify-between gap-3`}>
               <div>
-                <CardTitle className={AppText.h4}>Pusat Insiden Alert</CardTitle>
-                <CardDescription className={AppText.caption}>Daftar peringatan yang terpicu dari anomali metrik</CardDescription>
+                <CardTitle className={AppText.h4}>Alert Incident Center</CardTitle>
+                <CardDescription className={AppText.caption}>List of warnings triggered by metric anomalies</CardDescription>
               </div>
 
-              {}
               <div className={`flex items-center gap-1 ${AppColors.bg.surface} p-1 rounded-lg border ${AppColors.border.subtle}`}>
                 {[
-                  { id: "active", label: "Aktif" },
-                  { id: "acknowledged", label: "Ditandai" },
-                  { id: "resolved", label: "Selesai" },
-                  { id: "all", label: "Semua" },
+                  { id: "active", label: "Active" },
+                  { id: "acknowledged", label: "Acknowledged" },
+                  { id: "resolved", label: "Resolved" },
+                  { id: "all", label: "All" },
                 ].map((tab) => (
                   <button
                     key={tab.id}
@@ -283,15 +278,15 @@ export default function MonitoringPage() {
                 <div className={`flex h-64 items-center justify-center ${AppText.bodySm}`}>
                   <div className="flex flex-col items-center gap-2">
                     <div className="h-5 w-5 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent" />
-                    <p>Memuat daftar insiden alert...</p>
+                    <p>Loading alert incidents...</p>
                   </div>
                 </div>
               ) : alerts.length === 0 ? (
                 <div className="flex h-64 flex-col items-center justify-center text-center p-6">
                   <CheckCircle2 className="h-10 w-10 mb-2 text-emerald-500/50" />
-                  <p className={AppText.h4}>Tidak Ada Alert</p>
+                  <p className={AppText.h4}>No Alerts Found</p>
                   <p className={AppText.subtitle}>
-                    Seluruh performa server pada status ini beroperasi optimal.
+                    All server performance metrics are operating optimally.
                   </p>
                 </div>
               ) : (
@@ -308,10 +303,10 @@ export default function MonitoringPage() {
                         </div>
                         <p className={AppText.bodySm}>{alert.message}</p>
                         <div className={`flex items-center gap-3 ${AppText.codeMuted}`}>
-                          <span>Waktu: {new Date(alert.triggered_at).toLocaleString("id-ID")}</span>
+                          <span>Triggered: {new Date(alert.triggered_at).toLocaleString("en-US")}</span>
                           {alert.current_value !== undefined && (
                             <span className={`${AppColors.status.danger.text} font-bold`}>
-                              Terukur: {alert.current_value.toFixed(1)}%
+                              Measured: {alert.current_value.toFixed(1)}%
                             </span>
                           )}
                         </div>
@@ -327,7 +322,7 @@ export default function MonitoringPage() {
                             className={`${AppColors.status.restarting.text} ${AppColors.status.restarting.border} hover:${AppColors.status.restarting.bg} text-xs h-7.5`}
                           >
                             <Check className="h-3 w-3 mr-1" />
-                            Tandai
+                            Acknowledge
                           </Button>
                         )}
                         {alert.status !== "resolved" && (
@@ -339,7 +334,7 @@ export default function MonitoringPage() {
                             className={`${AppColors.brand.accent} ${AppColors.brand.border} hover:bg-emerald-950/20 text-xs h-7.5`}
                           >
                             <CheckCircle2 className="h-3 w-3 mr-1" />
-                            Selesaikan
+                            Resolve
                           </Button>
                         )}
                       </div>
@@ -351,13 +346,12 @@ export default function MonitoringPage() {
           </Card>
         </div>
 
-        {}
         <div className="space-y-4">
           <Card className={AppContainers.card}>
             <CardHeader className={`${AppContainers.cardHeader} flex items-center justify-between`}>
               <div>
-                <CardTitle className={AppText.h4}>Aturan Evaluasi ({rules.length})</CardTitle>
-                <CardDescription className={AppText.caption}>Kriteria threshold alert otomatis</CardDescription>
+                <CardTitle className={AppText.h4}>Evaluation Rules ({rules.length})</CardTitle>
+                <CardDescription className={AppText.caption}>Automated alert threshold criteria</CardDescription>
               </div>
               <Button
                 variant="outline"
@@ -366,13 +360,13 @@ export default function MonitoringPage() {
                 className={`h-7 text-[11px] ${AppColors.border.subtle}`}
               >
                 <Plus className="h-3 w-3 mr-1" />
-                Tambah
+                Add
               </Button>
             </CardHeader>
             <CardContent className="p-3 space-y-2.5">
               {rules.length === 0 ? (
                 <p className={`text-center py-6 ${AppText.caption}`}>
-                  Belum ada aturan threshold yang dikonfigurasi.
+                  No threshold rules configured yet.
                 </p>
               ) : (
                 rules.map((rule) => (
@@ -394,7 +388,7 @@ export default function MonitoringPage() {
                       type="button"
                       onClick={() => handleDeleteRule(rule.id)}
                       className={`p-1.5 ${AppColors.text.muted} hover:${AppColors.status.danger.text} transition-colors cursor-pointer`}
-                      aria-label="Hapus aturan"
+                      aria-label="Delete rule"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
@@ -406,7 +400,6 @@ export default function MonitoringPage() {
         </div>
       </div>
 
-      {}
       <CreateAlertRuleModal
         isOpen={isCreateRuleOpen}
         onClose={() => setIsCreateRuleOpen(false)}

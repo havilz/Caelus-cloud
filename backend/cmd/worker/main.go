@@ -25,12 +25,12 @@ import (
 func main() {
 	cfg, err := config.Load()
 	if err != nil {
-		fmt.Printf("Gagal memuat konfigurasi worker: %v\n", err)
+		fmt.Printf("Failed to load worker configuration: %v\n", err)
 		os.Exit(1)
 	}
 
 	logger.Init(cfg.App.LogLevel, cfg.App.Debug)
-	logger.Info("Menginisialisasi Caelus Worker Daemon (caelus-worker)...",
+	logger.Info("Initializing Caelus Worker Daemon (caelus-worker)...",
 		"env", cfg.App.Env,
 		"redis_host", cfg.Redis.Host,
 		"redis_port", cfg.Redis.Port,
@@ -44,7 +44,7 @@ func main() {
 
 	client, err := postgres.NewClient(dbCtx, &cfg.Database)
 	if err != nil {
-		logger.Error("Gagal menghubungkan ke database PostgreSQL", "error", err)
+		logger.Error("Failed to connect to PostgreSQL database", "error", err)
 		os.Exit(1)
 	}
 	defer client.Close()
@@ -65,9 +65,9 @@ func main() {
 	pingCtx, pingCancel := context.WithTimeout(ctx, 5*time.Second)
 	defer pingCancel()
 	if err := rdb.Ping(pingCtx).Err(); err != nil {
-		logger.Warn("Koneksi Redis tidak tersedia, worker berjalan dalam mode terbatas", "error", err)
+		logger.Warn("Redis connection unavailable, worker running in degraded mode", "error", err)
 	} else {
-		logger.Info("Koneksi Redis berhasil tersambung", "addr", redisAddr)
+		logger.Info("Redis connection established successfully", "addr", redisAddr)
 	}
 	defer rdb.Close()
 
@@ -92,21 +92,21 @@ func main() {
 	registerWorkerHandlers(queueEngine, ruleEngine, notifier)
 
 	if err := queueEngine.Start(ctx); err != nil {
-		logger.Error("Gagal menjalankan worker queue engine", "error", err)
+		logger.Error("Failed to start worker queue engine", "error", err)
 		os.Exit(1)
 	}
 
-	logger.Info("Caelus Worker siap memproses antrean pekerjaan terdistribusi")
+	logger.Info("Caelus Worker ready to process distributed job queue")
 
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 
 	<-sigChan
-	logger.Info("Menerima sinyal terminasi, mematikan worker secara anggun...")
+	logger.Info("Received termination signal, shutting down worker gracefully...")
 
 	cancel()
 	_ = queueEngine.Stop()
-	logger.Info("Caelus Worker berhasil dimatikan secara aman")
+	logger.Info("Caelus Worker stopped cleanly")
 }
 
 func registerWorkerHandlers(q queue.QueueEngine, engine automation.RuleEngine, notifier notification.Dispatcher) {

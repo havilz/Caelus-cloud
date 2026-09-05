@@ -40,7 +40,7 @@ export const WebhooksTab: React.FC = () => {
       const data = await settingsService.listWebhooks();
       setWebhooks(data || []);
     } catch (err: any) {
-      setErrorMsg("Gagal memuat daftar webhook");
+      setErrorMsg("Failed to load webhook list");
     } finally {
       setIsLoading(false);
     }
@@ -61,7 +61,7 @@ export const WebhooksTab: React.FC = () => {
   const handleCreateWebhook = async (e: React.FormEvent) => {
     e.preventDefault();
     if (selectedEvents.length === 0) {
-      setModalError("Pilih minimal satu event trigger");
+      setModalError("Select at least one event trigger");
       return;
     }
 
@@ -79,11 +79,11 @@ export const WebhooksTab: React.FC = () => {
       setName("");
       setUrl("");
       setSecret("");
-      setSuccessMsg("Webhook berhasil didaftarkan");
+      setSuccessMsg("Webhook registered successfully");
       setTimeout(() => setSuccessMsg(null), 3000);
       fetchWebhooks();
     } catch (err: any) {
-      setModalError(err.response?.data?.message || "Gagal membuat webhook");
+      setModalError(err.response?.data?.message || "Failed to create webhook");
     } finally {
       setIsCreating(false);
     }
@@ -93,11 +93,11 @@ export const WebhooksTab: React.FC = () => {
     try {
       setTestingId(id);
       const res = await settingsService.testWebhook(id);
-      setSuccessMsg(`Test ping berhasil dikirim (HTTP Status: ${res.http_status})`);
+      setSuccessMsg(`Test ping sent successfully (HTTP Status: ${res.http_status})`);
       setTimeout(() => setSuccessMsg(null), 4000);
       fetchWebhooks();
     } catch (err: any) {
-      setErrorMsg(err.response?.data?.message || "Gagal mengirim test ping");
+      setErrorMsg(err.response?.data?.message || "Failed to send test ping");
       setTimeout(() => setErrorMsg(null), 4000);
     } finally {
       setTestingId(null);
@@ -105,14 +105,14 @@ export const WebhooksTab: React.FC = () => {
   };
 
   const handleDeleteWebhook = async (id: string, name: string) => {
-    if (!confirm(`Hapus webhook "${name}"?`)) return;
+    if (!confirm(`Delete webhook "${name}"?`)) return;
     try {
       await settingsService.deleteWebhook(id);
-      setSuccessMsg("Webhook berhasil dihapus");
+      setSuccessMsg("Webhook deleted successfully");
       setTimeout(() => setSuccessMsg(null), 3000);
       fetchWebhooks();
     } catch (err: any) {
-      setErrorMsg("Gagal menghapus webhook");
+      setErrorMsg("Failed to delete webhook");
       setTimeout(() => setErrorMsg(null), 3000);
     }
   };
@@ -121,19 +121,18 @@ export const WebhooksTab: React.FC = () => {
     return (
       <div className="flex items-center justify-center py-16 text-zinc-500">
         <RefreshCw className="h-5 w-5 animate-spin mr-2" />
-        <span className="text-sm">Memuat integrasi webhook...</span>
+        <span className="text-sm">Loading webhook integrations...</span>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      {}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h3 className="text-sm font-semibold text-zinc-100">Outgoing Webhooks & Alert Dispatchers</h3>
           <p className="text-xs text-zinc-400 mt-0.5">
-            Kirimkan notifikasi HTTP POST real-time ke Discord, Slack, Telegram bot, atau server Anda sendiri saat terjadi event penting
+            Send real-time HTTP POST notifications to Discord, Slack, Telegram bots, or your own server when important events occur
           </p>
         </div>
         <button
@@ -142,7 +141,7 @@ export const WebhooksTab: React.FC = () => {
           className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-zinc-950 font-semibold text-xs rounded-lg transition-colors flex items-center gap-2 cursor-pointer shrink-0"
         >
           <Plus className="h-4 w-4" />
-          <span>Tambah Webhook</span>
+          <span>Add Webhook</span>
         </button>
       </div>
 
@@ -160,13 +159,12 @@ export const WebhooksTab: React.FC = () => {
         </div>
       )}
 
-      {}
       {webhooks.length === 0 ? (
         <div className={`${AppTheme.containers.card} text-center py-12 space-y-3`}>
           <div className="mx-auto w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-500">
             <Send className="h-5 w-5" />
           </div>
-          <p className="text-xs text-zinc-400">Belum ada webhook yang didaftarkan.</p>
+          <p className="text-xs text-zinc-400">No webhooks registered yet.</p>
         </div>
       ) : (
         <div className={`${AppTheme.containers.card} overflow-hidden p-0`}>
@@ -204,7 +202,7 @@ export const WebhooksTab: React.FC = () => {
                     disabled={testingId === wh.id}
                     onClick={() => handleTestWebhook(wh.id)}
                     className="px-2.5 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-medium border border-zinc-700 flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
-                    title="Kirim Test Ping"
+                    title="Send Test Ping"
                   >
                     {testingId === wh.id ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Play className="h-3.5 w-3.5 text-emerald-400" />}
                     <span>Test Ping</span>
@@ -214,7 +212,7 @@ export const WebhooksTab: React.FC = () => {
                     type="button"
                     onClick={() => handleDeleteWebhook(wh.id, wh.name)}
                     className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
-                    title="Hapus Webhook"
+                    title="Delete Webhook"
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
@@ -225,14 +223,13 @@ export const WebhooksTab: React.FC = () => {
         </div>
       )}
 
-      {}
       {isCreateModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-4">
           <div className="bg-[#141414] border border-[#2e2e2e] rounded-xl w-full max-w-md p-6 shadow-2xl space-y-4">
             <div className="flex items-center justify-between border-b border-[#262626] pb-3">
               <h3 className="text-sm font-semibold text-zinc-100 flex items-center gap-2">
                 <Send className="h-4 w-4 text-emerald-400" />
-                Daftarkan Webhook Baru
+                Register New Webhook
               </h3>
               <button
                 type="button"
@@ -252,19 +249,19 @@ export const WebhooksTab: React.FC = () => {
 
             <form onSubmit={handleCreateWebhook} className="space-y-4">
               <div>
-                <label className="block text-xs font-medium text-zinc-300 mb-1.5">Nama Webhook</label>
+                <label className="block text-xs font-medium text-zinc-300 mb-1.5">Webhook Name</label>
                 <input
                   type="text"
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Contoh: Discord Alerts, Slack Dev Channel"
+                  placeholder="e.g. Discord Alerts, Slack Dev Channel"
                   className="w-full bg-[#181818] border border-[#2e2e2e] text-zinc-200 text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-emerald-500 transition-colors"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-zinc-300 mb-1.5">Payload URL Target (HTTPS)</label>
+                <label className="block text-xs font-medium text-zinc-300 mb-1.5">Target Payload URL (HTTPS)</label>
                 <input
                   type="url"
                   required
@@ -276,12 +273,12 @@ export const WebhooksTab: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-zinc-300 mb-1.5">Secret Key HMAC (Opsional)</label>
+                <label className="block text-xs font-medium text-zinc-300 mb-1.5">HMAC Secret Key (Optional)</label>
                 <input
                   type="password"
                   value={secret}
                   onChange={(e) => setSecret(e.target.value)}
-                  placeholder="Kunci rahasia untuk memverifikasi signature X-Caelus-Signature"
+                  placeholder="Secret key used to verify X-Caelus-Signature header"
                   className="w-full bg-[#181818] border border-[#2e2e2e] text-zinc-200 text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-emerald-500 transition-colors"
                 />
               </div>
@@ -310,7 +307,7 @@ export const WebhooksTab: React.FC = () => {
                   onClick={() => setIsCreateModalOpen(false)}
                   className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs rounded-lg transition-colors cursor-pointer"
                 >
-                  Batal
+                  Cancel
                 </button>
                 <button
                   type="submit"
@@ -318,7 +315,7 @@ export const WebhooksTab: React.FC = () => {
                   className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-zinc-950 font-semibold text-xs rounded-lg transition-colors flex items-center gap-2 cursor-pointer disabled:opacity-50"
                 >
                   {isCreating && <RefreshCw className="h-3.5 w-3.5 animate-spin" />}
-                  <span>Daftarkan Webhook</span>
+                  <span>Register Webhook</span>
                 </button>
               </div>
             </form>

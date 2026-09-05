@@ -30,7 +30,7 @@ export const ProfileTab: React.FC = () => {
       setFullName(data.full_name || "");
       setAvatarUrl(data.avatar_url || "");
     } catch (err: any) {
-      setProfileError("Gagal memuat profil pengguna");
+      setProfileError("Failed to load user profile");
     } finally {
       setIsLoading(false);
     }
@@ -51,10 +51,10 @@ export const ProfileTab: React.FC = () => {
         avatar_url: avatarUrl || undefined,
       });
       setProfile(updated);
-      setProfileSuccess("Profil berhasil diperbarui");
+      setProfileSuccess("Profile updated successfully");
       setTimeout(() => setProfileSuccess(null), 3000);
     } catch (err: any) {
-      setProfileError(err.response?.data?.message || "Gagal memperbarui profil");
+      setProfileError(err.response?.data?.message || "Failed to update profile");
     } finally {
       setIsSavingProfile(false);
     }
@@ -63,11 +63,11 @@ export const ProfileTab: React.FC = () => {
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (newPassword !== confirmPassword) {
-      setPasswordError("Konfirmasi kata sandi baru tidak cocok");
+      setPasswordError("New password confirmation does not match");
       return;
     }
     if (newPassword.length < 8) {
-      setPasswordError("Kata sandi baru minimal 8 karakter");
+      setPasswordError("New password must be at least 8 characters");
       return;
     }
 
@@ -79,13 +79,13 @@ export const ProfileTab: React.FC = () => {
         old_password: oldPassword,
         new_password: newPassword,
       });
-      setPasswordSuccess("Kata sandi berhasil diubah");
+      setPasswordSuccess("Password changed successfully");
       setOldPassword("");
       setNewPassword("");
       setConfirmPassword("");
       setTimeout(() => setPasswordSuccess(null), 3000);
     } catch (err: any) {
-      setPasswordError(err.response?.data?.message || "Gagal mengubah kata sandi");
+      setPasswordError(err.response?.data?.message || "Failed to change password");
     } finally {
       setIsChangingPassword(false);
     }
@@ -95,22 +95,21 @@ export const ProfileTab: React.FC = () => {
     return (
       <div className="flex items-center justify-center py-16 text-zinc-500">
         <RefreshCw className="h-5 w-5 animate-spin mr-2" />
-        <span className="text-sm">Memuat pengaturan profil...</span>
+        <span className="text-sm">Loading profile settings...</span>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      {}
       <div className={AppTheme.containers.card}>
         <div className="border-b border-[#262626] pb-4 mb-5 flex items-center gap-3">
           <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
             <User className="h-5 w-5" />
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-zinc-100">Informasi Pribadi</h3>
-            <p className="text-xs text-zinc-400">Kelola informasi nama dan identitas akun Anda</p>
+            <h3 className="text-sm font-semibold text-zinc-100">Personal Information</h3>
+            <p className="text-xs text-zinc-400">Manage your account name and identity details</p>
           </div>
         </div>
 
@@ -130,30 +129,30 @@ export const ProfileTab: React.FC = () => {
 
         <form onSubmit={handleUpdateProfile} className="space-y-4 max-w-xl">
           <div>
-            <label className="block text-xs font-medium text-zinc-300 mb-1.5">Alamat Email</label>
+            <label className="block text-xs font-medium text-zinc-300 mb-1.5">Email Address</label>
             <input
               type="email"
               disabled
               value={profile?.email || ""}
               className="w-full bg-[#181818] border border-[#2e2e2e] text-zinc-400 text-xs rounded-lg px-3 py-2 cursor-not-allowed"
             />
-            <p className="text-[11px] text-zinc-400 mt-1">Email login utama tidak dapat diubah secara langsung</p>
+            <p className="text-[11px] text-zinc-400 mt-1">Primary login email cannot be changed directly</p>
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-zinc-300 mb-1.5">Nama Lengkap</label>
+            <label className="block text-xs font-medium text-zinc-300 mb-1.5">Full Name</label>
             <input
               type="text"
               required
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              placeholder="Contoh: Budi Santoso"
+              placeholder="e.g. John Doe"
               className="w-full bg-[#141414] border border-[#2e2e2e] text-zinc-200 text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-emerald-500 transition-colors"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-zinc-300 mb-1.5">URL Avatar (Opsional)</label>
+            <label className="block text-xs font-medium text-zinc-300 mb-1.5">Avatar URL (Optional)</label>
             <input
               type="url"
               value={avatarUrl}
@@ -169,20 +168,19 @@ export const ProfileTab: React.FC = () => {
             className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-zinc-950 font-semibold text-xs rounded-lg transition-colors flex items-center gap-2 cursor-pointer disabled:opacity-50"
           >
             {isSavingProfile && <RefreshCw className="h-3.5 w-3.5 animate-spin" />}
-            <span>Simpan Perubahan</span>
+            <span>Save Changes</span>
           </button>
         </form>
       </div>
 
-      {}
       <div className={AppTheme.containers.card}>
         <div className="border-b border-[#262626] pb-4 mb-5 flex items-center gap-3">
           <div className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400">
             <Lock className="h-5 w-5" />
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-zinc-100">Keamanan & Kata Sandi</h3>
-            <p className="text-xs text-zinc-400">Perbarui kata sandi untuk melindungi akun Anda</p>
+            <h3 className="text-sm font-semibold text-zinc-100">Security & Password</h3>
+            <p className="text-xs text-zinc-400">Update your password to protect your account</p>
           </div>
         </div>
 
@@ -202,37 +200,37 @@ export const ProfileTab: React.FC = () => {
 
         <form onSubmit={handleChangePassword} className="space-y-4 max-w-xl">
           <div>
-            <label className="block text-xs font-medium text-zinc-300 mb-1.5">Kata Sandi Lama</label>
+            <label className="block text-xs font-medium text-zinc-300 mb-1.5">Current Password</label>
             <input
               type="password"
               required
               value={oldPassword}
               onChange={(e) => setOldPassword(e.target.value)}
-              placeholder="Masukkan kata sandi saat ini"
+              placeholder="Enter current password"
               className="w-full bg-[#141414] border border-[#2e2e2e] text-zinc-200 text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-emerald-500 transition-colors"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-zinc-300 mb-1.5">Kata Sandi Baru</label>
+            <label className="block text-xs font-medium text-zinc-300 mb-1.5">New Password</label>
             <input
               type="password"
               required
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              placeholder="Minimal 8 karakter"
+              placeholder="Minimum 8 characters"
               className="w-full bg-[#141414] border border-[#2e2e2e] text-zinc-200 text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-emerald-500 transition-colors"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-zinc-300 mb-1.5">Konfirmasi Kata Sandi Baru</label>
+            <label className="block text-xs font-medium text-zinc-300 mb-1.5">Confirm New Password</label>
             <input
               type="password"
               required
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="Ulangi kata sandi baru"
+              placeholder="Repeat new password"
               className="w-full bg-[#141414] border border-[#2e2e2e] text-zinc-200 text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-emerald-500 transition-colors"
             />
           </div>
@@ -244,12 +242,11 @@ export const ProfileTab: React.FC = () => {
           >
             {isChangingPassword && <RefreshCw className="h-3.5 w-3.5 animate-spin" />}
             <Key className="h-3.5 w-3.5" />
-            <span>Perbarui Kata Sandi</span>
+            <span>Update Password</span>
           </button>
         </form>
       </div>
 
-      {}
       <div className={AppTheme.containers.card}>
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
@@ -257,14 +254,14 @@ export const ProfileTab: React.FC = () => {
               <Shield className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-zinc-100">Autentikasi Dua Faktor (2FA)</h3>
+              <h3 className="text-sm font-semibold text-zinc-100">Two-Factor Authentication (2FA)</h3>
               <p className="text-xs text-zinc-400 mt-0.5">
-                Tambahkan lapisan perlindungan ekstra pada akun Anda menggunakan aplikasi autentikator (TOTP)
+                Add an extra layer of protection to your account using an authenticator app (TOTP)
               </p>
             </div>
           </div>
           <span className="px-2.5 py-1 rounded-full text-[11px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-            Terlindungi JWT Session
+            JWT Session Protected
           </span>
         </div>
       </div>

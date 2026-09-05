@@ -50,7 +50,7 @@ import (
 func main() {
 	cfg, err := config.Load()
 	if err != nil {
-		fmt.Printf("Gagal memuat konfigurasi: %v\n", err)
+		fmt.Printf("Failed to load configuration: %v\n", err)
 		os.Exit(1)
 	}
 
@@ -58,9 +58,9 @@ func main() {
 	security.SetAllowedVolumeRoots(cfg.App.AllowedVolumeRoots)
 
 	if err := cfg.Validate(); err != nil {
-		logger.Warn("Peringatan konfigurasi environment", "error", err)
+		logger.Warn("Environment configuration warning", "error", err)
 	}
-	logger.Info("Menginisialisasi Caelus Cloud API",
+	logger.Info("Initializing Caelus Cloud API",
 		"app_name", cfg.App.Name,
 		"env", cfg.App.Env,
 		"port", cfg.App.Port,
@@ -71,7 +71,7 @@ func main() {
 
 	client, err := postgres.NewClient(ctx, &cfg.Database)
 	if err != nil {
-		logger.Error("Gagal menghubungkan ke database PostgreSQL", "error", err)
+		logger.Error("Failed to connect to PostgreSQL database", "error", err)
 		os.Exit(1)
 	}
 	defer client.Close()
@@ -255,9 +255,9 @@ func main() {
 	}
 
 	go func() {
-		logger.Info("Server HTTP Caelus Cloud berjalan", "addr", serverAddr)
+		logger.Info("Caelus Cloud HTTP server running", "addr", serverAddr)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			logger.Error("Gagal menjalankan server HTTP", "error", err)
+			logger.Error("Failed to start HTTP server", "error", err)
 			os.Exit(1)
 		}
 	}()
@@ -266,15 +266,15 @@ func main() {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 	<-quit
 
-	logger.Info("Menerima sinyal terminasi, mematikan server secara graceful...")
+	logger.Info("Termination signal received, shutting down server gracefully...")
 
 	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer shutdownCancel()
 
 	if err := srv.Shutdown(shutdownCtx); err != nil {
-		logger.Error("Server dipaksa berhenti karena error pada shutdown", "error", err)
+		logger.Error("Server forced to shutdown due to error", "error", err)
 		os.Exit(1)
 	}
 
-	logger.Info("Server HTTP Caelus Cloud berhasil dimatikan secara aman")
+	logger.Info("Caelus Cloud HTTP server shutdown successfully")
 }

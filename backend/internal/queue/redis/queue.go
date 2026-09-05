@@ -151,7 +151,7 @@ func (e *RedisQueueEngine) Start(ctx context.Context) error {
 	}
 	e.mu.Unlock()
 
-	logger.Info("Memulai Redis Queue Engine",
+	logger.Info("Starting Redis Queue Engine",
 		"queue", e.queueName,
 		"concurrency", e.concurrency,
 	)
@@ -177,15 +177,15 @@ func (e *RedisQueueEngine) Stop() error {
 	close(e.stopChan)
 	e.mu.Unlock()
 
-	logger.Info("Menghentikan Redis Queue Engine secara anggun...")
+	logger.Info("Stopping Redis Queue Engine gracefully...")
 	e.wg.Wait()
-	logger.Info("Redis Queue Engine berhasil dihentikan")
+	logger.Info("Redis Queue Engine stopped successfully")
 	return nil
 }
 
 func (e *RedisQueueEngine) workerConsumer(ctx context.Context, workerID int) {
 	defer e.wg.Done()
-	logger.Debug("Worker consumer loop aktif", "worker_id", workerID)
+	logger.Debug("Worker consumer loop active", "worker_id", workerID)
 
 	for {
 		select {
@@ -219,7 +219,7 @@ func (e *RedisQueueEngine) workerConsumer(ctx context.Context, workerID int) {
 			taskRaw := res[1]
 			var task queue.TaskPayload
 			if err := json.Unmarshal([]byte(taskRaw), &task); err != nil {
-				logger.Error("Gagal mendeserialisasi payload antrean", "raw", taskRaw, "error", err)
+				logger.Error("Failed to deserialize queue payload", "raw", taskRaw, "error", err)
 				continue
 			}
 
@@ -234,7 +234,7 @@ func (e *RedisQueueEngine) processTask(ctx context.Context, task *queue.TaskPayl
 	e.handlersMu.RUnlock()
 
 	if !exists {
-		logger.Warn("Tidak ditemukan handler untuk tipe tugas", "task_type", task.Type, "task_id", task.ID)
+		logger.Warn("No handler registered for task type", "task_type", task.Type, "task_id", task.ID)
 		e.sendToDeadLetterQueue(ctx, task, fmt.Sprintf("no handler registered for task type %s", task.Type))
 		return
 	}
@@ -249,7 +249,7 @@ func (e *RedisQueueEngine) processTask(ctx context.Context, task *queue.TaskPayl
 	task.LastError = execErr.Error()
 
 	if task.RetryCount > task.MaxRetries {
-		logger.Error("Tugas melebihi batas percobaan maksimal, dialihkan ke Dead Letter Queue",
+		logger.Error("Task exceeded maximum retry attempts, routed to Dead Letter Queue",
 			"task_id", task.ID,
 			"task_type", task.Type,
 			"retry_count", task.RetryCount,
@@ -262,7 +262,7 @@ func (e *RedisQueueEngine) processTask(ctx context.Context, task *queue.TaskPayl
 	multiplier := math.Pow(2, float64(task.RetryCount-1))
 	delay := time.Duration(float64(e.baseRetryDelay) * multiplier)
 
-	logger.Warn("Tugas gagal diproses, menjadwalkan percobaan ulang",
+	logger.Warn("Task processing failed, scheduling retry",
 		"task_id", task.ID,
 		"task_type", task.Type,
 		"retry_count", task.RetryCount,

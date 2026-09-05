@@ -14,19 +14,19 @@ import (
 )
 
 func main() {
-	direction := flag.String("direction", "up", "Arah migrasi: up")
+	direction := flag.String("direction", "up", "Migration direction: up")
 	flag.Parse()
 
 	cfg, err := config.Load()
 	if err != nil {
-		fmt.Printf("Gagal memuat konfigurasi: %v\n", err)
+		fmt.Printf("Failed to load configuration: %v\n", err)
 		os.Exit(1)
 	}
 
 	logger.Init(cfg.App.LogLevel, cfg.App.Debug)
 
 	if cfg.Database.Host == "" {
-		logger.Error("Konfigurasi DB_HOST belum diatur pada environment")
+		logger.Error("DB_HOST configuration not set in environment")
 		os.Exit(1)
 	}
 
@@ -35,7 +35,7 @@ func main() {
 
 	client, err := postgres.NewClient(ctx, &cfg.Database)
 	if err != nil {
-		logger.Error("Gagal tersambung ke basis data", "error", err)
+		logger.Error("Failed to connect to database", "error", err)
 		os.Exit(1)
 	}
 	defer client.Close()
@@ -49,9 +49,9 @@ func main() {
 
 	if *direction == "up" {
 		if err := migrator.Up(ctx, migrationsDir); err != nil {
-			logger.Error("Eksekusi migrasi up gagal", "error", err)
+			logger.Error("Migration up execution failed", "error", err)
 			os.Exit(1)
 		}
-		logger.Info("Seluruh migrasi basis data berhasil diaplikasikan")
+		logger.Info("All database migrations applied successfully")
 	}
 }

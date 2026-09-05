@@ -119,7 +119,6 @@ export default function StorageBackupsPage() {
 
   return (
     <div className={AppContainers.pageWrapper}>
-      {}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center space-x-3">
           <Link
@@ -155,7 +154,6 @@ export default function StorageBackupsPage() {
         </div>
       </div>
 
-      {}
       <div className={AppContainers.metricsGrid}>
         <div className={`${AppContainers.card} ${AppContainers.cardContent}`}>
           <div className="flex items-center justify-between">
@@ -202,9 +200,7 @@ export default function StorageBackupsPage() {
         </div>
       </div>
 
-      {}
       <div className={AppContainers.card}>
-        {}
         <div className="p-2 border-b border-[#262626] flex items-center space-x-2">
           <button
             onClick={() => setActiveTab('policies')}
@@ -231,7 +227,6 @@ export default function StorageBackupsPage() {
           </button>
         </div>
 
-        {}
         {activeTab === 'policies' && (
           <div>
             {loading ? (
@@ -348,7 +343,6 @@ export default function StorageBackupsPage() {
           </div>
         )}
 
-        {}
         {activeTab === 'records' && (
           <div>
             {loading ? (
@@ -465,7 +459,6 @@ export default function StorageBackupsPage() {
         )}
       </div>
 
-      {}
       <CreateBackupPolicyModal
         isOpen={isCreatePolicyOpen}
         onClose={() => setIsCreatePolicyOpen(false)}

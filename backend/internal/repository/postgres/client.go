@@ -48,7 +48,7 @@ func NewClient(ctx context.Context, cfg *config.DatabaseConfig) (*Client, error)
 		return nil, fmt.Errorf("gagal melakukan ping ke database PostgreSQL: %w", err)
 	}
 
-	logger.Info("Koneksi basis data PostgreSQL berhasil tersambung",
+	logger.Info("PostgreSQL database connection established successfully",
 		"host", cfg.Host,
 		"port", cfg.Port,
 		"database", cfg.DBName,
@@ -60,7 +60,7 @@ func NewClient(ctx context.Context, cfg *config.DatabaseConfig) (*Client, error)
 func (c *Client) Close() {
 	if c.Pool != nil {
 		c.Pool.Close()
-		logger.Info("Connection pool database PostgreSQL telah ditutup")
+		logger.Info("PostgreSQL database connection pool closed")
 	}
 }
 

@@ -71,7 +71,6 @@ export const CreateBucketModal: React.FC<CreateBucketModalProps> = ({
   return (
     <div className={AppContainers.modalBackdrop}>
       <div className={`${AppContainers.modalDialog} max-w-lg overflow-hidden`}>
-        {}
         <div className="flex items-center justify-between p-5 border-b border-[#262626] bg-[#171717]">
           <div className="flex items-center space-x-3">
             <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
@@ -92,9 +91,7 @@ export const CreateBucketModal: React.FC<CreateBucketModalProps> = ({
           </button>
         </div>
 
-        {}
         <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
-          {}
           <div className="p-5 overflow-y-auto max-h-[58vh] space-y-4 custom-scrollbar">
             {error && (
               <div className="p-3 rounded-lg bg-rose-950/60 border border-rose-800/40 text-rose-300 text-xs flex items-center space-x-2">
@@ -102,7 +99,6 @@ export const CreateBucketModal: React.FC<CreateBucketModalProps> = ({
               </div>
             )}
 
-            {}
             <div>
               <label className={`${AppText.label} mb-1.5 block`}>
                 Storage Provider
@@ -139,7 +135,6 @@ export const CreateBucketModal: React.FC<CreateBucketModalProps> = ({
               </div>
             </div>
 
-            {}
             {formData.provider_type === 'minio' ? (
               <div className="p-3.5 rounded-xl bg-[#141414] border border-[#262626] space-y-2">
                 <label className={`${AppText.label} block`}>
@@ -168,12 +163,11 @@ export const CreateBucketModal: React.FC<CreateBucketModalProps> = ({
                   <span className="text-[10px] px-2 py-0.5 rounded bg-cyan-900/40 text-cyan-200">Auto-Managed</span>
                 </div>
                 <p className="text-[11px] text-cyan-400/80 mt-1">
-                  Cloud-managed global storage. Menggunakan kredensial API yang terhubung di Cloud Providers untuk {formData.provider_type === 's3' ? 'AWS S3' : 'Cloudflare R2'}.
+                  Cloud-managed global storage. Uses connected API credentials from Cloud Providers for {formData.provider_type === 's3' ? 'AWS S3' : 'Cloudflare R2'}.
                 </p>
               </div>
             )}
 
-            {}
             <div>
               <label className={`${AppText.label} mb-1.5 block`}>
                 Bucket Name
@@ -193,7 +187,6 @@ export const CreateBucketModal: React.FC<CreateBucketModalProps> = ({
               </p>
             </div>
 
-            {}
             {formData.provider_type !== 'r2' ? (
               <div>
                 <label className={`${AppText.label} mb-1.5 block`}>
@@ -223,9 +216,7 @@ export const CreateBucketModal: React.FC<CreateBucketModalProps> = ({
               </div>
             )}
 
-            {}
             <div className="space-y-2.5 pt-1">
-              {}
               <div className="flex items-center justify-between p-3 rounded-lg bg-[#141414] border border-[#262626]">
                 <div className="flex items-center space-x-2.5">
                   {formData.is_public ? (
@@ -248,7 +239,6 @@ export const CreateBucketModal: React.FC<CreateBucketModalProps> = ({
                 />
               </div>
 
-              {}
               <div className="flex items-center justify-between p-3 rounded-lg bg-[#141414] border border-[#262626]">
                 <div className="flex items-center space-x-2.5">
                   <ShieldCheck className="w-4 h-4 text-cyan-400" />
@@ -269,7 +259,6 @@ export const CreateBucketModal: React.FC<CreateBucketModalProps> = ({
             </div>
           </div>
 
-          {}
           <div className="p-4 px-5 flex items-center justify-end space-x-3 border-t border-[#262626] bg-[#141414]">
             <button
               type="button"

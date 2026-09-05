@@ -50,7 +50,6 @@ export const Dialog: React.FC<DialogProps> = ({
 
   return (
     <div className={AppContainers.modalBackdrop}>
-      {}
       <button
         type="button"
         aria-label="Tutup modal backdrop"
@@ -58,7 +57,6 @@ export const Dialog: React.FC<DialogProps> = ({
         onClick={onClose}
       />
 
-      {}
       <div
         className={cn(
           AppContainers.modalDialog,
@@ -66,7 +64,6 @@ export const Dialog: React.FC<DialogProps> = ({
           maxWidths[maxWidth]
         )}
       >
-        {}
         <div className="flex items-center justify-between pb-4 border-b border-[#262626] shrink-0">
           <div>
             <h3 className={AppText.h4}>{title}</h3>
@@ -82,7 +79,6 @@ export const Dialog: React.FC<DialogProps> = ({
           </button>
         </div>
 
-        {}
         <div className={cn(AppContainers.modalBodyScroll, "mt-4")}>
           {children}
         </div>

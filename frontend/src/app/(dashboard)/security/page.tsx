@@ -71,7 +71,7 @@ export default function SecurityPage() {
       setScans(scansRes.data || []);
       setServers(serversRes.data || []);
     } catch (err) {
-      console.error("Gagal memuat data keamanan Sentinel:", err);
+      console.error("Failed to load Sentinel security data:", err);
     } finally {
       setIsLoading(false);
     }
@@ -94,7 +94,7 @@ export default function SecurityPage() {
         setIsScanning(false);
       }, 1500);
     } catch (err) {
-      console.error("Gagal memicu scan:", err);
+      console.error("Failed to trigger scan:", err);
       setIsScanning(false);
     }
   };
@@ -127,12 +127,11 @@ export default function SecurityPage() {
 
   return (
     <div className={AppTheme.containers.pageWrapper}>
-      {}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className={AppTheme.text.h1}>Sentinel Security Hub</h1>
           <p className={AppTheme.text.subtitle}>
-            Pusat audit keamanan infrastruktur, pemindaian kerentanan modular, dan mitigasi otomatis Caelus.
+            Automated infrastructure security audits, modular vulnerability scanning, and platform mitigation.
           </p>
         </div>
         <button
@@ -141,11 +140,10 @@ export default function SecurityPage() {
           className={AppTheme.controls.buttonSecondary}
         >
           <RotateCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin" : ""}`} />
-          Segarkan Data
+          Refresh Data
         </button>
       </div>
 
-      {}
       {posture && (
         <SecurityScoreBadge
           score={posture.overall_score}
@@ -156,27 +154,25 @@ export default function SecurityPage() {
         />
       )}
 
-      {}
       <div className={AppTheme.containers.card}>
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1">
             <h2 className="text-sm font-semibold text-zinc-200 flex items-center gap-2">
               <ShieldCheck className="w-4 h-4 text-emerald-400" />
-              Jalankan Pemindaian Keamanan Baru
+              Run New Security Scan
             </h2>
             <p className="text-xs text-zinc-400">
-              Pilih target server dan modul scanner untuk memulai audit kepatuhan dan analisis celah risiko.
+              Select target server and scanner module to initiate compliance audit and vulnerability analysis.
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            {}
             <select
               value={selectedServerId}
               onChange={(e) => setSelectedServerId(e.target.value)}
               className={AppTheme.controls.selectSm}
             >
-              <option value="all">Semua Server Organisasi</option>
+              <option value="all">All Organization Servers</option>
               {servers.map((s) => (
                 <option key={s.id} value={s.id}>
                   {s.name} ({s.ip_address || "Custom Node"})
@@ -184,13 +180,12 @@ export default function SecurityPage() {
               ))}
             </select>
 
-            {}
             <select
               value={selectedScanType}
               onChange={(e) => setSelectedScanType(e.target.value as ScanType)}
               className={AppTheme.controls.selectSm}
             >
-              <option value="full">Audit Lengkap (Full Suite)</option>
+              <option value="full">Full Audit (Full Suite)</option>
               <option value="port">Port & Service Exposure</option>
               <option value="tls">TLS/SSL & Cipher Suites</option>
               <option value="headers">HTTP Security Headers</option>
@@ -198,20 +193,18 @@ export default function SecurityPage() {
               <option value="vuln">System CVE Vulnerabilities</option>
             </select>
 
-            {}
             <button
               onClick={handleTriggerScan}
               disabled={isScanning}
               className={AppTheme.controls.buttonPrimary}
             >
               <Play className={`w-3.5 h-3.5 ${isScanning ? "animate-spin" : ""}`} />
-              {isScanning ? "Memindai..." : "Mulai Pemindaian"}
+              {isScanning ? "Scanning..." : "Start Scan"}
             </button>
           </div>
         </div>
       </div>
 
-      {}
       <div className="flex items-center gap-2 border-b border-[#262626] pb-3">
         <button
           onClick={() => setActiveTab("findings")}
@@ -222,7 +215,7 @@ export default function SecurityPage() {
           }`}
         >
           <Filter className="w-3.5 h-3.5" />
-          Temuan Keamanan ({findings.length})
+          Security Findings ({findings.length})
         </button>
         <button
           onClick={() => setActiveTab("scans")}
@@ -233,20 +226,18 @@ export default function SecurityPage() {
           }`}
         >
           <Clock className="w-3.5 h-3.5" />
-          Riwayat Pemindaian ({scans.length})
+          Scan History ({scans.length})
         </button>
       </div>
 
-      {}
       {activeTab === "findings" && (
         <div className="space-y-4">
-          {}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-[#111111] p-3 rounded-xl border border-[#222222]">
             <div className="relative w-full sm:w-72">
               <Search className="w-4 h-4 absolute left-3 top-2.5 text-zinc-500" />
               <input
                 type="text"
-                placeholder="Cari temuan, CVE, judul..."
+                placeholder="Search findings, CVE, title..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-9 pr-3 py-1.5 rounded-lg bg-[#181818] border border-[#2e2e2e] text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-emerald-500"
@@ -259,7 +250,7 @@ export default function SecurityPage() {
                 onChange={(e) => setSeverityFilter(e.target.value as FindingSeverity | "all")}
                 className={AppTheme.controls.selectSm}
               >
-                <option value="all">Semua Severity</option>
+                <option value="all">All Severities</option>
                 <option value="critical">Critical</option>
                 <option value="high">High</option>
                 <option value="medium">Medium</option>
@@ -271,7 +262,7 @@ export default function SecurityPage() {
                 onChange={(e) => setCategoryFilter(e.target.value as FindingCategory | "all")}
                 className={AppTheme.controls.selectSm}
               >
-                <option value="all">Semua Kategori</option>
+                <option value="all">All Categories</option>
                 <option value="network">Network & Ports</option>
                 <option value="tls">TLS / SSL</option>
                 <option value="http_headers">HTTP Headers</option>
@@ -284,7 +275,7 @@ export default function SecurityPage() {
                 onChange={(e) => setStatusFilter(e.target.value as FindingStatus | "all")}
                 className={AppTheme.controls.selectSm}
               >
-                <option value="all">Semua Status</option>
+                <option value="all">All Statuses</option>
                 <option value="open">Open</option>
                 <option value="acknowledged">Acknowledged</option>
                 <option value="resolved">Resolved</option>
@@ -293,16 +284,15 @@ export default function SecurityPage() {
             </div>
           </div>
 
-          {}
           <div className={AppTheme.containers.card}>
             {filteredFindings.length === 0 ? (
               <div className="text-center py-12 space-y-3">
                 <CheckCircle2 className="w-10 h-10 text-emerald-400 mx-auto opacity-70" />
                 <h3 className="text-sm font-semibold text-zinc-300">
-                  Tidak Ada Temuan Keamanan yang Cocok
+                  No Matching Security Findings
                 </h3>
                 <p className="text-xs text-zinc-500 max-w-sm mx-auto">
-                  Infrastruktur Anda berada dalam postur aman atau filter yang Anda gunakan tidak menemukan data aktif.
+                  Your infrastructure is in a secure posture or current filter filters out all findings.
                 </p>
               </div>
             ) : (
@@ -310,12 +300,12 @@ export default function SecurityPage() {
                 <table className="w-full text-left text-xs">
                   <thead className="text-[11px] uppercase tracking-wider text-zinc-500 border-b border-[#222222]">
                     <tr>
-                      <th className="pb-3 font-semibold">Tingkat Risiko</th>
-                      <th className="pb-3 font-semibold">Judul Temuan</th>
-                      <th className="pb-3 font-semibold">Kategori</th>
-                      <th className="pb-3 font-semibold">Server Target</th>
+                      <th className="pb-3 font-semibold">Risk Level</th>
+                      <th className="pb-3 font-semibold">Finding Title</th>
+                      <th className="pb-3 font-semibold">Category</th>
+                      <th className="pb-3 font-semibold">Target Server</th>
                       <th className="pb-3 font-semibold">Status</th>
-                      <th className="pb-3 font-semibold text-right">Aksi</th>
+                      <th className="pb-3 font-semibold text-right">Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#1c1c1c]">
@@ -346,7 +336,7 @@ export default function SecurityPage() {
                           </span>
                         </td>
                         <td className="py-3.5 text-zinc-400 font-mono">
-                          {f.server_name || "Semua Server"}
+                          {f.server_name || "All Servers"}
                         </td>
                         <td className="py-3.5">
                           <span
@@ -376,15 +366,14 @@ export default function SecurityPage() {
         </div>
       )}
 
-      {}
       {activeTab === "scans" && (
         <div className={AppTheme.containers.card}>
           {scans.length === 0 ? (
             <div className="text-center py-12 space-y-3">
               <Clock className="w-10 h-10 text-zinc-600 mx-auto" />
-              <h3 className="text-sm font-semibold text-zinc-300">Belum Ada Riwayat Pemindaian</h3>
+              <h3 className="text-sm font-semibold text-zinc-300">No Scan History Yet</h3>
               <p className="text-xs text-zinc-500">
-                Jalankan pemindaian pertama Anda menggunakan bilah di atas untuk memeriksa postur keamanan.
+                Run your first security scan using the form above to evaluate security posture.
               </p>
             </div>
           ) : (
@@ -392,12 +381,12 @@ export default function SecurityPage() {
               <table className="w-full text-left text-xs">
                 <thead className="text-[11px] uppercase tracking-wider text-zinc-500 border-b border-[#222222]">
                   <tr>
-                    <th className="pb-3 font-semibold">Tipe Scan</th>
+                    <th className="pb-3 font-semibold">Scan Type</th>
                     <th className="pb-3 font-semibold">Status</th>
-                    <th className="pb-3 font-semibold">Skor</th>
-                    <th className="pb-3 font-semibold">Total Temuan</th>
+                    <th className="pb-3 font-semibold">Score</th>
+                    <th className="pb-3 font-semibold">Total Findings</th>
                     <th className="pb-3 font-semibold">Critical / High</th>
-                    <th className="pb-3 font-semibold">Waktu Mulai</th>
+                    <th className="pb-3 font-semibold">Started At</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#1c1c1c]">
@@ -408,7 +397,7 @@ export default function SecurityPage() {
                           {s.scan_type.toUpperCase()}
                         </span>
                         <span className="text-zinc-400 font-mono text-[11px]">
-                          {s.server_name || "Semua Server"}
+                          {s.server_name || "All Servers"}
                         </span>
                       </td>
                       <td className="py-3.5">
@@ -427,14 +416,14 @@ export default function SecurityPage() {
                       <td className="py-3.5 font-bold text-zinc-200">
                         {s.score} / 100
                       </td>
-                      <td className="py-3.5 text-zinc-300">{s.total_findings} temuan</td>
+                      <td className="py-3.5 text-zinc-300">{s.total_findings} findings</td>
                       <td className="py-3.5 space-x-2">
                         <span className="text-rose-400 font-bold">{s.critical_count} crit</span>
                         <span className="text-zinc-600">/</span>
                         <span className="text-orange-400 font-bold">{s.high_count} high</span>
                       </td>
                       <td className="py-3.5 text-zinc-400 font-mono text-[11px]">
-                        {s.started_at ? new Date(s.started_at).toLocaleString("id-ID") : "-"}
+                        {s.started_at ? new Date(s.started_at).toLocaleString("en-US") : "-"}
                       </td>
                     </tr>
                   ))}
@@ -445,7 +434,6 @@ export default function SecurityPage() {
         </div>
       )}
 
-      {}
       <FindingDetailModal
         finding={selectedFinding}
         isOpen={isModalOpen}

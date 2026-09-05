@@ -108,7 +108,7 @@ export default function ServerDetailPage({
       const data = await serverService.getServer(serverId);
       setServer(data);
     } catch (err: any) {
-      setError(err.response?.data?.message || "Gagal memuat detail server.");
+      setError(err.response?.data?.message || "Failed to load server details.");
     } finally {
       setIsLoading(false);
     }
@@ -194,7 +194,7 @@ export default function ServerDetailPage({
 
   const handleDelete = async () => {
     if (!server) return;
-    if (confirm(`Apakah Anda yakin ingin menterminasi dan menghapus server ${server.name}?`)) {
+    if (confirm(`Are you sure you want to terminate and delete server ${server.name}?`)) {
       setIsActionLoading(true);
       try {
         await serverService.deleteServer(serverId);
@@ -212,7 +212,7 @@ export default function ServerDetailPage({
       <div className={`flex h-96 items-center justify-center ${AppColors.text.secondary}`}>
         <div className="flex flex-col items-center gap-3">
           <div className="h-6 w-6 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent" />
-          <p className={AppText.bodySm}>Memuat detail server VPS...</p>
+          <p className={AppText.bodySm}>Loading VPS server details...</p>
         </div>
       </div>
     );
@@ -225,13 +225,13 @@ export default function ServerDetailPage({
           <ServerIcon className="h-6 w-6" />
         </div>
         <div>
-          <h2 className={AppText.h3}>Server Tidak Ditemukan</h2>
-          <p className={AppText.subtitle}>{error || "Instance mungkin telah dihapus."}</p>
+          <h2 className={AppText.h3}>Server Not Found</h2>
+          <p className={AppText.subtitle}>{error || "Instance may have been removed."}</p>
         </div>
         <Link href="/infrastructure/vps">
           <Button variant="outline" size="sm" className={`${AppColors.text.secondary} ${AppColors.border.subtle}`}>
             <ArrowLeft className="h-3.5 w-3.5 mr-1.5" />
-            Kembali ke Daftar Server
+            Back to Server List
           </Button>
         </Link>
       </div>
@@ -240,7 +240,6 @@ export default function ServerDetailPage({
 
   return (
     <div className={AppContainers.pageWrapper}>
-      {}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <Link href="/infrastructure/vps">
@@ -266,7 +265,6 @@ export default function ServerDetailPage({
           </div>
         </div>
 
-        {/* Action Controls */}
         <div className="flex items-center gap-1.5 self-start sm:self-auto flex-wrap">
           {canManageServers ? (
             <>
@@ -337,7 +335,6 @@ export default function ServerDetailPage({
         </div>
       </div>
 
-      {}
       <div className={`flex items-center gap-1 border-b ${AppColors.border.subtle} pb-0`}>
         {[
           { id: "overview", label: "Overview & Hardware", icon: ServerIcon },
@@ -376,14 +373,13 @@ export default function ServerDetailPage({
         })}
       </div>
 
-      {}
       {activeTab === "overview" && (
         <div className={AppContainers.overviewSplitGrid}>
           <div className="lg:col-span-2 space-y-4">
             <Card className={AppContainers.card}>
               <CardHeader className={AppContainers.cardHeader}>
-                <CardTitle className={AppText.h4}>Spesifikasi Komputasi</CardTitle>
-                <CardDescription className={AppText.caption}>Rincian alokasi hardware yang diprovisioning</CardDescription>
+                <CardTitle className={AppText.h4}>Compute Specifications</CardTitle>
+                <CardDescription className={AppText.caption}>Provisioned hardware allocation details</CardDescription>
               </CardHeader>
               <CardContent className={AppContainers.cardContent}>
                 <div className={AppContainers.specsGrid}>
@@ -580,10 +576,8 @@ export default function ServerDetailPage({
         </div>
       )}
 
-      {}
       {activeTab === "metrics" && (
         <div className="space-y-4">
-          {}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <MetricCard
               title="vCPU Load"
@@ -621,7 +615,6 @@ export default function ServerDetailPage({
             />
           </div>
 
-          {}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <MetricTimeSeriesChart
               title="vCPU Utilization Percentage"
@@ -674,7 +667,6 @@ export default function ServerDetailPage({
         </div>
       )}
 
-      {}
       {activeTab === "logs" && (
         <div className="space-y-4">
           <LogViewer
@@ -686,13 +678,12 @@ export default function ServerDetailPage({
         </div>
       )}
 
-      {}
       {activeTab === "alerts" && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className={AppText.h4}>Aturan & Insiden Alert Server</h3>
-              <p className={AppText.caption}>Peringatan ambang batas yang dikonfigurasi untuk instance ini</p>
+              <h3 className={AppText.h4}>Server Alert Rules & Incidents</h3>
+              <p className={AppText.caption}>Configured threshold warnings for this instance</p>
             </div>
             <Button
               size="sm"
@@ -700,21 +691,20 @@ export default function ServerDetailPage({
               className={`${AppColors.brand.primary} text-xs`}
             >
               <Plus className="h-3.5 w-3.5 mr-1" />
-              Tambah Aturan Alert
+              Add Alert Rule
             </Button>
           </div>
 
-          {}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <Card className={AppContainers.card}>
               <CardHeader className={AppContainers.cardHeader}>
-                <CardTitle className={AppText.h4}>Insiden Alert Terpicu ({serverAlerts.length})</CardTitle>
-                <CardDescription className={AppText.caption}>Riwayat peringatan performa instan</CardDescription>
+                <CardTitle className={AppText.h4}>Triggered Alert Incidents ({serverAlerts.length})</CardTitle>
+                <CardDescription className={AppText.caption}>Instance performance alert history</CardDescription>
               </CardHeader>
               <CardContent className="p-4 space-y-3">
                 {serverAlerts.length === 0 ? (
                   <p className={`text-center py-6 ${AppText.caption}`}>
-                    Tidak ada insiden alert aktif untuk server ini.
+                    No active alert incidents for this server.
                   </p>
                 ) : (
                   serverAlerts.map((alert) => (
@@ -730,7 +720,7 @@ export default function ServerDetailPage({
                       </div>
                       <p className={AppText.bodySm}>{alert.message}</p>
                       <p className={AppText.codeMuted}>
-                        Waktu: {new Date(alert.triggered_at).toLocaleString("id-ID")}
+                        Triggered: {new Date(alert.triggered_at).toLocaleString("en-US")}
                       </p>
                     </div>
                   ))
@@ -738,16 +728,15 @@ export default function ServerDetailPage({
               </CardContent>
             </Card>
 
-            {}
             <Card className={AppContainers.card}>
               <CardHeader className={AppContainers.cardHeader}>
-                <CardTitle className={AppText.h4}>Aturan Evaluasi Aktif ({serverRules.length})</CardTitle>
-                <CardDescription className={AppText.caption}>Kriteria ambang batas pemantauan otomatis</CardDescription>
+                <CardTitle className={AppText.h4}>Active Evaluation Rules ({serverRules.length})</CardTitle>
+                <CardDescription className={AppText.caption}>Automated monitoring threshold criteria</CardDescription>
               </CardHeader>
               <CardContent className="p-4 space-y-3">
                 {serverRules.length === 0 ? (
                   <p className={`text-center py-6 ${AppText.caption}`}>
-                    Belum ada aturan threshold khusus yang terdaftar.
+                    No custom threshold rules registered yet.
                   </p>
                 ) : (
                   serverRules.map((rule) => (
@@ -758,7 +747,7 @@ export default function ServerDetailPage({
                       <div>
                         <p className={`font-semibold ${AppColors.text.primary}`}>{rule.name}</p>
                         <p className={AppText.codeMuted}>
-                          Kondisi: {rule.metric_name} {rule.operator} {rule.threshold}% ({rule.duration_seconds}s)
+                          Condition: {rule.metric_name} {rule.operator} {rule.threshold}% ({rule.duration_seconds}s)
                         </p>
                       </div>
                       <span className={`text-[10px] uppercase font-bold ${AppColors.brand.accent} ${AppColors.brand.primaryLight} px-2 py-0.5 rounded`}>
@@ -773,7 +762,6 @@ export default function ServerDetailPage({
         </div>
       )}
 
-      {}
       <ResizeServerModal
         server={server}
         isOpen={isResizeOpen}
@@ -783,7 +771,6 @@ export default function ServerDetailPage({
         }}
       />
 
-      {}
       <CreateAlertRuleModal
         serverId={server.id}
         isOpen={isCreateRuleOpen}

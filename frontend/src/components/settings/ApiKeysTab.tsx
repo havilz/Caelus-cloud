@@ -27,7 +27,7 @@ export const ApiKeysTab: React.FC = () => {
       const data = await settingsService.listAPIKeys();
       setApiKeys(data || []);
     } catch (err: any) {
-      setErrorMsg("Gagal memuat daftar Personal Access Tokens");
+      setErrorMsg("Failed to load Personal Access Tokens");
     } finally {
       setIsLoading(false);
     }
@@ -53,21 +53,21 @@ export const ApiKeysTab: React.FC = () => {
       setKeyName("");
       fetchApiKeys();
     } catch (err: any) {
-      setCreateModalError(err.response?.data?.message || "Gagal membuat API key");
+      setCreateModalError(err.response?.data?.message || "Failed to create API key");
     } finally {
       setIsCreating(false);
     }
   };
 
   const handleDeleteKey = async (id: string, name: string) => {
-    if (!confirm(`Revoke / Hapus API Key "${name}"? Kunci ini tidak akan dapat digunakan lagi.`)) return;
+    if (!confirm(`Revoke API Key "${name}"? This key will no longer be usable.`)) return;
     try {
       await settingsService.deleteAPIKey(id);
-      setSuccessMsg("API key berhasil dihapus / direvoke");
+      setSuccessMsg("API key revoked successfully");
       setTimeout(() => setSuccessMsg(null), 3000);
       fetchApiKeys();
     } catch (err: any) {
-      setErrorMsg("Gagal menghapus API key");
+      setErrorMsg("Failed to revoke API key");
       setTimeout(() => setErrorMsg(null), 3000);
     }
   };
@@ -83,31 +83,30 @@ export const ApiKeysTab: React.FC = () => {
     return (
       <div className="flex items-center justify-center py-16 text-zinc-500">
         <RefreshCw className="h-5 w-5 animate-spin mr-2" />
-        <span className="text-sm">Memuat Personal Access Tokens...</span>
+        <span className="text-sm">Loading Personal Access Tokens...</span>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      {}
       {createdToken && (
         <div className="p-4 rounded-xl bg-amber-950/40 border border-amber-500/40 text-amber-200 space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 font-semibold text-sm text-amber-400">
               <Key className="h-4 w-4" />
-              <span>Personal Access Token Baru Berhasil Dibuat</span>
+              <span>New Personal Access Token Generated Successfully</span>
             </div>
             <button
               type="button"
               onClick={() => setCreatedToken(null)}
               className="text-amber-400 hover:text-amber-200 text-xs cursor-pointer"
             >
-              Tutup
+              Close
             </button>
           </div>
           <p className="text-xs text-amber-300/80">
-            Harap salin token ini sekarang. Demi alasan keamanan, token ini <strong>tidak akan pernah ditampilkan lagi</strong> setelah Anda meninggalkan halaman ini.
+            Please copy this token now. For security reasons, this token <strong>will never be displayed again</strong> after leaving this page.
           </p>
           <div className="flex items-center gap-2">
             <input
@@ -122,18 +121,17 @@ export const ApiKeysTab: React.FC = () => {
               className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold text-xs rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer shrink-0"
             >
               {hasCopied ? <Check className="h-4 w-4 text-emerald-950" /> : <Copy className="h-4 w-4" />}
-              <span>{hasCopied ? "Tersalin!" : "Salin"}</span>
+              <span>{hasCopied ? "Copied!" : "Copy"}</span>
             </button>
           </div>
         </div>
       )}
 
-      {}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h3 className="text-sm font-semibold text-zinc-100">Personal Access Tokens & Developer API Keys</h3>
           <p className="text-xs text-zinc-400 mt-0.5">
-            Gunakan token API untuk mengautentikasi request CLI, pipeline CI/CD, dan skrip automasi ke Caelus Cloud
+            Use API tokens to authenticate CLI requests, CI/CD pipelines, and automation scripts with Caelus Cloud
           </p>
         </div>
         <button
@@ -142,7 +140,7 @@ export const ApiKeysTab: React.FC = () => {
           className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-zinc-950 font-semibold text-xs rounded-lg transition-colors flex items-center gap-2 cursor-pointer shrink-0"
         >
           <Plus className="h-4 w-4" />
-          <span>Buat Token Baru</span>
+          <span>Generate New Token</span>
         </button>
       </div>
 
@@ -160,13 +158,12 @@ export const ApiKeysTab: React.FC = () => {
         </div>
       )}
 
-      {}
       {apiKeys.length === 0 ? (
         <div className={`${AppTheme.containers.card} text-center py-12 space-y-3`}>
           <div className="mx-auto w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-500">
             <Key className="h-5 w-5" />
           </div>
-          <p className="text-xs text-zinc-400">Belum ada API Key yang dibuat.</p>
+          <p className="text-xs text-zinc-400">No API Keys generated yet.</p>
         </div>
       ) : (
         <div className={`${AppTheme.containers.card} overflow-hidden p-0`}>
@@ -183,15 +180,15 @@ export const ApiKeysTab: React.FC = () => {
                   <div className="flex items-center gap-4 text-[11px] text-zinc-400">
                     <span className="flex items-center gap-1">
                       <Clock className="h-3.5 w-3.5" />
-                      Dibuat: {new Date(key.created_at).toLocaleDateString()}
+                      Created: {new Date(key.created_at).toLocaleDateString()}
                     </span>
                     {key.last_used_at ? (
-                      <span>Terakhir digunakan: {new Date(key.last_used_at).toLocaleDateString()}</span>
+                      <span>Last used: {new Date(key.last_used_at).toLocaleDateString()}</span>
                     ) : (
-                      <span className="text-zinc-400">Belum pernah digunakan</span>
+                      <span className="text-zinc-400">Never used</span>
                     )}
                     {key.expires_at && (
-                      <span className="text-amber-400/80">Kedaluwarsa: {new Date(key.expires_at).toLocaleDateString()}</span>
+                      <span className="text-amber-400/80">Expires: {new Date(key.expires_at).toLocaleDateString()}</span>
                     )}
                   </div>
                 </div>
@@ -201,7 +198,7 @@ export const ApiKeysTab: React.FC = () => {
                     type="button"
                     onClick={() => handleDeleteKey(key.id, key.name)}
                     className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
-                    title="Revoke / Hapus Token"
+                    title="Revoke Token"
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
@@ -212,14 +209,13 @@ export const ApiKeysTab: React.FC = () => {
         </div>
       )}
 
-      {}
       {isCreateModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-4">
           <div className="bg-[#141414] border border-[#2e2e2e] rounded-xl w-full max-w-md p-6 shadow-2xl space-y-4">
             <div className="flex items-center justify-between border-b border-[#262626] pb-3">
               <h3 className="text-sm font-semibold text-zinc-100 flex items-center gap-2">
                 <Key className="h-4 w-4 text-emerald-400" />
-                Buat Personal Access Token Baru
+                Generate New Personal Access Token
               </h3>
               <button
                 type="button"
@@ -239,29 +235,29 @@ export const ApiKeysTab: React.FC = () => {
 
             <form onSubmit={handleCreateKey} className="space-y-4">
               <div>
-                <label className="block text-xs font-medium text-zinc-300 mb-1.5">Nama Deskriptif Token</label>
+                <label className="block text-xs font-medium text-zinc-300 mb-1.5">Descriptive Token Name</label>
                 <input
                   type="text"
                   required
                   value={keyName}
                   onChange={(e) => setKeyName(e.target.value)}
-                  placeholder="Contoh: GitHub Actions Deployer, CLI Laptop"
+                  placeholder="e.g. GitHub Actions Deployer, CLI Laptop"
                   className="w-full bg-[#181818] border border-[#2e2e2e] text-zinc-200 text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-emerald-500 transition-colors"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-zinc-300 mb-1.5">Masa Berlaku (Expiration)</label>
+                <label className="block text-xs font-medium text-zinc-300 mb-1.5">Expiration Period</label>
                 <select
                   value={expiresInDays}
                   onChange={(e) => setExpiresInDays(Number(e.target.value))}
                   className="w-full bg-[#181818] border border-[#2e2e2e] text-zinc-200 text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-emerald-500 cursor-pointer"
                 >
-                  <option value={7}>7 Hari</option>
-                  <option value={30}>30 Hari (Direkomendasikan)</option>
-                  <option value={90}>90 Hari</option>
-                  <option value={365}>1 Tahun</option>
-                  <option value={0}>Tidak pernah kedaluwarsa</option>
+                  <option value={7}>7 Days</option>
+                  <option value={30}>30 Days (Recommended)</option>
+                  <option value={90}>90 Days</option>
+                  <option value={365}>1 Year</option>
+                  <option value={0}>Never expires</option>
                 </select>
               </div>
 
@@ -271,7 +267,7 @@ export const ApiKeysTab: React.FC = () => {
                   onClick={() => setIsCreateModalOpen(false)}
                   className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs rounded-lg transition-colors cursor-pointer"
                 >
-                  Batal
+                  Cancel
                 </button>
                 <button
                   type="submit"

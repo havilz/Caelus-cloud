@@ -96,7 +96,6 @@ export default function DomainsPage() {
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-[#ededed] p-6 lg:p-8 space-y-6">
-      {}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-[#262626] pb-6">
         <div>
           <div className="flex items-center gap-3">
@@ -131,7 +130,6 @@ export default function DomainsPage() {
         </div>
       </div>
 
-      {}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="rounded-xl border border-[#262626] bg-[#121212] p-4 flex items-center justify-between">
           <div>
@@ -174,7 +172,6 @@ export default function DomainsPage() {
         </div>
       </div>
 
-      {}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
@@ -201,7 +198,6 @@ export default function DomainsPage() {
         </div>
       </div>
 
-      {}
       <div className="rounded-xl border border-[#262626] bg-[#121212] overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
@@ -357,14 +353,12 @@ export default function DomainsPage() {
         </div>
       </div>
 
-      {}
       <AddDomainModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onSuccess={loadDomains}
       />
 
-      {}
       <DnsInstructionModal
         domain={selectedDnsDomain}
         isOpen={!!selectedDnsDomain}

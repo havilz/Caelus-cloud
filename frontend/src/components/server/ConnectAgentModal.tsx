@@ -37,37 +37,35 @@ export const ConnectAgentModal: React.FC<ConnectAgentModalProps> = ({
     <Dialog
       isOpen={isOpen}
       onClose={onClose}
-      title="Hubungkan Caelus Agent ke VPS Anda"
-      description={`Jalankan perintah berikut pada terminal VPS "${server.name}" untuk memulai streaming telemetri & otomasi`}
+      title="Connect Caelus Agent to Your VPS"
+      description={`Run the following command in VPS terminal "${server.name}" to start telemetry streaming & automation`}
       maxWidth="lg"
     >
       <div className="space-y-4 py-1">
-        {}
         <div className="p-3.5 rounded-xl bg-[#141414] border border-[#262626] flex items-center justify-between">
           <div>
-            <span className="text-[10px] text-[#707070] font-semibold uppercase tracking-wider">Server Target</span>
+            <span className="text-[10px] text-[#707070] font-semibold uppercase tracking-wider">Target Server</span>
             <h4 className="text-sm font-bold text-[#ededed]">{server.name}</h4>
             <p className="text-xs font-mono text-[#a1a1a1]">IP: {server.ip_address || "BYOS / Host Server"}</p>
           </div>
           <div className="text-right">
-            <span className="text-[10px] text-[#707070] font-semibold uppercase tracking-wider">Status Agent</span>
+            <span className="text-[10px] text-[#707070] font-semibold uppercase tracking-wider">Agent Status</span>
             <div className="flex items-center gap-1.5 mt-0.5 justify-end">
               {server.status === "running" ? (
                 <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-emerald-950/60 text-emerald-400 border border-emerald-800/40 flex items-center gap-1">
                   <CheckCircle2 className="w-3 h-3" />
-                  Terhubung & Aktif
+                  Connected & Active
                 </span>
               ) : (
                 <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-amber-950/60 text-amber-400 border border-amber-800/40 flex items-center gap-1">
                   <RefreshCw className="w-3 h-3 animate-spin" />
-                  Menunggu Koneksi...
+                  Waiting for Connection...
                 </span>
               )}
             </div>
           </div>
         </div>
 
-        {}
         <div className="flex border-b border-[#262626] gap-2 pt-1">
           <button
             type="button"
@@ -75,15 +73,14 @@ export const ConnectAgentModal: React.FC<ConnectAgentModalProps> = ({
             className="pb-2 text-xs font-semibold border-b-2 border-emerald-500 text-emerald-400 flex items-center gap-1.5 cursor-pointer"
           >
             <Terminal className="w-3.5 h-3.5" />
-            Metode 1: Otomatis (Rekomendasi VPS)
+            Method 1: Automatic (VPS Recommended)
           </button>
         </div>
 
-        {}
         <div className="space-y-3 pt-1">
           <div className="flex items-center justify-between">
             <span className="text-xs text-[#a1a1a1]">
-              Jalankan perintah 1-baris berikut di terminal VPS Anda untuk menginstal dan menjalankan agent otomatis via <code>systemd</code>:
+              Run the following one-line command in your VPS terminal to install and start the agent automatically via <code>systemd</code>:
             </span>
             <span className="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded whitespace-nowrap">
               Auto-Start Service
@@ -101,25 +98,24 @@ export const ConnectAgentModal: React.FC<ConnectAgentModalProps> = ({
               {copiedType === "oneline" ? (
                 <>
                   <Check className="w-3.5 h-3.5 text-emerald-400" />
-                  <span className="text-emerald-400 text-[11px]">Tersalin!</span>
+                  <span className="text-emerald-400 text-[11px]">Copied!</span>
                 </>
               ) : (
                 <>
                   <Copy className="w-3.5 h-3.5" />
-                  <span className="text-[11px]">Salin Perintah</span>
+                  <span className="text-[11px]">Copy Command</span>
                 </>
               )}
             </button>
           </div>
 
           <div className="p-2.5 rounded-lg bg-[#141414] border border-[#222222] text-[11px] text-[#888888] space-y-1">
-            <p className="font-semibold text-[#cccccc]">Catatan:</p>
-            <p>• Perintah di atas akan langsung menjalankan agent di latar belakang sebagai system service (tidak perlu menjalankan perintah tambahan apa pun lagi).</p>
-            <p>• Untuk mengecek status di VPS: <code>sudo systemctl status caelus-agent</code></p>
+            <p className="font-semibold text-[#cccccc]">Note:</p>
+            <p>• The command above starts the agent in the background as a system service immediately (no additional commands required).</p>
+            <p>• To check status on your VPS: <code>sudo systemctl status caelus-agent</code></p>
           </div>
         </div>
 
-        {}
         <div className="grid grid-cols-2 gap-2.5 p-3 rounded-xl bg-[#121212] border border-[#262626] text-[11px]">
           <div>
             <span className="text-[#707070] uppercase tracking-wider block mb-0.5">Server UUID</span>
@@ -131,10 +127,9 @@ export const ConnectAgentModal: React.FC<ConnectAgentModalProps> = ({
           </div>
         </div>
 
-        {}
         <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#262626]">
           <Button variant="outline" type="button" onClick={onClose}>
-            Tutup
+            Close
           </Button>
         </div>
       </div>

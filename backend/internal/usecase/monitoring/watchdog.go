@@ -55,7 +55,7 @@ func (w *HeartbeatWatchdog) Start() {
 
 	w.wg.Add(1)
 	go w.runLoop()
-	logger.Info("Heartbeat Liveness Watchdog berhasil dijalankan", "timeout", w.timeout.String())
+	logger.Info("Heartbeat Liveness Watchdog started successfully", "timeout", w.timeout.String())
 }
 
 func (w *HeartbeatWatchdog) Stop() {
@@ -69,7 +69,7 @@ func (w *HeartbeatWatchdog) Stop() {
 	w.mu.Unlock()
 
 	w.wg.Wait()
-	logger.Info("Heartbeat Liveness Watchdog berhasil dihentikan")
+	logger.Info("Heartbeat Liveness Watchdog stopped successfully")
 }
 
 func (w *HeartbeatWatchdog) runLoop() {
@@ -94,7 +94,7 @@ func (w *HeartbeatWatchdog) evaluateHeartbeats() {
 
 	servers, err := w.serverRepo.ListAllRunning(ctx)
 	if err != nil {
-		logger.Error("Gagal mengambil daftar server running untuk watchdog", "error", err)
+		logger.Error("Failed to query running servers for watchdog", "error", err)
 		return
 	}
 
@@ -107,7 +107,7 @@ func (w *HeartbeatWatchdog) evaluateHeartbeats() {
 		}
 
 		if now.Sub(latestMetric.RecordedAt) > w.timeout {
-			logger.Warn("Server terdeteksi offline karena tidak mengirimkan heartbeat telemetri",
+			logger.Warn("Server detected offline due to missing telemetry heartbeat",
 				"server_id", srv.ID,
 				"server_name", srv.Name,
 				"last_heartbeat", latestMetric.RecordedAt,
@@ -115,7 +115,7 @@ func (w *HeartbeatWatchdog) evaluateHeartbeats() {
 			)
 
 			if err := w.serverRepo.UpdateStatus(ctx, srv.ID, domain.ServerStatusStopped); err != nil {
-				logger.Error("Gagal memperbarui status server menjadi stopped", "server_id", srv.ID, "error", err)
+				logger.Error("Failed to update server status to stopped", "server_id", srv.ID, "error", err)
 				continue
 			}
 

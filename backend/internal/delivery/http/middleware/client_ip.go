@@ -87,9 +87,6 @@ func (v *IPValidator) IsTrustedProxy(ipStr string) bool {
 }
 
 // ExtractClientIP securely extracts the client IP address from the request.
-// If the remote peer is not in the trusted proxies set, it returns the remote peer address directly,
-// ignoring X-Forwarded-For and X-Real-IP headers.
-// If the remote peer is trusted, it traverses X-Forwarded-For right-to-left to find the first untrusted upstream IP.
 func (v *IPValidator) ExtractClientIP(r *http.Request) string {
 	remoteHost, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
@@ -97,15 +94,12 @@ func (v *IPValidator) ExtractClientIP(r *http.Request) string {
 	}
 	remoteHost = strings.TrimSpace(remoteHost)
 
-	// If remote peer is not a trusted proxy, do not trust any forwarded headers.
 	if !v.IsTrustedProxy(remoteHost) {
 		return remoteHost
 	}
 
-	// Remote peer is a trusted reverse proxy: inspect X-Forwarded-For
 	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
 		parts := strings.Split(xff, ",")
-		// Traverse right-to-left: the first IP from the right that is not a trusted proxy is the true client IP.
 		for i := len(parts) - 1; i >= 0; i-- {
 			candidate := strings.TrimSpace(parts[i])
 			if candidate == "" {
@@ -120,7 +114,6 @@ func (v *IPValidator) ExtractClientIP(r *http.Request) string {
 			}
 		}
 
-		// If all IPs in the XFF chain were trusted proxies, fallback to the leftmost valid IP.
 		for _, part := range parts {
 			candidate := strings.TrimSpace(part)
 			if parsed := net.ParseIP(candidate); parsed != nil {
@@ -129,7 +122,6 @@ func (v *IPValidator) ExtractClientIP(r *http.Request) string {
 		}
 	}
 
-	// Check X-Real-IP if X-Forwarded-For is not present or valid
 	if xrip := r.Header.Get("X-Real-IP"); xrip != "" {
 		candidate := strings.TrimSpace(xrip)
 		if parsed := net.ParseIP(candidate); parsed != nil {
@@ -160,7 +152,6 @@ func ClientIPMiddleware(validator *IPValidator) func(http.Handler) http.Handler 
 			clientIP := validator.ExtractClientIP(r)
 			ctx := context.WithValue(r.Context(), ClientIPContextKey, clientIP)
 
-			// Safely update RemoteAddr to the validated client IP while preserving port if available
 			_, port, err := net.SplitHostPort(r.RemoteAddr)
 			if err == nil && port != "" {
 				r.RemoteAddr = net.JoinHostPort(clientIP, port)

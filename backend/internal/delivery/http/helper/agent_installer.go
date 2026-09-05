@@ -25,7 +25,7 @@ func HandleAgentBinDownload(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if targetBin == "" {
-		response.Error(w, http.StatusNotFound, "Binary caelus-agent belum dikompilasi pada server API (Jalankan 'make build-agent')", nil)
+		response.Error(w, http.StatusNotFound, "caelus-agent binary not compiled on API server (Run 'make build-agent')", nil)
 		return
 	}
 
@@ -71,15 +71,15 @@ fi
 INSTALL_DIR="/opt/caelus"
 mkdir -p "$INSTALL_DIR"
 
-echo "-> Menghentikan service lama jika sedang berjalan..."
+echo "-> Stopping previous service if running..."
 systemctl stop caelus-agent 2>/dev/null || true
 
-echo "-> Mengunduh binary agent terbaru..."
+echo "-> Downloading latest agent binary..."
 curl -sSL "$API_ENDPOINT/agent-bin" -o "$INSTALL_DIR/caelus-agent.tmp"
 mv -f "$INSTALL_DIR/caelus-agent.tmp" "$INSTALL_DIR/caelus-agent"
 chmod +x "$INSTALL_DIR/caelus-agent"
 
-echo "-> Membuat konfigurasi agent..."
+echo "-> Generating agent configuration..."
 cat <<EOF > "$INSTALL_DIR/agent.env"
 SERVER_ID=$SERVER_ID
 AGENT_SECRET=$AGENT_SECRET
@@ -97,7 +97,7 @@ if [ -n "$ALL_PROXY" ]; then
     echo "HTTPS_PROXY=$ALL_PROXY" >> "$INSTALL_DIR/agent.env"
 fi
 
-echo "-> Mendaftarkan service systemd..."
+echo "-> Registering systemd service..."
 cat <<EOF > /etc/systemd/system/caelus-agent.service
 [Unit]
 Description=Caelus Cloud Monitoring & Telemetry Agent
@@ -118,6 +118,6 @@ systemctl daemon-reload 2>/dev/null || true
 systemctl enable caelus-agent 2>/dev/null || true
 systemctl restart caelus-agent 2>/dev/null || true
 
-echo "=== Caelus Cloud Agent Berhasil Diinstal dan Berjalan! ==="
+echo "=== Caelus Cloud Agent Installed and Running Successfully! ==="
 `
 }

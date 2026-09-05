@@ -42,22 +42,19 @@ func GetAllowedVolumeRoots() []string {
 }
 
 // ValidateHostPath validates that hostPath is an absolute, canonical path strictly residing within
-// one of the allowed volume root directories (strict allowlist approach). It resolves symlinks,
-// prevents directory traversal (../), and disallows mounting root directories directly (Audit C-2).
+// one of the allowed volume root directories, preventing directory traversal and symlink escapes.
 func ValidateHostPath(hostPath string, customAllowedRoots ...[]string) (string, error) {
 	trimmed := strings.TrimSpace(hostPath)
 	if trimmed == "" {
-		return "", errors.New("host_path tidak boleh kosong")
+		return "", errors.New("host_path must not be empty")
 	}
 
 	if !filepath.IsAbs(trimmed) {
-		return "", fmt.Errorf("host_path '%s' harus berupa path absolut", hostPath)
+		return "", fmt.Errorf("host_path '%s' must be an absolute path", hostPath)
 	}
 
-	// Lexically clean the requested path
 	cleanPath := filepath.Clean(trimmed)
 
-	// Determine which allowed root paths to check against
 	allowedRoots := GetAllowedVolumeRoots()
 	if len(customAllowedRoots) > 0 && len(customAllowedRoots[0]) > 0 {
 		allowedRoots = customAllowedRoots[0]
@@ -72,25 +69,22 @@ func ValidateHostPath(hostPath string, customAllowedRoots ...[]string) (string, 
 	}
 
 	if len(cleanedAllowedRoots) == 0 {
-		return "", errors.New("tidak ada allowed volume roots yang terkonfigurasi")
+		return "", errors.New("no allowed volume roots configured")
 	}
 
-	// Resolve canonical path and inspect any symlinks
 	canonicalPath, err := resolveCanonicalPath(cleanPath)
 	if err != nil {
-		return "", fmt.Errorf("gagal mengevaluasi canonical path '%s': %w", hostPath, err)
+		return "", fmt.Errorf("failed to evaluate canonical path '%s': %w", hostPath, err)
 	}
 
-	// Verify that canonicalPath strictly resides inside at least one allowed root
 	for _, root := range cleanedAllowedRoots {
 		canonicalRoot, err := resolveCanonicalPath(root)
 		if err != nil {
 			canonicalRoot = root
 		}
 
-		// Disallow mounting the root volume itself (must be a specific subpath)
 		if canonicalPath == canonicalRoot {
-			return "", fmt.Errorf("host_path '%s' tidak boleh merupakan root volume itu sendiri (harus subpath spesifik)", hostPath)
+			return "", fmt.Errorf("host_path '%s' must not be the volume root itself (must be a specific subpath)", hostPath)
 		}
 
 		rootPrefix := canonicalRoot
@@ -103,28 +97,24 @@ func ValidateHostPath(hostPath string, customAllowedRoots ...[]string) (string, 
 		}
 	}
 
-	return "", fmt.Errorf("host_path '%s' berada di luar direktori volume yang diizinkan (C-2 path allowlist enforcement)", hostPath)
+	return "", fmt.Errorf("host_path '%s' is outside allowed volume directories (C-2 path allowlist enforcement)", hostPath)
 }
 
-// resolveCanonicalPath resolves symlinks and canonicalizes the path. If the full path does not exist on disk,
-// it walks up to the deepest existing ancestor directory, resolves symlinks for that ancestor, and reconstructs
-// the canonical path.
+// resolveCanonicalPath resolves symlinks and canonicalizes the path, walking ancestors if path does not exist.
 func resolveCanonicalPath(path string) (string, error) {
 	cleaned := filepath.Clean(path)
 
-	// If the path exists on disk, resolve symlinks directly
 	if resolved, err := filepath.EvalSymlinks(cleaned); err == nil {
 		return filepath.Clean(resolved), nil
 	} else if !os.IsNotExist(err) {
 		return "", err
 	}
 
-	// Path does not exist on disk yet: walk up ancestors to find the deepest existing directory
 	curr := cleaned
 	var missingParts []string
 	for {
 		parent := filepath.Dir(curr)
-		if parent == curr { // Reached filesystem root "/"
+		if parent == curr {
 			break
 		}
 		missingParts = append([]string{filepath.Base(curr)}, missingParts...)
@@ -141,6 +131,5 @@ func resolveCanonicalPath(path string) (string, error) {
 		}
 	}
 
-	// If no existing ancestor was found (e.g. mock or test environment), return cleaned lexical path
 	return cleaned, nil
 }

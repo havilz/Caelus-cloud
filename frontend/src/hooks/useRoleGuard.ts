@@ -10,7 +10,6 @@ export function useRoleGuard() {
   const isMember = currentRole === "member";
   const isViewer = currentRole === "viewer";
 
-  // Permission flags based on role hierarchy
   const canManageCredentials = isAdmin;
   const canManageServers = isAdmin;
   const canDeleteServer = isAdmin;

@@ -91,7 +91,6 @@ export const CreateBackupPolicyModal: React.FC<CreateBackupPolicyModalProps> = (
   return (
     <div className={AppContainers.modalBackdrop}>
       <div className={`${AppContainers.modalDialog} max-w-lg p-6`}>
-        {}
         <div className="flex items-center justify-between pb-4 border-b border-[#262626]">
           <div className="flex items-center space-x-3">
             <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
@@ -112,7 +111,6 @@ export const CreateBackupPolicyModal: React.FC<CreateBackupPolicyModalProps> = (
           </button>
         </div>
 
-        {}
         <form onSubmit={handleSubmit} className="mt-5 space-y-4">
           {error && (
             <div className="p-3 rounded-lg bg-rose-950/60 border border-rose-800/40 text-rose-300 text-xs">
@@ -127,7 +125,6 @@ export const CreateBackupPolicyModal: React.FC<CreateBackupPolicyModalProps> = (
             </div>
           ) : (
             <>
-              {}
               <div>
                 <label className={`${AppText.label} mb-1.5`}>
                   Policy Name
@@ -142,7 +139,6 @@ export const CreateBackupPolicyModal: React.FC<CreateBackupPolicyModalProps> = (
                 />
               </div>
 
-              {}
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className={`${AppText.label} mb-1.5`}>
@@ -185,7 +181,6 @@ export const CreateBackupPolicyModal: React.FC<CreateBackupPolicyModalProps> = (
                 </div>
               </div>
 
-              {}
               <div>
                 <label className={`${AppText.label} mb-1.5`}>
                   Backup Frequency Schedule
@@ -217,7 +212,6 @@ export const CreateBackupPolicyModal: React.FC<CreateBackupPolicyModalProps> = (
                 </div>
               </div>
 
-              {}
               <div>
                 <label className={`${AppText.label} mb-1.5`}>
                   Retention Period (Lifecycle Policy)
@@ -240,7 +234,6 @@ export const CreateBackupPolicyModal: React.FC<CreateBackupPolicyModalProps> = (
                 </p>
               </div>
 
-              {}
               <div className="flex items-center justify-between p-3 rounded-lg bg-[#141414] border border-[#262626]">
                 <div className="flex items-center space-x-2.5">
                   <HardDrive className="w-4 h-4 text-emerald-400" />
@@ -265,7 +258,6 @@ export const CreateBackupPolicyModal: React.FC<CreateBackupPolicyModalProps> = (
             </>
           )}
 
-          {}
           <div className="pt-4 flex items-center justify-end space-x-3 border-t border-[#262626]">
             <button
               type="button"

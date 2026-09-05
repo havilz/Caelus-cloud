@@ -37,7 +37,7 @@ export default function RegisterPage() {
     setError(null);
 
     if (password.length < 8) {
-      setError("Panjang kata sandi minimal 8 karakter");
+      setError("Password must be at least 8 characters");
       return;
     }
 
@@ -56,7 +56,7 @@ export default function RegisterPage() {
       setError(
         err.response?.data?.message ||
         err.response?.data?.errors ||
-        "Gagal mendaftarkan akun. Silakan coba kembali."
+        "Failed to register account. Please try again."
       );
     } finally {
       setIsLoading(false);
@@ -66,20 +66,18 @@ export default function RegisterPage() {
   return (
     <div className={AppContainers.authWrapper}>
       <div className={AppContainers.authCardWidth}>
-        {}
         <div className="flex flex-col items-center text-center mb-6">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500 text-zinc-950 font-bold shadow-sm mb-3">
             <Cloud className="h-5 w-5" />
           </div>
           <h1 className={AppText.h2}>Caelus Cloud</h1>
-          <p className={AppText.subtitle}>Inisialisasi Akun & Workspace Baru</p>
+          <p className={AppText.subtitle}>Initialize New Account & Workspace</p>
         </div>
 
-        {}
         <Card className="shadow-lg">
           <CardHeader className="text-center pb-2">
-            <CardTitle className="text-base">Daftar Akun Baru</CardTitle>
-            <CardDescription>Mulai kelola dan monitor seluruh server Anda dalam satu kontrol panel</CardDescription>
+            <CardTitle className="text-base">Create New Account</CardTitle>
+            <CardDescription>Manage and monitor all your servers in one unified control panel</CardDescription>
           </CardHeader>
 
           <CardContent className="pt-4">
@@ -92,7 +90,7 @@ export default function RegisterPage() {
             <form onSubmit={handleSubmit} className="space-y-3.5">
               <div className="space-y-1.5">
                 <label htmlFor="reg-name" className={AppText.label}>
-                  Nama Lengkap
+                  Full Name
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-[#707070]">
@@ -104,7 +102,7 @@ export default function RegisterPage() {
                     required
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
-                    placeholder="Nama Lengkap Anda"
+                    placeholder="Your Full Name"
                     className="w-full rounded-lg border border-[#262626] dark:border-[#262626] light:border-[#d1d5db] bg-[#121212] dark:bg-[#121212] light:bg-[#ffffff] pl-9 pr-3.5 py-2 text-xs text-[#ededed] dark:text-[#ededed] light:text-[#111827] placeholder-[#707070] focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-colors"
                   />
                 </div>
@@ -112,7 +110,7 @@ export default function RegisterPage() {
 
               <div className="space-y-1.5">
                 <label htmlFor="reg-email" className={AppText.label}>
-                  Alamat Email
+                  Email Address
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-[#707070]">
@@ -132,7 +130,7 @@ export default function RegisterPage() {
 
               <div className="space-y-1.5">
                 <label htmlFor="reg-org" className={AppText.label}>
-                  Nama Workspace / Organisasi
+                  Workspace / Organization Name
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-[#707070]">
@@ -143,7 +141,7 @@ export default function RegisterPage() {
                     type="text"
                     value={orgName}
                     onChange={(e) => setOrgName(e.target.value)}
-                    placeholder="My Production Workspace (Opsional)"
+                    placeholder="My Production Workspace (Optional)"
                     className="w-full rounded-lg border border-[#262626] dark:border-[#262626] light:border-[#d1d5db] bg-[#121212] dark:bg-[#121212] light:bg-[#ffffff] pl-9 pr-3.5 py-2 text-xs text-[#ededed] dark:text-[#ededed] light:text-[#111827] placeholder-[#707070] focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-colors"
                   />
                 </div>
@@ -151,7 +149,7 @@ export default function RegisterPage() {
 
               <div className="space-y-1.5">
                 <label htmlFor="reg-password" className={AppText.label}>
-                  Kata Sandi
+                  Password
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-[#707070]">
@@ -163,7 +161,7 @@ export default function RegisterPage() {
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Minimal 8 karakter"
+                    placeholder="Minimum 8 characters"
                     className="w-full rounded-lg border border-[#262626] dark:border-[#262626] light:border-[#d1d5db] bg-[#121212] dark:bg-[#121212] light:bg-[#ffffff] pl-9 pr-10 py-2 text-xs text-[#ededed] dark:text-[#ededed] light:text-[#111827] placeholder-[#707070] focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-colors"
                   />
                   <button
@@ -177,15 +175,15 @@ export default function RegisterPage() {
               </div>
 
               <Button type="submit" className="w-full mt-4" isLoading={isLoading}>
-                <span>Buat Akun & Masuk</span>
+                <span>Create Account & Sign In</span>
                 <ArrowRight className="h-4 w-4 ml-1" />
               </Button>
             </form>
 
             <div className="mt-6 text-center text-xs text-[#a1a1a1] border-t border-[#262626] dark:border-[#262626] light:border-[#e5e7eb] pt-4">
-              Sudah memiliki akun?{" "}
+              Already have an account?{" "}
               <Link href="/login" className="font-semibold text-emerald-400 hover:text-emerald-300 hover:underline">
-                Masuk di Sini
+                Sign In Here
               </Link>
             </div>
           </CardContent>

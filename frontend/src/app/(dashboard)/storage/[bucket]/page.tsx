@@ -119,7 +119,6 @@ export default function StorageExplorerPage({ params }: StorageExplorerPageProps
 
   return (
     <div className={AppContainers.pageWrapper}>
-      {}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center space-x-3">
           <Link
@@ -156,11 +155,8 @@ export default function StorageExplorerPage({ params }: StorageExplorerPageProps
         </div>
       </div>
 
-      {}
       <div className={AppContainers.card}>
-        {}
         <div className="p-4 border-b border-[#262626] flex flex-col sm:flex-row items-center justify-between gap-3">
-          {}
           <div className="flex items-center space-x-1.5 overflow-x-auto w-full sm:w-auto text-xs custom-scrollbar py-1">
             <button
               onClick={() => navigateToBreadcrumb(-1)}
@@ -190,7 +186,6 @@ export default function StorageExplorerPage({ params }: StorageExplorerPageProps
             ))}
           </div>
 
-          {}
           <div className="relative w-full sm:w-72">
             <Search className="w-4 h-4 text-[#707070] absolute left-3 top-1/2 -translate-y-1/2" />
             <input
@@ -203,7 +198,6 @@ export default function StorageExplorerPage({ params }: StorageExplorerPageProps
           </div>
         </div>
 
-        {}
         {loading ? (
           <div className="p-12 flex flex-col items-center justify-center space-y-3">
             <Loader2 className="w-6 h-6 animate-spin text-emerald-400" />
@@ -241,7 +235,6 @@ export default function StorageExplorerPage({ params }: StorageExplorerPageProps
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#262626] text-xs">
-                {}
                 {filteredFolders.map((folderPath) => {
                   const folderDisplayName = folderPath.replace(currentPrefix, '');
                   return (
@@ -261,7 +254,6 @@ export default function StorageExplorerPage({ params }: StorageExplorerPageProps
                   );
                 })}
 
-                {}
                 {filteredObjects.map((obj) => {
                   const fileName = obj.key.replace(currentPrefix, '');
                   const isDeleting = deletingKey === obj.key;
@@ -296,7 +288,6 @@ export default function StorageExplorerPage({ params }: StorageExplorerPageProps
 
                       <td className="py-3 px-4 text-right">
                         <div className="flex items-center justify-end space-x-1.5">
-                          {}
                           <button
                             onClick={() => setSignedUrlTarget(obj.key)}
                             className="p-1.5 rounded-md text-[#707070] hover:text-cyan-400 hover:bg-cyan-950/30 transition-colors"
@@ -305,7 +296,6 @@ export default function StorageExplorerPage({ params }: StorageExplorerPageProps
                             <KeyRound className="w-3.5 h-3.5" />
                           </button>
 
-                          {}
                           <button
                             onClick={() => handleDownload(obj.key)}
                             className="p-1.5 rounded-md text-[#707070] hover:text-emerald-400 hover:bg-emerald-950/30 transition-colors"
@@ -314,7 +304,6 @@ export default function StorageExplorerPage({ params }: StorageExplorerPageProps
                             <Download className="w-3.5 h-3.5" />
                           </button>
 
-                          {}
                           <button
                             onClick={() => handleDelete(obj.key)}
                             disabled={isDeleting}
@@ -338,7 +327,6 @@ export default function StorageExplorerPage({ params }: StorageExplorerPageProps
         )}
       </div>
 
-      {}
       <UploadObjectModal
         isOpen={isUploadOpen}
         bucketName={bucketName}
@@ -347,7 +335,6 @@ export default function StorageExplorerPage({ params }: StorageExplorerPageProps
         onSuccess={fetchObjects}
       />
 
-      {}
       {signedUrlTarget && (
         <GenerateSignedUrlModal
           isOpen={true}

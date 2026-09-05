@@ -94,7 +94,7 @@ func (e *Engine) evaluateSingleRule(ctx context.Context, rule *domain.Automation
 	if rule.LastTriggeredAt != nil && rule.CooldownSeconds > 0 {
 		cooldownExpiry := rule.LastTriggeredAt.Add(time.Duration(rule.CooldownSeconds) * time.Second)
 		if now.Before(cooldownExpiry) {
-			logger.Warn("Aturan otomasi sedang dalam periode cooldown, eksekusi diabaikan",
+			logger.Warn("Automation rule is in cooldown period, execution skipped",
 				"rule_id", rule.ID,
 				"rule_name", rule.Name,
 				"cooldown_remaining", cooldownExpiry.Sub(now),

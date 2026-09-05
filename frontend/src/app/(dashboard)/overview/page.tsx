@@ -37,7 +37,6 @@ export default function OverviewPage() {
 
   return (
     <div className={AppContainers.pageWrapper}>
-      {}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
@@ -48,10 +47,10 @@ export default function OverviewPage() {
             <span className={AppText.caption}>Control Panel Overview</span>
           </div>
           <h2 className={AppText.h2}>
-            Selamat Datang, {user?.full_name || "Admin"}
+            Welcome, {user?.full_name || "Admin"}
           </h2>
           <p className={AppText.subtitle}>
-            Ringkasan status infrastruktur server, utilisasi sumber daya, dan skor keamanan Sentinel.
+            Overview of server infrastructure status, resource utilization, and Sentinel security score.
           </p>
         </div>
 
@@ -70,43 +69,40 @@ export default function OverviewPage() {
           <Link href="/infrastructure/vps">
             <Button size="sm" className="cursor-pointer">
               <Plus className="h-3.5 w-3.5" />
-              <span>Deploy Server Baru</span>
+              <span>Deploy New Server</span>
             </Button>
           </Link>
         </div>
       </div>
 
-      {}
       <div className={AppContainers.metricsGrid}>
-        {}
         <Card className={AppContainers.cardHover}>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
-              <p className={AppText.bodySm}>Total Server VPS</p>
+              <p className={AppText.bodySm}>Total VPS Servers</p>
               <div className="p-1.5 rounded-md bg-[#202020] text-emerald-400 border border-[#2e2e2e]">
                 <Server className="h-4 w-4" />
               </div>
             </div>
             <div className="mt-2.5 flex items-baseline gap-2">
               <span className="text-2xl font-bold text-[#ededed] dark:text-[#ededed] light:text-[#111827]">{totalServers}</span>
-              <span className={AppText.caption}>Instance</span>
+              <span className={AppText.caption}>Instances</span>
             </div>
             <div className="mt-3 flex items-center gap-3 text-xs text-[#a1a1a1] border-t border-[#262626] dark:border-[#262626] light:border-[#e5e7eb] pt-2.5">
               <span className="flex items-center gap-1 text-emerald-400 font-medium">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                {runningServers} Aktif
+                {runningServers} Running
               </span>
               <span className="text-[#707070]">•</span>
-              <span>{stoppedServers} Berhenti</span>
+              <span>{stoppedServers} Stopped</span>
             </div>
           </CardContent>
         </Card>
 
-        {}
         <Card className={AppContainers.cardHover}>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
-              <p className={AppText.bodySm}>Alokasi Total vCPU</p>
+              <p className={AppText.bodySm}>Total vCPU Allocation</p>
               <div className="p-1.5 rounded-md bg-[#202020] text-emerald-400 border border-[#2e2e2e]">
                 <Cpu className="h-4 w-4" />
               </div>
@@ -116,17 +112,16 @@ export default function OverviewPage() {
               <span className={AppText.caption}>Cores</span>
             </div>
             <div className="mt-3 text-xs text-[#a1a1a1] border-t border-[#262626] dark:border-[#262626] light:border-[#e5e7eb] pt-2.5 flex items-center justify-between">
-              <span>Status CPU:</span>
+              <span>CPU Status:</span>
               <span className="text-emerald-400 font-medium">Optimal</span>
             </div>
           </CardContent>
         </Card>
 
-        {}
         <Card className={AppContainers.cardHover}>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
-              <p className={AppText.bodySm}>RAM & Disk Terpakai</p>
+              <p className={AppText.bodySm}>RAM & Disk Allocated</p>
               <div className="p-1.5 rounded-md bg-[#202020] text-emerald-400 border border-[#2e2e2e]">
                 <HardDrive className="h-4 w-4" />
               </div>
@@ -136,13 +131,12 @@ export default function OverviewPage() {
               <span className={AppText.caption}>RAM</span>
             </div>
             <div className="mt-3 text-xs text-[#a1a1a1] border-t border-[#262626] dark:border-[#262626] light:border-[#e5e7eb] pt-2.5 flex items-center justify-between">
-              <span>Storage Disk:</span>
+              <span>Disk Storage:</span>
               <span className="font-medium text-[#ededed] dark:text-[#ededed] light:text-[#111827]">{totalDiskGB} GB SSD</span>
             </div>
           </CardContent>
         </Card>
 
-        {}
         <Card className={AppContainers.cardHover}>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
@@ -153,30 +147,28 @@ export default function OverviewPage() {
             </div>
             <div className="mt-2.5 flex items-baseline gap-2">
               <span className="text-2xl font-bold text-emerald-400">92</span>
-              <span className={AppText.caption}>/ 100 (Aman)</span>
+              <span className={AppText.caption}>/ 100 (Secure)</span>
             </div>
             <div className="mt-3 text-xs text-[#a1a1a1] border-t border-[#262626] dark:border-[#262626] light:border-[#e5e7eb] pt-2.5 flex items-center justify-between">
               <span>Port Exposure:</span>
-              <span className="text-emerald-400 font-medium">Terkunci Aman</span>
+              <span className="text-emerald-400 font-medium">Protected</span>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {}
       <div className={AppContainers.overviewSplitGrid}>
-        {}
         <div className="lg:col-span-2 space-y-3">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className={AppText.h3}>Daftar Server Terkini</h3>
-              <p className={AppText.subtitle}>Instance server aktif yang terhubung pada workspace</p>
+              <h3 className={AppText.h3}>Recent Server Instances</h3>
+              <p className={AppText.subtitle}>Active server instances connected to the workspace</p>
             </div>
             <Link
               href="/infrastructure/vps"
               className="text-xs font-medium text-emerald-400 hover:text-emerald-300 flex items-center gap-1"
             >
-              <span>Kelola Semua</span>
+              <span>Manage All</span>
               <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
@@ -185,14 +177,14 @@ export default function OverviewPage() {
             {servers.length === 0 ? (
               <div className="py-12 text-center text-[#707070]">
                 <Server className="h-8 w-8 mx-auto text-[#404040] mb-2" />
-                <p className="text-sm font-medium text-[#ededed] dark:text-[#ededed] light:text-[#111827]">Belum ada server yang terdaftar</p>
+                <p className="text-sm font-medium text-[#ededed] dark:text-[#ededed] light:text-[#111827]">No servers registered yet</p>
                 <p className={AppText.subtitle}>
-                  Mulai dengan membuat instance server VPS baru menggunakan provider simulasi atau provider cloud Anda.
+                  Get started by deploying a new server instance using simulated or cloud providers.
                 </p>
                 <Link href="/infrastructure/vps" className="inline-block mt-4">
                   <Button size="sm">
                     <Plus className="h-3.5 w-3.5" />
-                    <span>Deploy Server Pertama</span>
+                    <span>Deploy First Server</span>
                   </Button>
                 </Link>
               </div>
@@ -215,7 +207,7 @@ export default function OverviewPage() {
                           </Badge>
                         </div>
                         <p className={AppText.codeMuted}>
-                          {server.ip_address || "Alokasi IP..."} • {server.region}
+                          {server.ip_address || "Allocating IP..."} • {server.region}
                         </p>
                       </div>
                     </div>
@@ -233,7 +225,7 @@ export default function OverviewPage() {
                       <Link href={`/infrastructure/vps/${server.id}`}>
                         <button
                           type="button"
-                          aria-label="Lihat detail server"
+                          aria-label="View server details"
                           className="p-1.5 text-[#a1a1a1] hover:text-[#ededed] hover:bg-[#222222] rounded-md transition-colors cursor-pointer"
                         >
                           <ExternalLink className="h-4 w-4" />
@@ -247,7 +239,6 @@ export default function OverviewPage() {
           </Card>
         </div>
 
-        {}
         <div className="space-y-4">
           <Card>
             <CardHeader className="pb-3">
@@ -255,7 +246,7 @@ export default function OverviewPage() {
                 <ShieldCheck className="h-4 w-4 text-emerald-400" />
                 <CardTitle className="text-xs">Sentinel Security Scanner</CardTitle>
               </div>
-              <CardDescription>Postur asesmen keamanan infrastruktur otomatis</CardDescription>
+              <CardDescription>Automated infrastructure security posture assessment</CardDescription>
             </CardHeader>
             <CardContent className="space-y-2.5 pt-2 text-xs">
               <div className="flex items-center justify-between py-1.5 border-b border-[#262626] dark:border-[#262626] light:border-[#e5e7eb]">
@@ -264,7 +255,7 @@ export default function OverviewPage() {
               </div>
               <div className="flex items-center justify-between py-1.5 border-b border-[#262626] dark:border-[#262626] light:border-[#e5e7eb]">
                 <span className="text-[#a1a1a1]">SSH Key Access</span>
-                <span className="text-emerald-400 font-medium">Enkripsi AES-256</span>
+                <span className="text-emerald-400 font-medium">AES-256 Encryption</span>
               </div>
               <div className="flex items-center justify-between py-1.5 border-b border-[#262626] dark:border-[#262626] light:border-[#e5e7eb]">
                 <span className="text-[#a1a1a1]">Security Headers</span>
@@ -272,7 +263,7 @@ export default function OverviewPage() {
               </div>
               <div className="flex items-center justify-between py-1.5">
                 <span className="text-[#a1a1a1]">Audit Logging</span>
-                <span className="text-emerald-400 font-medium">Aktif Merekam</span>
+                <span className="text-emerald-400 font-medium">Active Logging</span>
               </div>
             </CardContent>
           </Card>
@@ -288,7 +279,7 @@ export default function OverviewPage() {
             <CardContent className="space-y-2 pt-2 text-xs">
               <p className="text-[#ededed] dark:text-[#ededed] light:text-[#111827] font-medium">Auto-Restart VPS on High Load</p>
               <p className={AppText.caption}>
-                Secara otomatis me-reboot server jika utilisasi RAM &gt; 95% selama 10 menit berturut-turut.
+                Automatically reboot server if RAM utilization exceeds 95% for 10 consecutive minutes.
               </p>
               <div className="pt-1">
                 <Badge variant="outline" className="text-emerald-400 border-emerald-800/40 bg-emerald-950/30 text-[10px]">

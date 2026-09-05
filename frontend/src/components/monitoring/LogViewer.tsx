@@ -149,21 +149,18 @@ export const LogViewer: React.FC<LogViewerProps> = ({
           </div>
         </div>
 
-        {}
         <div className="flex flex-col sm:flex-row items-center gap-2 pt-2 mt-1">
-          {}
           <div className="relative flex-1 w-full">
             <Search className="absolute left-2.5 top-2 h-3.5 w-3.5 text-[#707070]" />
             <input
               type="text"
-              placeholder="Cari kata kunci log..."
+              placeholder="Search log keywords..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full h-7.5 rounded-md border border-[#262626] bg-[#171717] pl-8 pr-3 text-[11px] text-[#ededed] placeholder-[#606060] focus:border-emerald-500 focus:outline-none"
             />
           </div>
 
-          {}
           <div className="flex items-center gap-1 bg-[#171717] p-0.5 rounded-md border border-[#262626] self-start sm:self-auto">
             {["ALL", "INFO", "WARN", "ERROR", "DEBUG"].map((lvl) => (
               <button
@@ -183,13 +180,12 @@ export const LogViewer: React.FC<LogViewerProps> = ({
         </div>
       </CardHeader>
 
-      {}
       <CardContent className="p-3 flex-1 overflow-y-auto font-mono text-[11px] leading-relaxed text-[#c0c0c0] select-text">
         {filteredLogs.length === 0 ? (
           <div className="flex h-full items-center justify-center text-center text-[#555555]">
             <div>
               <Filter className="h-6 w-6 mx-auto mb-2 opacity-40" />
-              <p>Tidak ada entri log yang sesuai dengan filter.</p>
+              <p>No log entries match the selected filter.</p>
             </div>
           </div>
         ) : (
@@ -200,7 +196,7 @@ export const LogViewer: React.FC<LogViewerProps> = ({
                 className="flex items-start gap-2 hover:bg-[#151515] px-1.5 py-0.5 rounded transition-colors"
               >
                 <span className="text-[#555555] shrink-0 select-none">
-                  {new Date(log.timestamp).toLocaleTimeString("id-ID", {
+                  {new Date(log.timestamp).toLocaleTimeString("en-US", {
                     hour: "2-digit",
                     minute: "2-digit",
                     second: "2-digit",

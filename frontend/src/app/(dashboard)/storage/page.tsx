@@ -74,9 +74,9 @@ export default function StorageDashboardPage() {
     } catch (err: any) {
       const serverMsg = err?.response?.data?.message || err?.response?.data?.errors || err?.message || '';
       if (serverMsg.includes('NotEmpty') || serverMsg.includes('not empty') || err?.response?.status === 400) {
-        alert(` Bucket "${bucketName}" tidak dapat dihapus karena masih berisi file/objek di dalamnya.\n\nDemi keamanan data Anda, silakan masuk ke dalam bucket dan hapus semua file terlebih dahulu sebelum menghapus wadah bucket.`);
+        alert(`Bucket "${bucketName}" cannot be deleted because it still contains files or objects.\n\nFor your data safety, please navigate into the bucket and delete all objects before deleting the bucket.`);
       } else {
-        alert(serverMsg || 'Gagal menghapus bucket');
+        alert(serverMsg || 'Failed to delete bucket');
       }
     } finally {
       setDeletingBucket(null);
@@ -95,7 +95,6 @@ export default function StorageDashboardPage() {
 
   return (
     <div className={AppContainers.pageWrapper}>
-      {}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className={AppText.h2}>Object Storage & Buckets</h1>
@@ -133,7 +132,6 @@ export default function StorageDashboardPage() {
         </div>
       </div>
 
-      {}
       <div className={AppContainers.metricsGrid}>
         <div className={`${AppContainers.card} ${AppContainers.cardContent}`}>
           <div className="flex items-center justify-between">
@@ -180,7 +178,6 @@ export default function StorageDashboardPage() {
         </div>
       </div>
 
-      {}
       <div className={AppContainers.card}>
         <div className="p-4 border-b border-[#262626] flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="relative w-full sm:w-80">
@@ -199,7 +196,6 @@ export default function StorageDashboardPage() {
           </div>
         </div>
 
-        {}
         {loading ? (
           <div className="p-12 flex flex-col items-center justify-center space-y-3">
             <Loader2 className="w-6 h-6 animate-spin text-emerald-400" />
@@ -331,7 +327,6 @@ export default function StorageDashboardPage() {
         )}
       </div>
 
-      {}
       <CreateBucketModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}

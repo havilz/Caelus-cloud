@@ -115,7 +115,7 @@ func recordAuditEntry(ctx context.Context, auditRepo domain.AuditLogRepository, 
 	}
 
 	if err := auditRepo.Create(context.Background(), auditEntry); err != nil && logger != nil {
-		logger.Error("gagal menyimpan audit log", "error", err, "action", action)
+		logger.Error("failed to persist audit log", "error", err, "action", action)
 	}
 }
 

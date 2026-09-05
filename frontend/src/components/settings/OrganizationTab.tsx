@@ -23,7 +23,7 @@ export const OrganizationTab: React.FC = () => {
       setName(data.name || "");
       setSlug(data.slug || "");
     } catch (err: any) {
-      setErrorMsg("Gagal memuat informasi organisasi");
+      setErrorMsg("Failed to load organization information");
     } finally {
       setIsLoading(false);
     }
@@ -41,10 +41,10 @@ export const OrganizationTab: React.FC = () => {
       setErrorMsg(null);
       const updated = await settingsService.updateOrganization({ name, slug });
       setOrg(updated);
-      setSuccessMsg("Informasi organisasi berhasil diperbarui");
+      setSuccessMsg("Organization information updated successfully");
       setTimeout(() => setSuccessMsg(null), 3000);
     } catch (err: any) {
-      setErrorMsg(err.response?.data?.message || "Gagal memperbarui organisasi");
+      setErrorMsg(err.response?.data?.message || "Failed to update organization");
     } finally {
       setIsSaving(false);
     }
@@ -54,14 +54,13 @@ export const OrganizationTab: React.FC = () => {
     return (
       <div className="flex items-center justify-center py-16 text-zinc-500">
         <RefreshCw className="h-5 w-5 animate-spin mr-2" />
-        <span className="text-sm">Memuat informasi organisasi...</span>
+        <span className="text-sm">Loading organization information...</span>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      {}
       <div className={AppTheme.containers.card}>
         <div className="border-b border-[#262626] pb-4 mb-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -69,8 +68,8 @@ export const OrganizationTab: React.FC = () => {
               <Building2 className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-zinc-100">Profil Organisasi / Workspace</h3>
-              <p className="text-xs text-zinc-400">Kelola nama workspace dan identitas URL tim Anda</p>
+              <h3 className="text-sm font-semibold text-zinc-100">Organization / Workspace Profile</h3>
+              <p className="text-xs text-zinc-400">Manage workspace name and your team URL identifier</p>
             </div>
           </div>
           <span className="px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
@@ -94,7 +93,7 @@ export const OrganizationTab: React.FC = () => {
 
         <form onSubmit={handleUpdate} className="space-y-4 max-w-xl">
           <div>
-            <label className="block text-xs font-medium text-zinc-300 mb-1.5">ID Organisasi</label>
+            <label className="block text-xs font-medium text-zinc-300 mb-1.5">Organization ID</label>
             <input
               type="text"
               disabled
@@ -104,19 +103,19 @@ export const OrganizationTab: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-zinc-300 mb-1.5">Nama Organisasi</label>
+            <label className="block text-xs font-medium text-zinc-300 mb-1.5">Organization Name</label>
             <input
               type="text"
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Contoh: Acme Corporation"
+              placeholder="e.g. Acme Corporation"
               className="w-full bg-[#141414] border border-[#2e2e2e] text-zinc-200 text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-emerald-500 transition-colors"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-zinc-300 mb-1.5">Slug URL Workspace</label>
+            <label className="block text-xs font-medium text-zinc-300 mb-1.5">Workspace URL Slug</label>
             <input
               type="text"
               required
@@ -126,7 +125,7 @@ export const OrganizationTab: React.FC = () => {
               className="w-full bg-[#141414] border border-[#2e2e2e] text-zinc-200 font-mono text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-emerald-500 transition-colors"
             />
             <p className="text-[11px] text-zinc-400 mt-1">
-              Digunakan sebagai penanda unik URL routing API dan integrasi webhook
+              Used as a unique identifier for API URL routing and webhook integrations
             </p>
           </div>
 
@@ -136,36 +135,35 @@ export const OrganizationTab: React.FC = () => {
             className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-zinc-950 font-semibold text-xs rounded-lg transition-colors flex items-center gap-2 cursor-pointer disabled:opacity-50"
           >
             {isSaving && <RefreshCw className="h-3.5 w-3.5 animate-spin" />}
-            <span>Simpan Perubahan</span>
+            <span>Save Changes</span>
           </button>
         </form>
       </div>
 
-      {}
       <div className="p-5 rounded-xl bg-rose-950/10 border border-rose-500/20">
         <div className="flex items-center gap-3 border-b border-rose-500/20 pb-4 mb-4">
           <div className="p-2 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400">
             <ShieldAlert className="h-5 w-5" />
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-rose-400">Zona Kritis (Danger Zone)</h3>
-            <p className="text-xs text-zinc-400">Tindakan berikut bersifat destruktif dan tidak dapat dibatalkan</p>
+            <h3 className="text-sm font-semibold text-rose-400">Danger Zone</h3>
+            <p className="text-xs text-zinc-400">These actions are destructive and cannot be reversed</p>
           </div>
         </div>
 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-2">
           <div>
-            <p className="text-xs font-medium text-zinc-200">Hapus Workspace Organisasi</p>
+            <p className="text-xs font-medium text-zinc-200">Delete Organization Workspace</p>
             <p className="text-[11px] text-zinc-400">
-              Menghapus seluruh konfigurasi VPS, volume storage, jaringan VPC, dan data telemetri terkait secara permanen.
+              Permanently deletes all VPS configurations, storage volumes, VPC networks, and related telemetry data.
             </p>
           </div>
           <button
             type="button"
-            onClick={() => alert("Untuk keamanan tingkat tinggi, hubungi Master Admin untuk menghapus workspace ini.")}
+            onClick={() => alert("For high-level security, contact the Master Admin to delete this workspace.")}
             className="px-3.5 py-1.5 bg-rose-600/20 hover:bg-rose-600/30 text-rose-400 border border-rose-500/30 text-xs font-semibold rounded-lg transition-colors cursor-pointer shrink-0"
           >
-            Hapus Organisasi
+            Delete Organization
           </button>
         </div>
       </div>

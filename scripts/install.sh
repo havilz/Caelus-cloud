@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ==============================================================================
 #  CAELUS CLOUD - Universal Multi-Cloud & Hybrid VPS Control Plane
-#  Smart Production Installer & Provisioning Wizard
+#  Production Installer & Provisioning Wizard
 # ==============================================================================
 #  Usage:
 #    curl -fsSL https://get.caelus.cloud/install.sh | bash
@@ -42,7 +42,7 @@ print_banner() {
 EOF
   echo -e "${C_RESET}"
   echo -e "${C_DIM}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${C_RESET}"
-  echo -e "  ${C_BOLD}Caelus Cloud Control Plane — Smart CLI Provisioner${C_RESET}"
+  echo -e "  ${C_BOLD}Caelus Cloud Control Plane — CLI Provisioner${C_RESET}"
   echo -e "  ${C_DIM}Version: v1.0.0-production-ready | Automated Setup Wizard${C_RESET}"
   echo -e "${C_DIM}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${C_RESET}"
   echo ""
@@ -68,7 +68,7 @@ log_error() {
 # 1. Environment & Preflight Checks
 # ------------------------------------------------------------------------------
 check_system_requirements() {
-  log_info "Memeriksa arsitektur sistem operasi dan hak akses..."
+  log_info "Checking operating system architecture and privileges..."
 
   # Detect OS
   OS="$(uname -s)"
@@ -76,23 +76,23 @@ check_system_requirements() {
   case "$OS" in
     Linux)  OS_TYPE="linux" ;;
     Darwin) OS_TYPE="darwin" ;;
-    *)      log_error "Sistem Operasi $OS saat ini belum didukung secara resmi."; exit 1 ;;
+    *)      log_error "Operating System $OS is not officially supported."; exit 1 ;;
   esac
 
-  log_success "Sistem terdeteksi: ${C_BOLD}$OS ($ARCH)${C_RESET}"
+  log_success "Detected system: ${C_BOLD}$OS ($ARCH)${C_RESET}"
 }
 
 ensure_docker_installed() {
-  log_info "Memeriksa ketersediaan Docker Engine & Docker Compose..."
+  log_info "Checking availability of Docker Engine & Docker Compose..."
 
   if ! command -v docker &> /dev/null; then
-    log_warn "Docker belum terpasang di sistem ini."
-    echo -ne "  ${C_YELLOW}Apakah Anda ingin script ini memasang Docker secara otomatis? (Y/n): ${C_RESET}"
+    log_warn "Docker is not installed on this system."
+    echo -ne "  ${C_YELLOW}Would you like this script to install Docker automatically? (Y/n): ${C_RESET}"
     read -r INSTALL_DOCKER_CHOICE
     INSTALL_DOCKER_CHOICE="${INSTALL_DOCKER_CHOICE:-Y}"
 
     if [[ "$INSTALL_DOCKER_CHOICE" =~ ^[Yy]$ ]]; then
-      log_info "Mengunduh dan memasang Docker Engine resmi..."
+      log_info "Downloading and installing official Docker Engine..."
       curl -fsSL https://get.docker.com -o get-docker.sh
       sh get-docker.sh
       rm -f get-docker.sh
@@ -101,26 +101,26 @@ ensure_docker_installed() {
       if command -v systemctl &> /dev/null; then
         sudo systemctl enable --now docker || true
       fi
-      log_success "Docker Engine berhasil dipasang."
+      log_success "Docker Engine installed successfully."
     else
-      log_error "Docker diperlukan untuk menjalankan Caelus Cloud. Instalasi dibatalkan."
+      log_error "Docker is required to run Caelus Cloud. Installation aborted."
       exit 1
     fi
   else
     DOCKER_VER=$(docker --version | awk '{print $3}' | tr -d ',')
-    log_success "Docker Engine aktif: ${C_BOLD}v$DOCKER_VER${C_RESET}"
+    log_success "Docker Engine active: ${C_BOLD}v$DOCKER_VER${C_RESET}"
   fi
 
   # Check compose
   if ! docker compose version &> /dev/null; then
-    log_warn "Plugin docker compose tidak ditemukan. Memasang docker-compose-plugin..."
+    log_warn "Docker Compose plugin not found. Installing docker-compose-plugin..."
     if command -v apt-get &> /dev/null; then
       sudo apt-get update -qq && sudo apt-get install -y -qq docker-compose-plugin
     elif command -v yum &> /dev/null; then
       sudo yum install -y -q docker-compose-plugin
     fi
   fi
-  log_success "Docker Compose Plugin aktif."
+  log_success "Docker Compose plugin active."
 }
 
 # ------------------------------------------------------------------------------
@@ -140,21 +140,21 @@ generate_crypto_token() {
 # ------------------------------------------------------------------------------
 wizard_topology_selection() {
   echo ""
-  echo -e "${C_BOLD}Pilih Skenario Topologi & Arsitektur Instalasi Caelus Cloud:${C_RESET}"
+  echo -e "${C_BOLD}Select Caelus Cloud Topology & Installation Architecture:${C_RESET}"
   echo -e "${C_DIM}────────────────────────────────────────────────────────────────────${C_RESET}"
-  echo -e "  ${C_CYAN}${C_BOLD}[1] All-in-One Full Stack (Rekomendasi Quickstart)${C_RESET}"
-  echo -e "      ${C_DIM}• Menjalankan Postgres 16, Redis 7, MinIO, Prometheus & Loki lokal (Docker).${C_RESET}"
-  echo -e "      ${C_DIM}• Cocok untuk VPS baru/mandiri tanpa database eksternal.${C_RESET}"
+  echo -e "  ${C_CYAN}${C_BOLD}[1] All-in-One Full Stack (Recommended Quickstart)${C_RESET}"
+  echo -e "      ${C_DIM}- Runs local Postgres 16, Redis 7, MinIO, Prometheus & Loki via Docker.${C_RESET}"
+  echo -e "      ${C_DIM}- Best for standalone/fresh VPS without external database.${C_RESET}"
   echo ""
   echo -e "  ${C_CYAN}${C_BOLD}[2] External Managed Database & Cache (Enterprise / Cloud-Native)${C_RESET}"
-  echo -e "      ${C_DIM}• Menggunakan PostgreSQL Cloud (Supabase / AWS RDS / Neon) & Redis (Upstash/Aiven).${C_RESET}"
-  echo -e "      ${C_DIM}• Hemat RAM & Disk hingga 50%+; kontainer DB lokal otomatis dinonaktifkan.${C_RESET}"
+  echo -e "      ${C_DIM}- Uses cloud PostgreSQL (Supabase / AWS RDS / Neon) & Redis (Upstash / Aiven).${C_RESET}"
+  echo -e "      ${C_DIM}- Saves RAM & Disk by 50%+; local DB containers are disabled.${C_RESET}"
   echo ""
   echo -e "  ${C_CYAN}${C_BOLD}[3] Local Workstation + Cloudflare Tunnel (Hybrid Remote VPS Agent)${C_RESET}"
-  echo -e "      ${C_DIM}• Caelus Control Plane di laptop/perangkat kerja Anda.${C_RESET}"
-  echo -e "      ${C_DIM}• Otomatis menghubungkan Cloudflare Tunnel agar VPS luar bisa lapor telemetri.${C_RESET}"
+  echo -e "      ${C_DIM}- Caelus Control Plane on your local workstation.${C_RESET}"
+  echo -e "      ${C_DIM}- Connects Cloudflare Tunnel so remote VPS nodes can report telemetry.${C_RESET}"
   echo -e "${C_DIM}────────────────────────────────────────────────────────────────────${C_RESET}"
-  echo -ne "  ${C_BOLD}Masukkan nomor pilihan [1/2/3] (Default: 1): ${C_RESET}"
+  echo -ne "  ${C_BOLD}Enter choice [1/2/3] (Default: 1): ${C_RESET}"
   read -r TOPOLOGY_CHOICE < /dev/tty || TOPOLOGY_CHOICE="1"
   TOPOLOGY_CHOICE="${TOPOLOGY_CHOICE:-1}"
 
@@ -179,24 +179,24 @@ wizard_topology_selection() {
 
   case "$TOPOLOGY_CHOICE" in
     1)
-      log_info "Mode All-in-One Full Stack dipilih. Database & Redis otomatis dibuat via Docker."
+      log_info "All-in-One Full Stack mode selected. Database & Redis automatically provisioned via Docker."
       ;;
 
     2)
       echo ""
-      echo -e "  ${C_YELLOW}${C_BOLD}── Konfigurasi Managed PostgreSQL Eksternal ──${C_RESET}"
-      echo -ne "  Host PostgreSQL (e.g. db.xyz.supabase.co / rds.amazonaws.com): "
+      echo -e "  ${C_YELLOW}${C_BOLD}-- External Managed PostgreSQL Configuration --${C_RESET}"
+      echo -ne "  PostgreSQL Host (e.g. db.xyz.supabase.co / rds.amazonaws.com): "
       read -r DB_HOST < /dev/tty || true
-      echo -ne "  Port PostgreSQL [5432]: "
+      echo -ne "  PostgreSQL Port [5432]: "
       read -r INPUT_DB_PORT < /dev/tty || true
       DB_PORT="${INPUT_DB_PORT:-5432}"
-      echo -ne "  User PostgreSQL [postgres]: "
+      echo -ne "  PostgreSQL User [postgres]: "
       read -r INPUT_DB_USER < /dev/tty || true
       DB_USER="${INPUT_DB_USER:-postgres}"
-      echo -ne "  Password PostgreSQL: "
+      echo -ne "  PostgreSQL Password: "
       read -s DB_PASSWORD < /dev/tty || true
       echo ""
-      echo -ne "  Nama Database [postgres]: "
+      echo -ne "  Database Name [postgres]: "
       read -r INPUT_DB_NAME < /dev/tty || true
       DB_NAME="${INPUT_DB_NAME:-postgres}"
       echo -ne "  SSL Mode (require/verify-full/disable) [require]: "
@@ -204,35 +204,35 @@ wizard_topology_selection() {
       DB_SSL_MODE="${INPUT_SSL_MODE:-require}"
 
       echo ""
-      echo -e "  ${C_YELLOW}${C_BOLD}── Konfigurasi Managed Redis Eksternal ──${C_RESET}"
-      echo -ne "  Host Redis (e.g. global-redis.upstash.io / aivencloud.com): "
+      echo -e "  ${C_YELLOW}${C_BOLD}-- External Managed Redis Configuration --${C_RESET}"
+      echo -ne "  Redis Host (e.g. global-redis.upstash.io / aivencloud.com): "
       read -r REDIS_HOST < /dev/tty || true
-      echo -ne "  Port Redis [6379]: "
+      echo -ne "  Redis Port [6379]: "
       read -r INPUT_REDIS_PORT < /dev/tty || true
       REDIS_PORT="${INPUT_REDIS_PORT:-6379}"
-      echo -ne "  Password Redis: "
+      echo -ne "  Redis Password: "
       read -s REDIS_PASSWORD < /dev/tty || true
       echo ""
-      echo -ne "  Gunakan Redis TLS (true/false) [true]: "
+      echo -ne "  Use Redis TLS (true/false) [true]: "
       read -r INPUT_REDIS_TLS < /dev/tty || true
       REDIS_USE_TLS="${INPUT_REDIS_TLS:-true}"
       ;;
 
     3)
-      log_info "Mode Hybrid Workstation + Cloudflare Tunnel dipilih."
+      log_info "Hybrid Workstation + Cloudflare Tunnel mode selected."
       TUNNEL_ENABLED="true"
       echo ""
-      echo -ne "  Masukkan Domain Publik untuk Dashboard Caelus Anda (e.g. caelus.domainanda.com): "
+      echo -ne "  Enter Public Domain for Caelus Dashboard (e.g. caelus.yourdomain.com): "
       read -r PUBLIC_DOMAIN < /dev/tty || true
       PUBLIC_DOMAIN="${PUBLIC_DOMAIN:-localhost:3000}"
       PUBLIC_API_URL="https://${PUBLIC_DOMAIN}/api"
 
-      echo -ne "  Masukkan Cloudflare Tunnel Token (Opsional, tekan Enter untuk lewati jika pakai Quick Tunnel): "
+      echo -ne "  Enter Cloudflare Tunnel Token (Optional, press Enter to skip if using Quick Tunnel): "
       read -r TUNNEL_TOKEN < /dev/tty || true
       ;;
 
     *)
-      log_warn "Pilihan tidak valid, kembali ke All-in-One Full Stack."
+      log_warn "Invalid selection, falling back to All-in-One Full Stack."
       ;;
   esac
 }
@@ -241,7 +241,7 @@ wizard_topology_selection() {
 # 4. Generate Production .env File
 # ------------------------------------------------------------------------------
 generate_env_configuration() {
-  log_info "Menghasilkan kunci kriptografi aman (AES-256-GCM & JWT Tokens)..."
+  log_info "Generating cryptographic tokens (AES-256-GCM & JWT Tokens)..."
 
   JWT_SECRET="$(generate_crypto_token)"
   ENCRYPTION_KEY="$(generate_crypto_token)"
@@ -307,14 +307,14 @@ PROMETHEUS_URL=http://prometheus:9090
 LOKI_URL=http://loki:3100
 EOF
 
-  log_success "File konfigurasi berhasil dibuat di: ${C_BOLD}$INSTALL_DIR/.env${C_RESET}"
+  log_success "Configuration file created at: ${C_BOLD}$INSTALL_DIR/.env${C_RESET}"
 }
 
 # ------------------------------------------------------------------------------
 # 5. Launch Services
 # ------------------------------------------------------------------------------
 launch_caelus_platform() {
-  log_info "Menyiapkan dan menyalakan layanan platform Caelus Cloud..."
+  log_info "Setting up and launching Caelus Cloud platform services..."
   cd "$INSTALL_DIR"
 
   # Copy or create docker-compose.yml if running via standalone curl
@@ -322,21 +322,21 @@ launch_caelus_platform() {
     if [ -f "$(dirname "$0")/../docker-compose.yml" ]; then
       cp "$(dirname "$0")/../docker-compose.yml" "$INSTALL_DIR/docker-compose.yml"
     else
-      log_info "Mengunduh docker-compose.yml resmi dari repository..."
+      log_info "Downloading official docker-compose.yml from repository..."
       curl -fsSL "$COMPOSE_URL" -o "$INSTALL_DIR/docker-compose.yml"
     fi
   fi
 
   # Start services based on topology
   if [ "$TOPOLOGY_CHOICE" == "2" ]; then
-    log_info "Memulai Caelus Cloud (Mode External Managed Database)..."
+    log_info "Starting Caelus Cloud (External Managed Database mode)..."
     docker compose up -d --no-deps api worker frontend prometheus loki
   else
-    log_info "Memulai seluruh stack Caelus Cloud (All-in-One)..."
+    log_info "Starting full Caelus Cloud stack (All-in-One)..."
     docker compose up -d
   fi
 
-  log_success "Seluruh kontainer Caelus Cloud berhasil diaktifkan!"
+  log_success "All Caelus Cloud service containers started successfully!"
 }
 
 # ------------------------------------------------------------------------------
@@ -348,24 +348,24 @@ print_installation_summary() {
 
   echo ""
   echo -e "${C_GREEN}${C_BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${C_RESET}"
-  echo -e "  ${C_GREEN}${C_BOLD}🎉 INSTALASI CAELUS CLOUD BERHASIL DISELESAIKAN! 🎉${C_RESET}"
+  echo -e "  ${C_GREEN}${C_BOLD}CAELUS CLOUD INSTALLATION COMPLETED SUCCESSFULLY!${C_RESET}"
   echo -e "${C_GREEN}${C_BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${C_RESET}"
   echo ""
   echo -e "  ${C_BOLD}Dashboard Web URL:${C_RESET}"
-  echo -e "  👉 ${C_CYAN}${C_BOLD}http://${PUBLIC_IP}:3000${C_RESET} ${C_DIM}(atau http://${PUBLIC_DOMAIN})${C_RESET}"
+  echo -e "  - ${C_CYAN}${C_BOLD}http://${PUBLIC_IP}:3000${C_RESET} ${C_DIM}(or http://${PUBLIC_DOMAIN})${C_RESET}"
   echo ""
   echo -e "  ${C_BOLD}Backend API Endpoint:${C_RESET}"
-  echo -e "  👉 ${C_CYAN}http://${PUBLIC_IP}:8080${C_RESET}"
+  echo -e "  - ${C_CYAN}http://${PUBLIC_IP}:8080${C_RESET}"
   echo ""
-  echo -e "  ${C_BOLD}Direktori Instalasi:${C_RESET}"
-  echo -e "  📂 ${C_DIM}$INSTALL_DIR${C_RESET}"
+  echo -e "  ${C_BOLD}Installation Directory:${C_RESET}"
+  echo -e "  - ${C_DIM}$INSTALL_DIR${C_RESET}"
   echo ""
-  echo -e "  ${C_YELLOW}${C_BOLD}── Cara Menghubungkan VPS Klien ke Caelus Ini: ──${C_RESET}"
-  echo -e "  Jalankan perintah ini di VPS target manapun untuk menghubungkannya secara live:"
+  echo -e "  ${C_YELLOW}${C_BOLD}-- Connecting Host / Client VPS Nodes: --${C_RESET}"
+  echo -e "  Run this command on any target server to connect it:"
   echo -e "  ${C_CYAN}curl -fsSL http://${PUBLIC_IP}:8080/install.sh | bash -s -- --endpoint=http://${PUBLIC_IP}:8080${C_RESET}"
   echo ""
   echo -e "${C_DIM}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${C_RESET}"
-  echo -e "  ${C_DIM}Dokumentasi & Panduan Lengkap: https://github.com/havilz/Caelus-cloud${C_RESET}"
+  echo -e "  ${C_DIM}Documentation & Guide: https://github.com/havilz/Caelus-cloud${C_RESET}"
   echo ""
 }
 

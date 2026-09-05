@@ -17,24 +17,24 @@ func RequireOrganizationRole(orgRepo domain.OrganizationRepository, allowedRoles
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			userID, ok := GetUserIDFromContext(r.Context())
 			if !ok {
-				response.Error(w, http.StatusUnauthorized, "Autentikasi diperlukan", "Identitas pengguna tidak ditemukan pada sesi request")
+				response.Error(w, http.StatusUnauthorized, "Authentication required", "User identity not found in request session")
 				return
 			}
 
 			orgID, err := resolveOrganizationID(r)
 			if err != nil {
-				response.Error(w, http.StatusBadRequest, "Permintaan tidak valid", "Identifier organisasi target tidak ditemukan")
+				response.Error(w, http.StatusBadRequest, "Invalid request", "Target organization identifier not found")
 				return
 			}
 
 			member, err := orgRepo.GetMember(r.Context(), orgID, userID)
 			if err != nil {
-				response.Error(w, http.StatusForbidden, "Akses ditolak", "Pengguna bukan anggota dari organisasi ini")
+				response.Error(w, http.StatusForbidden, "Access denied", "User is not a member of this organization")
 				return
 			}
 
 			if !isRoleAuthorized(member.Role, allowedRoles) {
-				response.Error(w, http.StatusForbidden, "Akses ditolak", "Hak akses peran Anda tidak mencukupi untuk melakukan tindakan ini")
+				response.Error(w, http.StatusForbidden, "Access denied", "Your role permissions are insufficient for this action")
 				return
 			}
 

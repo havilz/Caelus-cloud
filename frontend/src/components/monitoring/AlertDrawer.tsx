@@ -102,7 +102,6 @@ export const AlertDrawer: React.FC<AlertDrawerProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 overflow-hidden">
-      {}
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-xs transition-opacity animate-in fade-in"
         onClick={onClose}
@@ -110,15 +109,14 @@ export const AlertDrawer: React.FC<AlertDrawerProps> = ({
 
       <div className="fixed inset-y-0 right-0 max-w-full flex pl-10">
         <div className="w-screen max-w-md bg-[#121212] border-l border-[#262626] shadow-2xl flex flex-col animate-in slide-in-from-right duration-200">
-          {}
           <div className="p-4 border-b border-[#262626] flex items-center justify-between bg-[#171717]">
             <div className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-500/10 text-rose-400 border border-rose-500/20">
                 <Bell className="h-4 w-4" />
               </div>
               <div>
-                <h2 className="text-sm font-semibold text-[#ededed]">Pusat Notifikasi Alert</h2>
-                <p className="text-[11px] text-[#a1a1a1]">Insiden telemetri dan ambang batas sistem</p>
+                <h2 className="text-sm font-semibold text-[#ededed]">Alert Notification Center</h2>
+                <p className="text-[11px] text-[#a1a1a1]">Telemetry incidents and system threshold alerts</p>
               </div>
             </div>
             <div className="flex items-center gap-1">
@@ -141,13 +139,12 @@ export const AlertDrawer: React.FC<AlertDrawerProps> = ({
             </div>
           </div>
 
-          {}
           <div className="p-3 border-b border-[#262626] bg-[#141414] flex gap-1">
             {[
-              { id: "active", label: "Aktif" },
-              { id: "acknowledged", label: "Ditandai" },
-              { id: "resolved", label: "Selesai" },
-              { id: "all", label: "Semua" },
+              { id: "active", label: "Active" },
+              { id: "acknowledged", label: "Acknowledged" },
+              { id: "resolved", label: "Resolved" },
+              { id: "all", label: "All" },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -164,20 +161,19 @@ export const AlertDrawer: React.FC<AlertDrawerProps> = ({
             ))}
           </div>
 
-          {}
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
             {isLoading && alerts.length === 0 ? (
               <div className="flex h-64 items-center justify-center text-xs text-[#a1a1a1]">
                 <div className="flex flex-col items-center gap-2">
                   <div className="h-5 w-5 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent" />
-                  <p>Memuat daftar insiden alert...</p>
+                  <p>Loading alert incidents...</p>
                 </div>
               </div>
             ) : alerts.length === 0 ? (
               <div className="flex h-64 flex-col items-center justify-center text-center text-[#666666]">
                 <CheckCircle2 className="h-8 w-8 mb-2 text-emerald-500/50" />
-                <p className="text-xs font-medium text-[#a1a1a1]">Tidak ada alert pada status ini</p>
-                <p className="text-[11px] text-[#707070] mt-1">Seluruh metrik server beroperasi normal</p>
+                <p className="text-xs font-medium text-[#a1a1a1]">No alerts in this status</p>
+                <p className="text-[11px] text-[#707070] mt-1">All server metrics are operating normally</p>
               </div>
             ) : (
               alerts.map((alert) => (
@@ -191,7 +187,7 @@ export const AlertDrawer: React.FC<AlertDrawerProps> = ({
                         {getSeverityBadge(alert.severity)}
                         <span className="text-[11px] text-[#707070] flex items-center gap-1 font-mono">
                           <Clock className="h-3 w-3" />
-                          {new Date(alert.triggered_at).toLocaleTimeString("id-ID", {
+                          {new Date(alert.triggered_at).toLocaleTimeString("en-US", {
                             hour: "2-digit",
                             minute: "2-digit",
                           })}
@@ -203,10 +199,9 @@ export const AlertDrawer: React.FC<AlertDrawerProps> = ({
 
                   <p className="text-[11px] text-[#a1a1a1] leading-relaxed">{alert.message}</p>
 
-                  {}
                   {alert.current_value !== undefined && alert.threshold_value !== undefined && (
                     <div className="flex items-center gap-2 text-[11px] font-mono p-2 rounded-lg bg-[#111111] border border-[#222222]">
-                      <span className="text-[#888888]">Nilai Terukur:</span>
+                      <span className="text-[#888888]">Measured Value:</span>
                       <span className="text-rose-400 font-bold">{alert.current_value.toFixed(1)}%</span>
                       <span className="text-[#555555]">/</span>
                       <span className="text-[#888888]">Threshold:</span>
@@ -214,7 +209,6 @@ export const AlertDrawer: React.FC<AlertDrawerProps> = ({
                     </div>
                   )}
 
-                  {}
                   <div className="flex items-center justify-between pt-1 border-t border-[#222222] text-xs">
                     <span className="text-[10px] uppercase font-bold tracking-wider text-[#666666]">
                       Status: <span className="text-[#a1a1a1]">{alert.status}</span>
@@ -230,7 +224,7 @@ export const AlertDrawer: React.FC<AlertDrawerProps> = ({
                           className="h-6 px-2 text-[10px] text-amber-400 hover:bg-amber-950/20 border-amber-500/20"
                         >
                           <Check className="h-3 w-3 mr-1" />
-                          Tandai
+                          Acknowledge
                         </Button>
                       )}
                       {alert.status !== "resolved" && (
@@ -242,7 +236,7 @@ export const AlertDrawer: React.FC<AlertDrawerProps> = ({
                           className="h-6 px-2 text-[10px] text-emerald-400 hover:bg-emerald-950/20 border-emerald-500/20"
                         >
                           <CheckCircle2 className="h-3 w-3 mr-1" />
-                          Selesaikan
+                          Resolve
                         </Button>
                       )}
                     </div>

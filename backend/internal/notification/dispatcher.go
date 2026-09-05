@@ -31,7 +31,7 @@ func (d *UnifiedDispatcher) SendWebhook(ctx context.Context, url string, payload
 	if d.webhookClient == nil {
 		return fmt.Errorf("webhook client is not initialized")
 	}
-	logger.Info("Mengirimkan notifikasi webhook", "target_url", url, "event_type", payload.EventType)
+	logger.Info("Sending webhook notification", "target_url", url, "event_type", payload.EventType)
 	return d.webhookClient.SendWebhook(ctx, url, payload)
 }
 
@@ -39,6 +39,6 @@ func (d *UnifiedDispatcher) SendEmail(ctx context.Context, msg email.EmailMessag
 	if d.emailClient == nil {
 		return fmt.Errorf("email client is not initialized")
 	}
-	logger.Info("Mengirimkan notifikasi email", "to", msg.To, "subject", msg.Subject)
+	logger.Info("Sending email notification", "to", msg.To, "subject", msg.Subject)
 	return d.emailClient.SendEmail(ctx, msg)
 }

@@ -81,12 +81,11 @@ func (p *DockerPipeline) runPipeline(ctx context.Context, dep *domain.Deployment
 		}()
 
 		if err := pullCmd.Wait(); err != nil {
-
 			inspectErr := exec.CommandContext(ctx, "docker", "image", "inspect", dep.ImageTag).Run()
 			if inspectErr == nil {
-				p.log(ctx, dep.ID, "stdout", fmt.Sprintf("Image '%s' ditemukan di lokal host. Melanjutkan deployment...", dep.ImageTag))
+				p.log(ctx, dep.ID, "stdout", fmt.Sprintf("Image '%s' found on local host. Continuing deployment...", dep.ImageTag))
 			} else {
-				errMsg := fmt.Sprintf("Gagal mengunduh image %s: image tidak ditemukan atau koneksi registry gagal", dep.ImageTag)
+				errMsg := fmt.Sprintf("Failed to pull image %s: image not found or registry connection failed", dep.ImageTag)
 				p.log(ctx, dep.ID, "stderr", errMsg)
 				_ = p.deploymentRepo.UpdateDeploymentStatus(ctx, dep.ID, domain.DeploymentStatusFailed, errMsg, nil)
 				return
@@ -145,9 +144,9 @@ func (p *DockerPipeline) runPipeline(ctx context.Context, dep *domain.Deployment
 	for _, vb := range dep.VolumeBindings {
 		canonicalHost, err := security.ValidateHostPath(vb.HostPath)
 		if err != nil {
-			p.log(ctx, dep.ID, "stderr", fmt.Sprintf("Pipeline menolak bind-mount tidak aman: %s (%v)", vb.HostPath, err))
+			p.log(ctx, dep.ID, "stderr", fmt.Sprintf("Pipeline rejected unsafe bind-mount: %s (%v)", vb.HostPath, err))
 			_ = p.deploymentRepo.UpdateDeploymentStatus(ctx, dep.ID, domain.DeploymentStatusFailed,
-				fmt.Sprintf("bind-mount path tidak aman ditolak: %s (%v)", vb.HostPath, err), nil)
+				fmt.Sprintf("unsafe bind-mount path rejected: %s (%v)", vb.HostPath, err), nil)
 			return
 		}
 
@@ -189,17 +188,17 @@ func (p *DockerPipeline) runPipeline(ctx context.Context, dep *domain.Deployment
 		outStr := strings.TrimSpace(string(outBytes))
 
 		if err != nil {
-			errMsg := fmt.Sprintf("Gagal menjalankan container: %s | %v", outStr, err)
+			errMsg := fmt.Sprintf("Failed to run container: %s | %v", outStr, err)
 			p.log(ctx, dep.ID, "stderr", errMsg)
 			_ = p.deploymentRepo.UpdateDeploymentStatus(ctx, dep.ID, domain.DeploymentStatusFailed, errMsg, nil)
 			return
 		}
 
-		p.log(ctx, dep.ID, "stdout", fmt.Sprintf("Container %s [ID: %s] berhasil dijalankan.", dep.ContainerName, outStr[:min(12, len(outStr))]))
+		p.log(ctx, dep.ID, "stdout", fmt.Sprintf("Container %s [ID: %s] started successfully.", dep.ContainerName, outStr[:min(12, len(outStr))]))
 
 		now := time.Now().UTC()
 		_ = p.deploymentRepo.UpdateDeploymentStatus(ctx, dep.ID, domain.DeploymentStatusRunning, "", &now)
-		p.log(ctx, dep.ID, "system", fmt.Sprintf("Deployment berhasil. Container '%s' aktif pada status RUNNING.", dep.ContainerName))
+		p.log(ctx, dep.ID, "system", fmt.Sprintf("Deployment succeeded. Container '%s' is RUNNING.", dep.ContainerName))
 
 		go p.streamContainerLogs(dep.ID, dep.ContainerName)
 	} else {

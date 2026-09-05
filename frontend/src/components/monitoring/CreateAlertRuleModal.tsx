@@ -32,7 +32,7 @@ export const CreateAlertRuleModal: React.FC<CreateAlertRuleModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name) {
-      setError("Nama aturan alert wajib diisi.");
+      setError("Alert rule name is required.");
       return;
     }
 
@@ -52,7 +52,7 @@ export const CreateAlertRuleModal: React.FC<CreateAlertRuleModalProps> = ({
       onRuleCreated();
       onClose();
     } catch (err: any) {
-      setError(err.response?.data?.message || "Gagal membuat aturan alert.");
+      setError(err.response?.data?.message || "Failed to create alert rule.");
     } finally {
       setIsLoading(false);
     }
@@ -72,8 +72,8 @@ export const CreateAlertRuleModal: React.FC<CreateAlertRuleModalProps> = ({
               <ShieldAlert className="h-4 w-4" />
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-[#ededed]">Buat Aturan Alert Baru</h3>
-              <p className="text-[11px] text-[#a1a1a1]">Konfigurasi ambang batas evaluasi otomatis</p>
+              <h3 className="text-sm font-semibold text-[#ededed]">Create New Alert Rule</h3>
+              <p className="text-[11px] text-[#a1a1a1]">Configure automated threshold evaluation</p>
             </div>
           </div>
           <button
@@ -93,11 +93,11 @@ export const CreateAlertRuleModal: React.FC<CreateAlertRuleModalProps> = ({
 
         <form onSubmit={handleSubmit} className="mt-4 space-y-4 text-xs">
           <div>
-            <label className="block text-[#a1a1a1] mb-1 font-medium">Nama Aturan</label>
+            <label className="block text-[#a1a1a1] mb-1 font-medium">Rule Name</label>
             <input
               type="text"
               required
-              placeholder="Contoh: Beban CPU Kritis Node 1"
+              placeholder="e.g. Critical CPU Load Node 1"
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="w-full rounded-lg border border-[#262626] bg-[#121212] px-3 py-2 text-[#ededed] placeholder-[#666666] focus:border-emerald-500 focus:outline-none"
@@ -106,7 +106,7 @@ export const CreateAlertRuleModal: React.FC<CreateAlertRuleModalProps> = ({
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-[#a1a1a1] mb-1 font-medium">Target Metrik</label>
+              <label className="block text-[#a1a1a1] mb-1 font-medium">Target Metric</label>
               <select
                 value={metricName}
                 onChange={(e) => setMetricName(e.target.value)}
@@ -119,7 +119,7 @@ export const CreateAlertRuleModal: React.FC<CreateAlertRuleModalProps> = ({
             </div>
 
             <div>
-              <label className="block text-[#a1a1a1] mb-1 font-medium">Operator & Ambang Batas</label>
+              <label className="block text-[#a1a1a1] mb-1 font-medium">Operator & Threshold</label>
               <div className="flex gap-2">
                 <select
                   value={operator}
@@ -146,20 +146,20 @@ export const CreateAlertRuleModal: React.FC<CreateAlertRuleModalProps> = ({
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-[#a1a1a1] mb-1 font-medium">Tingkat Keparahan (Severity)</label>
+              <label className="block text-[#a1a1a1] mb-1 font-medium">Severity Level</label>
               <select
                 value={severity}
                 onChange={(e) => setSeverity(e.target.value)}
                 className="w-full rounded-lg border border-[#262626] bg-[#121212] px-3 py-2 text-[#ededed] focus:border-emerald-500 focus:outline-none cursor-pointer"
               >
-                <option value="warning">Warning (Peringatan)</option>
-                <option value="critical">Critical (Kritis)</option>
-                <option value="info">Info (Informasi)</option>
+                <option value="warning">Warning</option>
+                <option value="critical">Critical</option>
+                <option value="info">Info</option>
               </select>
             </div>
 
             <div>
-              <label className="block text-[#a1a1a1] mb-1 font-medium">Durasi Pemicu (Detik)</label>
+              <label className="block text-[#a1a1a1] mb-1 font-medium">Trigger Duration (Seconds)</label>
               <input
                 type="number"
                 required
@@ -180,7 +180,7 @@ export const CreateAlertRuleModal: React.FC<CreateAlertRuleModalProps> = ({
               onClick={onClose}
               className="text-[#a1a1a1]"
             >
-              Batal
+              Cancel
             </Button>
             <Button
               type="submit"
@@ -188,7 +188,7 @@ export const CreateAlertRuleModal: React.FC<CreateAlertRuleModalProps> = ({
               disabled={isLoading}
               className="bg-emerald-500 text-black hover:bg-emerald-400 font-semibold"
             >
-              {isLoading ? "Menyimpan..." : "Buat Aturan"}
+              {isLoading ? "Saving..." : "Create Rule"}
             </Button>
           </div>
         </form>

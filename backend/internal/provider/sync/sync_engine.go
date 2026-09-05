@@ -64,7 +64,7 @@ func (e *SyncEngine) Start(ctx context.Context) {
 		ticker := time.NewTicker(e.interval)
 		defer ticker.Stop()
 
-		logger.Info("SyncEngine Multi-Provider aktif", "interval", e.interval.String())
+		logger.Info("Multi-Provider SyncEngine active", "interval", e.interval.String())
 
 		for {
 			select {
@@ -75,7 +75,7 @@ func (e *SyncEngine) Start(ctx context.Context) {
 			case <-ticker.C:
 				syncCtx, cancel := context.WithTimeout(context.Background(), 45*time.Second)
 				if err := e.SyncOnce(syncCtx); err != nil {
-					logger.Warn("Gagal melakukan sinkronisasi status multi-provider", "error", err)
+					logger.Warn("Failed to synchronize multi-provider status", "error", err)
 				}
 				cancel()
 			}
@@ -94,7 +94,7 @@ func (e *SyncEngine) Stop() {
 	e.mu.Unlock()
 
 	e.wg.Wait()
-	logger.Info("SyncEngine Multi-Provider berhasil dihentikan")
+	logger.Info("Multi-Provider SyncEngine stopped successfully")
 }
 
 func (e *SyncEngine) SyncOnce(ctx context.Context) error {
@@ -129,7 +129,7 @@ func (e *SyncEngine) SyncOnce(ctx context.Context) error {
 
 		remoteServer, err := driver.GetServer(ctx, cred, *srv.ExternalServerID)
 		if err != nil {
-			logger.Warn("Gagal mengambil status remote server dari provider",
+			logger.Warn("Failed to fetch remote server status from provider",
 				"server_id", srv.ID,
 				"external_id", *srv.ExternalServerID,
 				"provider", prov.Slug,
@@ -156,7 +156,7 @@ func (e *SyncEngine) SyncOnce(ctx context.Context) error {
 
 		if needsUpdate {
 			if err := e.serverRepo.Update(ctx, &srv); err != nil {
-				logger.Error("Gagal memperbarui status hasil sinkronisasi server ke database", "server_id", srv.ID, "error", err)
+				logger.Error("Failed to update synchronized server status in database", "server_id", srv.ID, "error", err)
 				continue
 			}
 

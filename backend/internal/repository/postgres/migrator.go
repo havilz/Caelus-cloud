@@ -83,7 +83,7 @@ func (m *Migrator) Up(ctx context.Context, migrationsDir string) error {
 			return fmt.Errorf("gagal melakukan commit transaksi migrasi %s: %w", version, err)
 		}
 
-		logger.Info("Migrasi basis data berhasil diaplikasikan", "version", version)
+		logger.Info("Database migration applied successfully", "version", version)
 	}
 
 	return nil

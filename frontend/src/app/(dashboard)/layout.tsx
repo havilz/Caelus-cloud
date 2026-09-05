@@ -29,7 +29,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       <div className="flex h-screen w-full items-center justify-center bg-[#0f0f0f] text-[#a1a1a1]">
         <div className="flex flex-col items-center gap-3">
           <div className="h-6 w-6 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent" />
-          <p className="text-xs font-medium">Memuat Caelus Cloud Dashboard...</p>
+          <p className="text-xs font-medium">Loading Caelus Cloud Dashboard...</p>
         </div>
       </div>
     );
@@ -41,10 +41,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   return (
     <div className="min-h-screen bg-[#0f0f0f] dark:bg-[#0f0f0f] light:bg-[#f9fafb] text-[#ededed] dark:text-[#ededed] light:text-[#111827] flex">
-      {}
       <Sidebar />
 
-      {}
       <div className="flex-1 flex flex-col pl-64 min-h-screen">
         <Header />
         <main className="flex-1 p-6 overflow-y-auto">{children}</main>

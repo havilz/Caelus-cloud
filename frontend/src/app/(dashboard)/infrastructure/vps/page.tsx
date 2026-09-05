@@ -82,14 +82,13 @@ export default function VPSManagementPage() {
 
   return (
     <div className={AppContainers.pageWrapper}>
-      {}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h2 className={AppText.h2}>
-            Manajemen VPS & Virtual Servers
+            VPS & Virtual Servers Management
           </h2>
           <p className={AppText.subtitle}>
-            Kelola, monitor, dan orkestrasi seluruh instance server VPS dari satu panel terpadu.
+            Manage, monitor, and orchestrate all VPS server instances from a unified control panel.
           </p>
         </div>
 
@@ -112,13 +111,12 @@ export default function VPSManagementPage() {
               className="cursor-pointer"
             >
               <Plus className="h-4 w-4" />
-              <span>Tambah / Hubungkan Server</span>
+              <span>Add / Connect Server</span>
             </Button>
           )}
         </div>
       </div>
 
-      {}
       <div className="flex flex-col sm:flex-row items-center gap-3">
         <div className="relative flex-1 w-full">
           <Search className="h-3.5 w-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[#707070]" />
@@ -126,7 +124,7 @@ export default function VPSManagementPage() {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Cari berdasarkan nama server atau alamat IP..."
+            placeholder="Search by server name or IP address..."
             className="w-full pl-9 pr-4 py-2 text-xs rounded-lg border border-[#262626] dark:border-[#262626] light:border-[#d1d5db] bg-[#121212] dark:bg-[#121212] light:bg-[#ffffff] text-[#ededed] dark:text-[#ededed] light:text-[#111827] placeholder-[#707070] focus:border-emerald-500 focus:outline-none transition-colors"
           />
         </div>
@@ -137,7 +135,7 @@ export default function VPSManagementPage() {
             onChange={(e) => setStatusFilter(e.target.value)}
             className="px-3 py-2 text-xs rounded-lg border border-[#262626] dark:border-[#262626] light:border-[#d1d5db] bg-[#121212] dark:bg-[#121212] light:bg-[#ffffff] text-[#ededed] dark:text-[#ededed] light:text-[#111827] focus:border-emerald-500 focus:outline-none"
           >
-            <option value="all">Semua Status</option>
+            <option value="all">All Statuses</option>
             <option value="running">Running</option>
             <option value="stopped">Stopped</option>
             <option value="restarting">Restarting</option>
@@ -145,19 +143,18 @@ export default function VPSManagementPage() {
         </div>
       </div>
 
-      {}
       <Card className="overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs text-[#ededed] dark:text-[#ededed] light:text-[#111827]">
             <thead className="border-b border-[#262626] dark:border-[#262626] light:border-[#e5e7eb] bg-[#141414] dark:bg-[#141414] light:bg-[#f4f4f5] text-[11px] font-semibold uppercase tracking-wider text-[#a1a1a1]">
               <tr>
-                <th className="px-5 py-3.5">Nama Instance</th>
+                <th className="px-5 py-3.5">Instance Name</th>
                 <th className="px-5 py-3.5">Status</th>
                 <th className="px-5 py-3.5">Provider</th>
-                <th className="px-5 py-3.5">Alamat IP</th>
-                <th className="px-5 py-3.5">Spesifikasi</th>
+                <th className="px-5 py-3.5">IP Address</th>
+                <th className="px-5 py-3.5">Specifications</th>
                 <th className="px-5 py-3.5">Region & OS</th>
-                <th className="px-5 py-3.5 text-right">Aksi Kontrol</th>
+                <th className="px-5 py-3.5 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#262626] dark:divide-[#262626] light:divide-[#e5e7eb]">
@@ -166,8 +163,8 @@ export default function VPSManagementPage() {
                   <td colSpan={7} className="text-center py-12 text-[#707070]">
                     <ServerIcon className="h-8 w-8 mx-auto text-[#404040] mb-2" />
                     {searchQuery
-                      ? "Tidak ada server yang cocok dengan kata kunci pencarian"
-                      : "Belum ada server yang terdaftar. Klik 'Deploy Server Baru' untuk memulai."}
+                      ? "No servers matching search criteria"
+                      : "No servers registered yet. Click 'Add / Connect Server' to get started."}
                   </td>
                 </tr>
               ) : (
@@ -176,7 +173,6 @@ export default function VPSManagementPage() {
 
                   return (
                     <tr key={server.id} className="hover:bg-[#1a1a1a] dark:hover:bg-[#1a1a1a] light:hover:bg-[#f3f4f6] transition-colors">
-                      {}
                       <td className="px-5 py-4 font-medium">
                         <Link
                           href={`/infrastructure/vps/${server.id}`}
@@ -190,26 +186,23 @@ export default function VPSManagementPage() {
                         </span>
                       </td>
 
-                      {}
                       <td className="px-5 py-4">
                         <ServerStatusBadge status={server.status} />
                       </td>
 
-                      {}
                       <td className="px-5 py-4">
                         <Badge variant="outline" className="text-[10px] py-0 px-2">
                           {server.provider?.name || "Mock Provider"}
                         </Badge>
                       </td>
 
-                      {}
                       <td className="px-5 py-4 font-mono">
                         {server.ip_address ? (
                           <button
                             type="button"
                             onClick={() => handleCopyIP(server.ip_address)}
                             className="flex items-center gap-1.5 text-[#a1a1a1] hover:text-emerald-400 transition-colors cursor-pointer"
-                            title="Salin IP Address"
+                            title="Copy IP Address"
                           >
                             <span>{server.ip_address}</span>
                             {copiedIP === server.ip_address ? (
@@ -223,7 +216,6 @@ export default function VPSManagementPage() {
                         )}
                       </td>
 
-                      {}
                       <td className="px-5 py-4">
                         <div className="font-medium text-[#ededed] dark:text-[#ededed] light:text-[#111827]">
                           {server.cpu_cores} vCPU • {(server.memory_mb / 1024).toFixed(0)} GB RAM
@@ -231,27 +223,24 @@ export default function VPSManagementPage() {
                         <span className={AppText.caption}>{server.disk_gb} GB SSD</span>
                       </td>
 
-                      {}
                       <td className="px-5 py-4">
                         <div className="text-[#ededed] dark:text-[#ededed] light:text-[#111827]">{server.region}</div>
                         <span className={AppText.caption}>{server.os_type}</span>
                       </td>
 
-                      {/* Action Controls */}
                       <td className="px-5 py-4 text-right">
                         <div className="flex items-center justify-end gap-1.5">
                           <button
                             type="button"
                             onClick={() => setConnectTarget(server)}
                             className="p-1.5 rounded-md text-emerald-400 hover:bg-emerald-950/40 border border-emerald-500/20 transition-colors cursor-pointer"
-                            title="Petunjuk Hubungkan Agent"
+                            title="Connect Agent Instructions"
                           >
                             <Terminal className="h-3.5 w-3.5" />
                           </button>
 
                           {canManageServers ? (
                             <>
-                              {/* Reboot Action */}
                               <button
                                 type="button"
                                 disabled={isActionLoading || server.status !== "running"}
@@ -262,7 +251,6 @@ export default function VPSManagementPage() {
                                 <RotateCcw className="h-3.5 w-3.5" />
                               </button>
 
-                              {/* Power State */}
                               {server.status === "running" ? (
                                 <button
                                   type="button"
@@ -285,29 +273,27 @@ export default function VPSManagementPage() {
                                 </button>
                               )}
 
-                              {/* Resize Action */}
                               <button
                                 type="button"
                                 disabled={isActionLoading}
                                 onClick={() => setResizeTarget(server)}
                                 className="p-1.5 rounded-md text-[#a1a1a1] hover:text-[#ededed] hover:bg-[#202020] transition-colors cursor-pointer"
-                                title="Resize Spesifikasi"
+                                title="Resize Specifications"
                               >
                                 <Sliders className="h-3.5 w-3.5" />
                               </button>
 
-                              {/* Terminate Action */}
                               {canDeleteServer && (
                                 <button
                                   type="button"
                                   disabled={isActionLoading}
                                   onClick={() => {
-                                    if (confirm(`Apakah Anda yakin ingin menterminasi server ${server.name}?`)) {
+                                    if (confirm(`Are you sure you want to terminate server ${server.name}?`)) {
                                       handleAction(server.id, deleteServer);
                                     }
                                   }}
                                   className="p-1.5 rounded-md text-[#a1a1a1] hover:text-rose-400 hover:bg-rose-950/40 transition-colors cursor-pointer"
-                                  title="Hapus / Terminate Server"
+                                  title="Delete / Terminate Server"
                                 >
                                   <Trash2 className="h-3.5 w-3.5" />
                                 </button>
@@ -326,11 +312,10 @@ export default function VPSManagementPage() {
           </table>
         </div>
 
-        {}
         {totalPages > 1 && (
           <div className="flex items-center justify-between p-4 border-t border-[#262626] dark:border-[#262626] light:border-[#e5e7eb] bg-[#141414] dark:bg-[#141414] light:bg-[#f4f4f5] text-xs text-[#a1a1a1]">
             <span>
-              Menampilkan Halaman {currentPage} dari {totalPages} ({totalServers} Total Server)
+              Showing page {currentPage} of {totalPages} ({totalServers} total servers)
             </span>
             <div className="flex items-center gap-2">
               <Button
@@ -339,7 +324,7 @@ export default function VPSManagementPage() {
                 disabled={currentPage <= 1 || isLoading}
                 onClick={() => fetchServers(currentPage - 1)}
               >
-                Sebelumnya
+                Previous
               </Button>
               <Button
                 variant="outline"
@@ -347,14 +332,13 @@ export default function VPSManagementPage() {
                 disabled={currentPage >= totalPages || isLoading}
                 onClick={() => fetchServers(currentPage + 1)}
               >
-                Selanjutnya
+                Next
               </Button>
             </div>
           </div>
         )}
       </Card>
 
-      {}
       <CreateServerModal isOpen={isCreateOpen} onClose={() => setIsCreateOpen(false)} />
       <ResizeServerModal
         server={resizeTarget}

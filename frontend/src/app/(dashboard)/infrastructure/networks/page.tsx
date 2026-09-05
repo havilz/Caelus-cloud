@@ -90,7 +90,7 @@ export default function NetworksManagementPage() {
       setNewNetName("");
       setIsCreateModalOpen(false);
     } catch (err: any) {
-      alert(`Gagal membuat network: ${err?.response?.data?.message || err.message}`);
+      alert(`Failed to create network: ${err?.response?.data?.message || err.message}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -116,7 +116,7 @@ export default function NetworksManagementPage() {
       setNewRuleName("");
       setIsRuleModalOpen(false);
     } catch (err: any) {
-      alert(`Gagal membuat firewall rule: ${err?.response?.data?.message || err.message}`);
+      alert(`Failed to create firewall rule: ${err?.response?.data?.message || err.message}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -128,7 +128,7 @@ export default function NetworksManagementPage() {
       await networkService.deleteNetwork(id);
       setNetworks((prev) => prev.filter((n) => n.id !== id));
     } catch (err: any) {
-      alert(`Gagal menghapus network: ${err?.response?.data?.message || err.message}`);
+      alert(`Failed to delete network: ${err?.response?.data?.message || err.message}`);
     }
   };
 
@@ -138,7 +138,7 @@ export default function NetworksManagementPage() {
       await networkService.deleteFirewallRule(id);
       setFirewallRules((prev) => prev.filter((r) => r.id !== id));
     } catch (err: any) {
-      alert(`Gagal menghapus firewall rule: ${err?.response?.data?.message || err.message}`);
+      alert(`Failed to delete firewall rule: ${err?.response?.data?.message || err.message}`);
     }
   };
 
@@ -157,7 +157,6 @@ export default function NetworksManagementPage() {
 
   return (
     <div className="space-y-6">
-      {}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-100 flex items-center gap-2.5">
@@ -189,7 +188,6 @@ export default function NetworksManagementPage() {
         </div>
       </div>
 
-      {}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800/80">
           <div className="flex items-center justify-between">
@@ -244,7 +242,6 @@ export default function NetworksManagementPage() {
         </div>
       </div>
 
-      {}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
         <div className="flex items-center gap-2">
           <button
@@ -281,7 +278,6 @@ export default function NetworksManagementPage() {
         </div>
       </div>
 
-      {}
       {activeTab === "networks" && (
         filteredNetworks.length === 0 ? (
           <div className="p-12 text-center rounded-xl bg-slate-900/60 border border-slate-800/80">
@@ -369,7 +365,6 @@ export default function NetworksManagementPage() {
         )
       )}
 
-      {}
       {activeTab === "firewall" && (
         <div className="rounded-xl bg-slate-900/60 border border-slate-800/80 overflow-hidden">
           <div className="overflow-x-auto">
@@ -458,12 +453,11 @@ export default function NetworksManagementPage() {
         </div>
       )}
 
-      {}
       <Dialog
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         title="Create Virtual Network"
-        description="Konfigurasikan ruang alamat IP terisolasi untuk server dan kontainer Anda."
+        description="Configure isolated IP address spaces for your servers and containers."
       >
         <form onSubmit={handleCreateNetwork} className="space-y-4 mt-2">
           <div>
@@ -547,7 +541,6 @@ export default function NetworksManagementPage() {
         </form>
       </Dialog>
 
-      {}
       <Dialog
         isOpen={isRuleModalOpen}
         onClose={() => setIsRuleModalOpen(false)}

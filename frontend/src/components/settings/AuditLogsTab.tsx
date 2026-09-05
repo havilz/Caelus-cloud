@@ -24,7 +24,7 @@ export const AuditLogsTab: React.FC = () => {
       setTotal(res.total);
       setPage(res.page);
     } catch (err: any) {
-      setErrorMsg("Gagal memuat log audit aktivitas");
+      setErrorMsg("Failed to load activity audit logs");
     } finally {
       setIsLoading(false);
     }
@@ -62,12 +62,11 @@ export const AuditLogsTab: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h3 className="text-sm font-semibold text-zinc-100">Log Audit Aktivitas Global</h3>
+          <h3 className="text-sm font-semibold text-zinc-100">Global Activity Audit Logs</h3>
           <p className="text-xs text-zinc-400 mt-0.5">
-            Rekam jejak tidak dapat diubah dari setiap tindakan administrasi, modifikasi resource, dan sesi pengguna
+            Immutable audit trail of all administrative actions, resource modifications, and user sessions
           </p>
         </div>
 
@@ -78,7 +77,7 @@ export const AuditLogsTab: React.FC = () => {
               type="text"
               value={searchFilter}
               onChange={(e) => setSearchFilter(e.target.value)}
-              placeholder="Cari aksi / resource..."
+              placeholder="Search action / resource..."
               className="bg-[#141414] border border-[#2e2e2e] text-zinc-200 text-xs rounded-lg pl-8 pr-3 py-1.5 focus:outline-none focus:border-emerald-500 transition-colors w-48"
             />
           </div>
@@ -100,18 +99,17 @@ export const AuditLogsTab: React.FC = () => {
         </div>
       )}
 
-      {}
       {isLoading ? (
         <div className="flex items-center justify-center py-16 text-zinc-500">
           <RefreshCw className="h-5 w-5 animate-spin mr-2" />
-          <span className="text-sm">Memuat log audit...</span>
+          <span className="text-sm">Loading audit logs...</span>
         </div>
       ) : filteredLogs.length === 0 ? (
         <div className={`${AppTheme.containers.card} text-center py-12 space-y-3`}>
           <div className="mx-auto w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-500">
             <History className="h-5 w-5" />
           </div>
-          <p className="text-xs text-zinc-400">Belum ada riwayat aktivitas yang tercatat.</p>
+          <p className="text-xs text-zinc-400">No activity history recorded yet.</p>
         </div>
       ) : (
         <div className={`${AppTheme.containers.card} overflow-hidden p-0`}>
@@ -119,11 +117,11 @@ export const AuditLogsTab: React.FC = () => {
             <table className="w-full text-left text-xs text-zinc-300">
               <thead className="bg-[#161616] text-[11px] font-semibold text-zinc-400 uppercase tracking-wider border-b border-[#262626]">
                 <tr>
-                  <th className="py-3 px-4">Aksi</th>
-                  <th className="py-3 px-4">Tipe Resource</th>
-                  <th className="py-3 px-4">Alamat IP</th>
-                  <th className="py-3 px-4">Waktu</th>
-                  <th className="py-3 px-4 text-right">Detail</th>
+                  <th className="py-3 px-4">Action</th>
+                  <th className="py-3 px-4">Resource Type</th>
+                  <th className="py-3 px-4">IP Address</th>
+                  <th className="py-3 px-4">Timestamp</th>
+                  <th className="py-3 px-4 text-right">Details</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#222222]">
@@ -138,7 +136,7 @@ export const AuditLogsTab: React.FC = () => {
                         type="button"
                         onClick={() => setSelectedLog(log)}
                         className="p-1 text-zinc-400 hover:text-emerald-400 hover:bg-emerald-500/10 rounded transition-colors cursor-pointer"
-                        title="Lihat Payload"
+                        title="View Payload"
                       >
                         <Eye className="h-4 w-4" />
                       </button>
@@ -149,10 +147,9 @@ export const AuditLogsTab: React.FC = () => {
             </table>
           </div>
 
-          {}
           <div className="p-3 border-t border-[#262626] bg-[#161616] flex items-center justify-between text-xs text-zinc-400">
             <span>
-              Halaman {page} dari {totalPages} ({total} total aksi)
+              Page {page} of {totalPages} ({total} total actions)
             </span>
             <div className="flex items-center gap-1.5">
               <button
@@ -176,14 +173,13 @@ export const AuditLogsTab: React.FC = () => {
         </div>
       )}
 
-      {}
       {selectedLog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-4">
           <div className="bg-[#141414] border border-[#2e2e2e] rounded-xl w-full max-w-lg p-6 shadow-2xl space-y-4">
             <div className="flex items-center justify-between border-b border-[#262626] pb-3">
               <h3 className="text-sm font-semibold text-zinc-100 flex items-center gap-2">
                 <History className="h-4 w-4 text-emerald-400" />
-                Detail Log Audit
+                Audit Log Details
               </h3>
               <button
                 type="button"
@@ -197,15 +193,15 @@ export const AuditLogsTab: React.FC = () => {
             <div className="space-y-3 text-xs">
               <div className="grid grid-cols-2 gap-2 bg-[#181818] p-3 rounded-lg border border-[#262626]">
                 <div>
-                  <p className="text-[10px] uppercase text-zinc-500 font-semibold">Aksi</p>
+                  <p className="text-[10px] uppercase text-zinc-500 font-semibold">Action</p>
                   <p className="font-semibold text-zinc-200">{selectedLog.action}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] uppercase text-zinc-500 font-semibold">Tipe Resource</p>
+                  <p className="text-[10px] uppercase text-zinc-500 font-semibold">Resource Type</p>
                   <p className="font-mono text-zinc-300">{selectedLog.resource_type}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] uppercase text-zinc-500 font-semibold">Alamat IP</p>
+                  <p className="text-[10px] uppercase text-zinc-500 font-semibold">IP Address</p>
                   <p className="font-mono text-zinc-300">{selectedLog.ip_address || "-"}</p>
                 </div>
                 <div>
@@ -237,7 +233,7 @@ export const AuditLogsTab: React.FC = () => {
                 onClick={() => setSelectedLog(null)}
                 className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs rounded-lg transition-colors cursor-pointer"
               >
-                Tutup
+                Close
               </button>
             </div>
           </div>

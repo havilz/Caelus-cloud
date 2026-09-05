@@ -50,7 +50,7 @@ export const ResizeServerModal: React.FC<ResizeServerModalProps> = ({
       });
       onClose();
     } catch (err: any) {
-      setError(err.response?.data?.message || "Gagal mengubah spesifikasi server.");
+      setError(err.response?.data?.message || "Failed to resize server.");
     } finally {
       setIsLoading(false);
     }
@@ -60,8 +60,8 @@ export const ResizeServerModal: React.FC<ResizeServerModalProps> = ({
     <Dialog
       isOpen={isOpen}
       onClose={onClose}
-      title={`Resize Spesifikasi: ${server.name}`}
-      description="Ubah kapasitas vCPU, RAM, dan Disk instance server ini"
+      title={`Resize Instance: ${server.name}`}
+      description="Change vCPU, RAM, and Disk capacity for this server instance"
       maxWidth="md"
     >
       {error && (
@@ -130,11 +130,11 @@ export const ResizeServerModal: React.FC<ResizeServerModalProps> = ({
 
         <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#262626] dark:border-[#262626] light:border-[#e5e7eb]">
           <Button variant="outline" type="button" onClick={onClose} disabled={isLoading}>
-            Batal
+            Cancel
           </Button>
           <Button type="submit" isLoading={isLoading}>
             <Sliders className="h-4 w-4" />
-            <span>Terapkan Resize</span>
+            <span>Apply Resize</span>
           </Button>
         </div>
       </form>

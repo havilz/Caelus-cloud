@@ -40,7 +40,7 @@ export const useServerStore = create<ServerState>((set, get) => ({
       });
     } catch (err: any) {
       set({
-        error: err.response?.data?.message || "Gagal memuat daftar server",
+        error: err.response?.data?.message || "Failed to load server list",
         isLoading: false,
       });
     }
@@ -55,7 +55,7 @@ export const useServerStore = create<ServerState>((set, get) => ({
       return newServer;
     } catch (err: any) {
       set({
-        error: err.response?.data?.message || err.response?.data?.errors || "Gagal membuat server",
+        error: err.response?.data?.message || err.response?.data?.errors || "Failed to create server",
         isLoading: false,
       });
       throw err;

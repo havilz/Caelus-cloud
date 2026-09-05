@@ -121,7 +121,6 @@ export const CreateRuleModal: React.FC<CreateRuleModalProps> = ({
   return (
     <div className={AppTheme.containers.modalBackdrop}>
       <div className={`${AppTheme.containers.modalDialog} max-w-2xl`}>
-        {}
         <div className={AppTheme.containers.cardHeader}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -144,7 +143,6 @@ export const CreateRuleModal: React.FC<CreateRuleModalProps> = ({
           </div>
         </div>
 
-        {}
         <form onSubmit={handleSubmit} className={AppTheme.containers.modalBodyScroll}>
           <div className="p-6 space-y-6">
             {error && (
@@ -154,7 +152,6 @@ export const CreateRuleModal: React.FC<CreateRuleModalProps> = ({
               </div>
             )}
 
-            {}
             <div className="space-y-4">
               <div>
                 <label className={AppTheme.text.label}>Rule Name</label>
@@ -180,7 +177,6 @@ export const CreateRuleModal: React.FC<CreateRuleModalProps> = ({
               </div>
             </div>
 
-            {}
             <div>
               <label className={AppTheme.text.label}>Event Trigger Type</label>
               <select
@@ -195,7 +191,6 @@ export const CreateRuleModal: React.FC<CreateRuleModalProps> = ({
               </select>
             </div>
 
-            {}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div>
@@ -265,7 +260,6 @@ export const CreateRuleModal: React.FC<CreateRuleModalProps> = ({
               </div>
             </div>
 
-            {}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div>
@@ -327,7 +321,6 @@ export const CreateRuleModal: React.FC<CreateRuleModalProps> = ({
               </div>
             </div>
 
-            {}
             <div>
               <div className="flex items-center gap-1.5">
                 <ShieldCheck className="w-4 h-4 text-emerald-400" />
@@ -344,7 +337,6 @@ export const CreateRuleModal: React.FC<CreateRuleModalProps> = ({
             </div>
           </div>
 
-          {}
           <div className="p-5 border-t border-[#262626] bg-[#141414] flex items-center justify-end gap-3 rounded-b-xl">
             <button
               type="button"

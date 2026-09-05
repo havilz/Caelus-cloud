@@ -85,7 +85,7 @@ func (o *Orchestrator) ExecuteScan(
 			defer wg.Done()
 			results, err := worker.Scan(ctx, target)
 			if err != nil {
-				logger.Warn("Scanner gagal mengeksekusi pemeriksaan", "type", worker.Type(), "error", err)
+				logger.Warn("Scanner failed to execute inspection", "type", worker.Type(), "error", err)
 				return
 			}
 			mu.Lock()
@@ -103,7 +103,7 @@ func (o *Orchestrator) ExecuteScan(
 			continue
 		}
 		if err := o.securityRepo.UpsertFinding(ctx, finding); err != nil {
-			logger.Error("Gagal menyimpan temuan keamanan", "title", finding.Title, "error", err)
+			logger.Error("Failed to persist security finding", "title", finding.Title, "error", err)
 			continue
 		}
 		normalizedFindings = append(normalizedFindings, *finding)

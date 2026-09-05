@@ -112,7 +112,7 @@ func (u *securityUsecase) TriggerScan(ctx context.Context, orgID uuid.UUID, serv
 		defer cancel()
 
 		if _, err := u.orchestrator.ExecuteScan(bgCtx, s, t); err != nil {
-			logger.Error("Eksekusi pemindaian Sentinel gagal", "scan_id", s.ID, "error", err)
+			logger.Error("Sentinel scan execution failed", "scan_id", s.ID, "error", err)
 		}
 	}(scan, target)
 

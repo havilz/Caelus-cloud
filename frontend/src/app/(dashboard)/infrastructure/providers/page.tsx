@@ -52,7 +52,7 @@ const PROVIDER_PRESETS: ProviderPreset[] = [
   {
     slug: "hetzner",
     name: "Hetzner Cloud",
-    desc: "Cloud VPS performa tinggi dengan biaya ekonomis di datacenter Eropa & AS.",
+    desc: "High-performance, cost-effective cloud VPS in European & US datacenters.",
     badge: "Hetzner API",
     badgeStyle: "text-rose-400 border-rose-500/30 bg-rose-950/20",
     iconBoxStyle: "p-2.5 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400",
@@ -60,7 +60,7 @@ const PROVIDER_PRESETS: ProviderPreset[] = [
   {
     slug: "digitalocean",
     name: "DigitalOcean",
-    desc: "Provisioning Droplet instan dengan integrasi API v2 dan jaringan VPC.",
+    desc: "Instant Droplet provisioning with API v2 integration and VPC networking.",
     badge: "DO Droplets",
     badgeStyle: "text-cyan-400 border-cyan-500/30 bg-cyan-950/20",
     iconBoxStyle: AppTheme.controls.iconBoxCyan,
@@ -68,7 +68,7 @@ const PROVIDER_PRESETS: ProviderPreset[] = [
   {
     slug: "contabo",
     name: "Contabo Cloud",
-    desc: "Cloud VPS dengan kapasitas core CPU dan storage NVMe ekstra lega.",
+    desc: "Cloud VPS with high core counts and generous NVMe storage capacity.",
     badge: "Contabo API",
     badgeStyle: "text-purple-400 border-purple-500/30 bg-purple-950/20",
     iconBoxStyle: AppTheme.controls.iconBoxPurple,
@@ -76,7 +76,7 @@ const PROVIDER_PRESETS: ProviderPreset[] = [
   {
     slug: "custom",
     name: "Custom / BYOS",
-    desc: "Hubungkan server fisik, Home Server, atau VPS existing via Caelus Agent.",
+    desc: "Connect bare-metal servers, home servers, or existing VPS via Caelus Agent.",
     badge: "On-Premises",
     badgeStyle: "text-emerald-400 border-emerald-500/30 bg-emerald-950/20",
     iconBoxStyle: AppTheme.controls.iconBoxEmerald,
@@ -84,7 +84,7 @@ const PROVIDER_PRESETS: ProviderPreset[] = [
   {
     slug: "mock",
     name: "Mock Cloud Sandbox",
-    desc: "Simulator provider lokal untuk pengujian siklus hidup VM tanpa biaya API.",
+    desc: "Local provider simulator for testing VM lifecycles without API costs.",
     badge: "Sandbox",
     badgeStyle: "text-purple-400 border-purple-500/30 bg-purple-950/20",
     iconBoxStyle: AppTheme.controls.iconBoxPurple,
@@ -108,7 +108,7 @@ export default function CloudProvidersPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
-  const [testResults, setTestResults] = useState<Record<string, { status: string; count?: number; testing?: boolean }>>({});
+  const [testResults, setTestResults] = useState<Record<string, { status?: string; count?: number; testing?: boolean; message?: string }>>({});
 
   const loadData = async () => {
     try {
@@ -119,7 +119,7 @@ export default function CloudProvidersPage() {
       setProviders(Array.isArray(provData) ? provData : []);
       setCredentials(Array.isArray(credData) ? credData : []);
     } catch (err) {
-      console.error("Gagal memuat data provider:", err);
+      console.error("Failed to load provider data:", err);
       setProviders([]);
       setCredentials([]);
     } finally {
@@ -155,13 +155,13 @@ export default function CloudProvidersPage() {
   const handleCreateCredential = async (e: React.SyntheticEvent) => {
     e.preventDefault();
     if (!credName.trim()) {
-      setFormError("Nama kredensial wajib diisi.");
+      setFormError("Credential name is required.");
       return;
     }
 
     const targetProvider = providers.find((p) => p.slug === selectedProviderSlug);
     if (!targetProvider) {
-      setFormError("Provider tidak valid atau belum terdaftar di sistem.");
+      setFormError("Invalid or unregistered provider.");
       return;
     }
 
@@ -201,7 +201,7 @@ export default function CloudProvidersPage() {
       setIsModalOpen(false);
       await loadData();
     } catch (err: any) {
-      const errMsg = err.response?.data?.errors || err.response?.data?.message || err.message || "Gagal menyimpan kredensial";
+      const errMsg = err.response?.data?.errors || err.response?.data?.message || err.message || "Failed to save credentials";
       setFormError(typeof errMsg === 'string' ? errMsg : JSON.stringify(errMsg));
     } finally {
       setIsSubmitting(false);
@@ -209,65 +209,57 @@ export default function CloudProvidersPage() {
   };
 
   const handleDeleteCredential = async (id: string) => {
-    if (!confirm("Apakah Anda yakin ingin menghapus kredensial provider ini?")) return;
+    if (!confirm("Are you sure you want to delete this provider credential?")) return;
     try {
       await credentialService.deleteCredential(id);
       setCredentials((prev) => prev.filter((c) => c.id !== id));
     } catch (err) {
-      alert("Gagal menghapus kredensial.");
+      alert("Failed to delete credential.");
     }
   };
 
   const handleTestConnection = async (id: string) => {
     setTestResults((prev) => ({
       ...prev,
-      [id]: { status: "testing", testing: true },
+      [id]: { testing: true },
     }));
 
     try {
       const res = await credentialService.testCredential(id);
       setTestResults((prev) => ({
         ...prev,
-        [id]: { status: "connected", count: res.server_count, testing: false },
+        [id]: { testing: false, status: res.status, count: res.server_count ?? 0 },
       }));
     } catch (err: any) {
       setTestResults((prev) => ({
         ...prev,
-        [id]: { status: "failed", testing: false },
+        [id]: { testing: false, status: "failed", message: err.message },
       }));
     }
   };
 
-  const safeCredentials = Array.isArray(credentials) ? credentials : [];
-  const safeProviders = Array.isArray(providers) ? providers : [];
+  const safeProviders = providers || [];
+  const safeCredentials = credentials || [];
 
   return (
     <div className={AppTheme.containers.pageWrapper}>
-      {}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <span className={AppTheme.text.categoryTag}>Cloud Infrastructure</span>
-            <span className={AppTheme.controls.badgeActive}>Orchestrator</span>
-          </div>
-          <h1 className={AppTheme.text.h1}>Multi-Provider Infrastructure</h1>
+          <h1 className={AppTheme.text.h1}>Cloud Providers & API Credentials</h1>
           <p className={AppTheme.text.subtitle}>
-            Hubungkan akun cloud provider (AWS, Hetzner, DigitalOcean, Contabo) dengan enkripsi AES-256-GCM tingkat enterprise.
+            Multi-cloud infrastructure integrations, automated provisioning keys, and hybrid VPS orchestrators.
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => {
-              setIsRefreshing(true);
-              loadData();
-            }}
+            onClick={loadData}
             disabled={isRefreshing}
             className={AppTheme.controls.buttonSecondary}
           >
-            <RefreshCw className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
-            <span>Sinkronisasi</span>
+            <RefreshCw className={`h-3.5 w-3.5 ${isRefreshing ? "animate-spin" : ""}`} />
+            <span>Sync Providers</span>
           </button>
 
           {canManageCredentials && (
@@ -277,7 +269,7 @@ export default function CloudProvidersPage() {
               className={AppTheme.controls.buttonPrimary}
             >
               <Plus className="h-4 w-4" />
-              <span>Tambah Kredensial</span>
+              <span>Add Credential</span>
             </button>
           )}
         </div>
@@ -287,21 +279,20 @@ export default function CloudProvidersPage() {
         <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300 flex items-center gap-3 text-sm">
           <Lock className="h-5 w-5 shrink-0 text-amber-400" />
           <span>
-            <strong>Akses Dibatasi:</strong> Hanya pengguna dengan role <strong>Admin</strong> atau <strong>Owner</strong> organisasi yang berwenang untuk menambah, menguji, atau menghapus kredensial cloud provider.
+            <strong>Restricted Access:</strong> Only organization members with <strong>Admin</strong> or <strong>Owner</strong> roles are authorized to manage cloud provider credentials.
           </span>
         </div>
       )}
 
-      {}
       <div className={`p-4 rounded-xl ${AppTheme.colors.brand.primaryLight} flex flex-col sm:flex-row sm:items-center justify-between gap-3`}>
         <div className="flex items-start sm:items-center gap-3">
           <div className={AppTheme.controls.iconBoxEmerald}>
             <ShieldCheck className="h-5 w-5" />
           </div>
           <div>
-            <h4 className={AppTheme.text.h4}>Enkripsi Data Kredensial Terproteksi (At Rest & In Transit)</h4>
+            <h4 className={AppTheme.text.h4}>Protected Credential Encryption (At Rest & In Transit)</h4>
             <p className={AppTheme.text.subtitle}>
-              Kunci API, secret key, dan access token dienkripsi menggunakan algoritma <strong className="text-emerald-400">AES-256-GCM</strong> sebelum disimpan ke basis data.
+              API keys, secret keys, and access tokens are encrypted using <strong className="text-emerald-400">AES-256-GCM</strong> before persisting to the database.
             </p>
           </div>
         </div>
@@ -311,15 +302,14 @@ export default function CloudProvidersPage() {
         </div>
       </div>
 
-      {}
       <div className={AppTheme.containers.metricsGrid}>
         <div className={`${AppTheme.containers.card} ${AppTheme.containers.cardHover} ${AppTheme.containers.cardContent} flex items-center justify-between`}>
           <div>
-            <p className={AppTheme.text.caption}>Provider Terhubung</p>
+            <p className={AppTheme.text.caption}>Connected Providers</p>
             <h3 className={`${AppTheme.text.h1} mt-1`}>
               {new Set(safeCredentials.map((c) => c.provider?.slug || c.provider_id)).size}
             </h3>
-            <p className={AppTheme.text.caption}>Dari {safeProviders.length} provider terdaftar</p>
+            <p className={AppTheme.text.caption}>From {safeProviders.length} registered providers</p>
           </div>
           <div className={AppTheme.controls.iconBoxCyan}>
             <Cloud className="h-5 w-5" />
@@ -328,9 +318,9 @@ export default function CloudProvidersPage() {
 
         <div className={`${AppTheme.containers.card} ${AppTheme.containers.cardHover} ${AppTheme.containers.cardContent} flex items-center justify-between`}>
           <div>
-            <p className={AppTheme.text.caption}>Total Kredensial</p>
+            <p className={AppTheme.text.caption}>Total Credentials</p>
             <h3 className={`${AppTheme.text.h1} mt-1`}>{safeCredentials.length}</h3>
-            <p className={AppTheme.text.caption}>Terenkripsi AES-256-GCM</p>
+            <p className={AppTheme.text.caption}>Encrypted AES-256-GCM</p>
           </div>
           <div className={AppTheme.controls.iconBoxEmerald}>
             <Key className="h-5 w-5" />
@@ -339,8 +329,8 @@ export default function CloudProvidersPage() {
 
         <div className={`${AppTheme.containers.card} ${AppTheme.containers.cardHover} ${AppTheme.containers.cardContent} flex items-center justify-between`}>
           <div>
-            <p className={AppTheme.text.caption}>Status Rekonsiliasi</p>
-            <h3 className="text-2xl font-bold text-emerald-400 mt-1">Aktif</h3>
+            <p className={AppTheme.text.caption}>Reconciliation Status</p>
+            <h3 className="text-2xl font-bold text-emerald-400 mt-1">Active</h3>
             <p className={AppTheme.text.caption}>Polling interval 60s</p>
           </div>
           <div className={AppTheme.controls.iconBoxPurple}>
@@ -350,8 +340,8 @@ export default function CloudProvidersPage() {
 
         <div className={`${AppTheme.containers.card} ${AppTheme.containers.cardHover} ${AppTheme.containers.cardContent} flex items-center justify-between`}>
           <div>
-            <p className={AppTheme.text.caption}>Driver Didukung</p>
-            <h3 className="text-2xl font-bold text-amber-400 mt-1">6 Driver</h3>
+            <p className={AppTheme.text.caption}>Supported Drivers</p>
+            <h3 className="text-2xl font-bold text-amber-400 mt-1">6 Drivers</h3>
             <p className={AppTheme.text.caption}>AWS, Hetzner, DO, Contabo, BYOS, Mock</p>
           </div>
           <div className={AppTheme.controls.iconBoxAmber}>
@@ -360,11 +350,10 @@ export default function CloudProvidersPage() {
         </div>
       </div>
 
-      {}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h3 className={AppTheme.text.h3}>Katalog Cloud Provider yang Didukung</h3>
-          <span className={AppTheme.text.caption}>Pilih provider untuk menghubungkan akun</span>
+          <h3 className={AppTheme.text.h3}>Supported Cloud Providers Catalog</h3>
+          <span className={AppTheme.text.caption}>Select a provider to connect your account</span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -395,9 +384,9 @@ export default function CloudProvidersPage() {
                 <div className="mt-5 pt-4 border-t border-[#262626] dark:border-[#262626] light:border-[#e5e7eb] flex items-center justify-between">
                   <div className={AppTheme.text.caption}>
                     {connectedCount > 0 ? (
-                      <span className="text-emerald-400 font-medium">{connectedCount} Akun Terhubung</span>
+                      <span className="text-emerald-400 font-medium">{connectedCount} Connected</span>
                     ) : (
-                      <span>Belum terhubung</span>
+                      <span>Not connected</span>
                     )}
                   </div>
                   {canManageCredentials ? (
@@ -407,10 +396,10 @@ export default function CloudProvidersPage() {
                       className={AppTheme.controls.buttonSecondary}
                     >
                       <Plus className="h-3 w-3" />
-                      <span>Hubungkan</span>
+                      <span>Connect</span>
                     </button>
                   ) : (
-                    <span className="text-xs text-zinc-500">Terkunci</span>
+                    <span className="text-xs text-zinc-500">Locked</span>
                   )}
                 </div>
               </div>
@@ -419,17 +408,16 @@ export default function CloudProvidersPage() {
         </div>
       </div>
 
-      {}
       <div className={AppTheme.containers.card}>
         <div className={`${AppTheme.containers.cardHeader} flex items-center justify-between`}>
           <div>
-            <h3 className={AppTheme.text.h3}>Daftar Kredensial Provider Terpasang</h3>
+            <h3 className={AppTheme.text.h3}>Configured Provider Credentials</h3>
             <p className={AppTheme.text.subtitle}>
-              Kredensial aktif yang dapat digunakan untuk provisioning VM dan auto-sync status.
+              Active credentials available for VM provisioning and auto-sync reconciliation.
             </p>
           </div>
           <span className={AppTheme.controls.badgeMono}>
-            {safeCredentials.length} Kredensial
+            {safeCredentials.length} Credentials
           </span>
         </div>
 
@@ -437,9 +425,9 @@ export default function CloudProvidersPage() {
           {safeCredentials.length === 0 ? (
             <div className="p-8 text-center">
               <Key className="h-8 w-8 text-zinc-600 mx-auto mb-2" />
-              <p className={AppTheme.text.h4}>Belum ada kredensial provider yang ditambahkan</p>
+              <p className={AppTheme.text.h4}>No provider credentials added yet</p>
               <p className={`${AppTheme.text.subtitle} max-w-md mx-auto mt-1`}>
-                Tambahkan kunci API atau token provider cloud Anda untuk memulai provisioning server secara otomatis.
+                Add your cloud provider API keys or tokens to initiate automated VM provisioning.
               </p>
               <button
                 type="button"
@@ -447,7 +435,7 @@ export default function CloudProvidersPage() {
                 className={`${AppTheme.controls.buttonPrimary} mx-auto mt-4`}
               >
                 <Plus className="h-4 w-4" />
-                <span>Tambah Kredensial Pertama</span>
+                <span>Add First Credential</span>
               </button>
             </div>
           ) : (
@@ -455,12 +443,12 @@ export default function CloudProvidersPage() {
               <table className="w-full text-left text-xs">
                 <thead className="bg-[#141414] dark:bg-[#141414] light:bg-[#f4f4f5] text-[#a1a1a1] font-medium border-b border-[#262626]">
                   <tr>
-                    <th className="py-3 px-4">Nama Kredensial</th>
-                    <th className="py-3 px-4">Penyedia (Provider)</th>
-                    <th className="py-3 px-4">Region / Lokasi</th>
-                    <th className="py-3 px-4">Status Enkripsi</th>
-                    <th className="py-3 px-4">Koneksi</th>
-                    <th className="py-3 px-4 text-right">Aksi</th>
+                    <th className="py-3 px-4">Credential Name</th>
+                    <th className="py-3 px-4">Provider</th>
+                    <th className="py-3 px-4">Region / Location</th>
+                    <th className="py-3 px-4">Encryption Status</th>
+                    <th className="py-3 px-4">Connection</th>
+                    <th className="py-3 px-4 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#262626] dark:divide-[#262626] light:divide-[#e5e7eb] text-[#ededed]">
@@ -494,20 +482,20 @@ export default function CloudProvidersPage() {
                           {testState?.testing ? (
                             <span className="inline-flex items-center gap-1 text-[11px] text-amber-400 animate-pulse">
                               <RefreshCw className="h-3 w-3 animate-spin" />
-                              Menguji koneksi...
+                              Testing connection...
                             </span>
                           ) : testState?.status === "connected" ? (
                             <span className="inline-flex items-center gap-1 text-[11px] text-emerald-400 font-medium">
                               <CheckCircle2 className="h-3.5 w-3.5" />
-                              Terhubung ({testState.count ?? 0} VM)
+                              Connected ({testState.count ?? 0} VMs)
                             </span>
                           ) : testState?.status === "failed" ? (
                             <span className="inline-flex items-center gap-1 text-[11px] text-rose-400 font-medium">
                               <AlertCircle className="h-3.5 w-3.5" />
-                              Gagal terhubung
+                              Connection failed
                             </span>
                           ) : (
-                            <span className={AppTheme.text.caption}>Siap diuji</span>
+                            <span className={AppTheme.text.caption}>Ready to test</span>
                           )}
                         </td>
                         <td className="py-3 px-4 text-right">
@@ -521,13 +509,13 @@ export default function CloudProvidersPage() {
                                   className={AppTheme.controls.buttonAction}
                                 >
                                   <Zap className="h-3 w-3" />
-                                  <span>Uji</span>
+                                  <span>Test</span>
                                 </button>
                                 <button
                                   type="button"
                                   onClick={() => handleDeleteCredential(cred.id)}
                                   className={AppTheme.controls.iconButtonDanger}
-                                  title="Hapus kredensial"
+                                  title="Delete credential"
                                 >
                                   <Trash2 className="h-3.5 w-3.5" />
                                 </button>
@@ -547,12 +535,11 @@ export default function CloudProvidersPage() {
         </div>
       </div>
 
-      {}
       <Dialog
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title="Hubungkan Kredensial Cloud Provider"
-        description="Kredensial disimpan dengan enkripsi AES-256-GCM dan hanya didekripsi saat provisioning instance."
+        title="Connect Cloud Provider Credentials"
+        description="Credentials are stored with AES-256-GCM encryption and only decrypted during instance provisioning."
         maxWidth="lg"
       >
         <div className="space-y-5">
@@ -565,7 +552,7 @@ export default function CloudProvidersPage() {
 
           <form onSubmit={handleCreateCredential} className="space-y-4">
             <div className="space-y-1.5">
-              <label className={AppTheme.text.label}>Pilih Provider</label>
+              <label className={AppTheme.text.label}>Select Provider</label>
               <div className="grid grid-cols-3 gap-2">
                 {PROVIDER_PRESETS.filter((p) => p.slug !== "custom").map((p) => {
                   const isSelected = selectedProviderSlug === p.slug;
@@ -598,7 +585,7 @@ export default function CloudProvidersPage() {
             </div>
 
             <div className="space-y-1.5">
-              <label className={AppTheme.text.label}>Nama Kredensial / Alias</label>
+              <label className={AppTheme.text.label}>Credential Name / Label</label>
               <input
                 type="text"
                 placeholder="e.g. Production AWS Account, Hetzner Production Token"
@@ -622,7 +609,7 @@ export default function CloudProvidersPage() {
                     className={AppTheme.controls.inputMono}
                   />
                   <p className="text-[11px] text-[#707070]">
-                    Ditemukan di overview R2 / URL S3: https:
+                    Found in R2 overview / S3 URL endpoint:
                   </p>
                 </div>
                 <div className="space-y-1.5">
@@ -705,7 +692,7 @@ export default function CloudProvidersPage() {
                   </label>
                   <input
                     type="password"
-                    placeholder="eyJhbGciOi... atau token rahasia"
+                    placeholder="API token or secret token"
                     value={apiKey}
                     onChange={(e) => setApiKey(e.target.value)}
                     required
@@ -764,7 +751,7 @@ export default function CloudProvidersPage() {
 
             {selectedProviderSlug === "mock" && (
               <div className="space-y-1.5">
-                <label className={AppTheme.text.label}>Simulasi Region</label>
+                <label className={AppTheme.text.label}>Simulation Region</label>
                 <input
                   type="text"
                   placeholder="mock-region-1"
@@ -781,7 +768,7 @@ export default function CloudProvidersPage() {
                 onClick={() => setIsModalOpen(false)}
                 className={AppTheme.controls.buttonSecondary}
               >
-                Batal
+                Cancel
               </button>
               <button
                 type="submit"
@@ -789,7 +776,7 @@ export default function CloudProvidersPage() {
                 className={AppTheme.controls.buttonPrimary}
               >
                 <Lock className="h-3.5 w-3.5" />
-                <span>{isSubmitting ? "Menyimpan..." : "Enkripsi & Simpan"}</span>
+                <span>{isSubmitting ? "Saving..." : "Encrypt & Save"}</span>
               </button>
             </div>
           </form>

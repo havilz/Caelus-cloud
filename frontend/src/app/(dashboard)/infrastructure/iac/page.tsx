@@ -342,7 +342,6 @@ export default function DeclarativeIaCPage() {
 
   return (
     <div className="space-y-6">
-      {}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#262626] pb-5">
         <div>
           <h1 className="text-xl font-bold tracking-tight text-[#ededed]">Declarative Infrastructure as Code (IaC)</h1>
@@ -378,11 +377,8 @@ export default function DeclarativeIaCPage() {
         </div>
       </div>
 
-      {}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {}
         <div className="lg:col-span-1 space-y-4">
-          {}
           <div className="bg-[#171717] border border-[#262626] rounded-xl p-4 space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-[#ededed] uppercase tracking-wider">Saved Stacks</span>
@@ -413,7 +409,6 @@ export default function DeclarativeIaCPage() {
             </div>
           </div>
 
-          {}
           <div className="bg-[#171717] border border-[#262626] rounded-xl p-4 space-y-3">
             <span className="text-xs font-bold text-[#ededed] uppercase tracking-wider">Starter Templates</span>
             <div className="space-y-2">
@@ -431,9 +426,7 @@ export default function DeclarativeIaCPage() {
           </div>
         </div>
 
-        {}
         <div className="lg:col-span-3 space-y-4">
-          {}
           <div className="bg-[#171717] border border-[#262626] rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div className="flex-1 w-full sm:w-auto">
               <input
@@ -445,7 +438,6 @@ export default function DeclarativeIaCPage() {
               />
             </div>
 
-            {}
             <div className="flex items-center bg-[#121212] p-1 border border-[#262626] rounded-lg">
               <button
                 onClick={() => setActiveTab('editor')}
@@ -489,7 +481,6 @@ export default function DeclarativeIaCPage() {
             </div>
           )}
 
-          {}
           {activeTab === 'editor' && (
             <div className="bg-[#171717] border border-[#262626] rounded-xl overflow-hidden shadow-sm">
               <div className="flex items-center justify-between px-4 py-2.5 bg-[#121212] border-b border-[#262626]">
@@ -540,12 +531,10 @@ export default function DeclarativeIaCPage() {
             </div>
           )}
 
-          {}
           {activeTab === 'diff' && (
             <div className="space-y-4">
               {currentPlan ? (
                 <div className="space-y-4">
-                  {}
                   <div className="grid grid-cols-4 gap-3">
                     <div className="p-3 bg-[#171717] border border-emerald-500/20 rounded-xl text-center">
                       <p className="text-[10px] text-[#707070] uppercase font-bold">To Create</p>
@@ -565,7 +554,6 @@ export default function DeclarativeIaCPage() {
                     </div>
                   </div>
 
-                  {}
                   <div className="bg-[#171717] border border-[#262626] rounded-xl overflow-hidden">
                     <div className="px-4 py-3 bg-[#121212] border-b border-[#262626] flex items-center justify-between">
                       <span className="text-xs font-bold text-[#ededed]">Planned Resource Changes</span>
@@ -594,7 +582,6 @@ export default function DeclarativeIaCPage() {
                             <p className="text-xs text-[#a1a1a1] italic">{change.reason}</p>
                           )}
 
-                          {}
                           {change.action === 'update' && (
                             <div className="bg-[#101010] p-3 rounded-lg border border-[#222222] font-mono text-[11px] space-y-1">
                               <p className="text-[#707070] font-bold">Modified Fields: {change.changed_fields?.join(', ')}</p>
@@ -643,7 +630,6 @@ export default function DeclarativeIaCPage() {
             </div>
           )}
 
-          {}
           {activeTab === 'history' && (
             <div className="bg-[#171717] border border-[#262626] rounded-xl overflow-hidden">
               <div className="px-4 py-3 bg-[#121212] border-b border-[#262626]">

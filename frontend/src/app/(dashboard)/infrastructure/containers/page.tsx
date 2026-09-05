@@ -345,7 +345,6 @@ export default function ContainersOrchestrationPage() {
 
   return (
     <div className="space-y-6">
-      {}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#262626] pb-5">
           <div>
             <h1 className="text-xl font-bold tracking-tight text-[#ededed]">Container Orchestration & Deployments</h1>
@@ -363,15 +362,12 @@ export default function ContainersOrchestrationPage() {
         </button>
       </div>
 
-      {}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {}
         <div className="lg:col-span-5 space-y-4">
           <div className="bg-[#171717] border border-[#262626] rounded-xl p-4 space-y-3">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <span className="text-xs font-bold text-[#ededed] uppercase tracking-wider">Active Deployments</span>
               
-              {}
               <div className="flex items-center gap-2">
                 <select
                   value={selectedServerFilter}
@@ -487,12 +483,9 @@ export default function ContainersOrchestrationPage() {
           </div>
         </div>
 
-        {}
         <div className="lg:col-span-7 space-y-4">
           <div className="bg-[#0f1218] border border-[#22272e] rounded-xl overflow-hidden shadow-lg flex flex-col h-[650px]">
-            {}
             <div className="bg-[#13171f] border-b border-[#22272e] flex flex-col">
-              {}
               <div className="px-4 py-2.5 flex items-center justify-between border-b border-[#1c2128]">
                 <div className="flex items-center gap-2.5">
                   <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800/80 border border-slate-700/60">
@@ -529,7 +522,6 @@ export default function ContainersOrchestrationPage() {
                 </div>
               </div>
 
-              {}
               <div className="px-4 py-2 flex items-center justify-between bg-[#0d1117]">
                 <div className="flex items-center gap-1">
                   {(['all', 'stdout', 'stderr', 'system'] as const).map((filter) => (
@@ -569,7 +561,6 @@ export default function ContainersOrchestrationPage() {
               </div>
             </div>
 
-            {}
             <div className="flex-1 p-4 font-mono text-xs overflow-y-auto bg-[#0a0c10] text-[#c9d1d9] space-y-1">
               {filteredLogs.map((log) => {
                 let colorClass = 'text-zinc-300';
@@ -602,7 +593,6 @@ export default function ContainersOrchestrationPage() {
         </div>
       </div>
 
-      {}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-4">
           <div className="bg-[#171717] border border-[#262626] rounded-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto shadow-2xl p-6 space-y-5">
@@ -620,7 +610,6 @@ export default function ContainersOrchestrationPage() {
             </div>
 
             <form onSubmit={handleDeploy} className="space-y-4">
-              {}
               <div>
                 <label className="text-[11px] font-medium text-[#a1a1a1]">Target Server / Host Node</label>
                 <select
@@ -642,7 +631,6 @@ export default function ContainersOrchestrationPage() {
                 </select>
               </div>
 
-              {}
               <div className="space-y-1.5">
                 <label className="text-[11px] font-medium text-[#a1a1a1]">Quick Image Presets</label>
                 <div className="grid grid-cols-2 gap-2">
@@ -664,7 +652,6 @@ export default function ContainersOrchestrationPage() {
                 </div>
               </div>
 
-              {}
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-[11px] font-medium text-[#a1a1a1]">App Name *</label>
@@ -690,7 +677,6 @@ export default function ContainersOrchestrationPage() {
                 </div>
               </div>
 
-              {}
               <div>
                 <label className="text-[11px] font-medium text-[#a1a1a1]">Command / Arguments (Opsional)</label>
                 <input
@@ -702,7 +688,6 @@ export default function ContainersOrchestrationPage() {
                 />
               </div>
 
-              {}
               <div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
@@ -727,16 +712,15 @@ export default function ContainersOrchestrationPage() {
                   </div>
                 </div>
                 <p className="text-[10px] text-[#707070] mt-1">
-                  Kosongkan kedua port jika kontainer tidak butuh expose port publik (seperti Cloudflare Tunnel / background job).
+                  Leave both ports blank if the container does not require public exposure (e.g., Cloudflare Tunnel / background jobs).
                 </p>
               </div>
 
-              {}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <label className="text-[11px] font-medium text-[#a1a1a1]">Persistent Storage Volumes (Opsional)</label>
+                  <label className="text-[11px] font-medium text-[#a1a1a1]">Persistent Storage Volumes (Optional)</label>
                   <span className="text-[10px] text-zinc-500 font-mono">
-                    {availableVolumes.filter(v => (v.server_id || '') === (targetServerId || '')).length} volume tersedia di node ini
+                    {availableVolumes.filter(v => (v.server_id || '') === (targetServerId || '')).length} volumes available on this node
                   </span>
                 </div>
 
@@ -754,7 +738,7 @@ export default function ContainersOrchestrationPage() {
                       }}
                       className="w-full bg-[#121212] border border-[#2e2e2e] rounded-lg px-2.5 py-1.5 text-xs text-[#ededed] font-mono focus:outline-none focus:border-purple-500 cursor-pointer"
                     >
-                      <option value="">-- Pilih Volume Terdaftar --</option>
+                      <option value="">-- Select Registered Volume --</option>
                       {availableVolumes
                         .filter(v => (v.server_id || '') === (targetServerId || ''))
                         .map((v) => (
@@ -785,7 +769,6 @@ export default function ContainersOrchestrationPage() {
                   </div>
                 </div>
 
-                {}
                 {volumeMounts.length > 0 && (
                   <div className="flex flex-wrap gap-1.5 pt-1">
                     {volumeMounts.map((vm, idx) => (
@@ -811,7 +794,6 @@ export default function ContainersOrchestrationPage() {
                 )}
               </div>
 
-              {}
               <div>
                 <label className="text-[11px] font-medium text-[#a1a1a1]">VPC Network / Isolation</label>
                 <select
@@ -828,7 +810,6 @@ export default function ContainersOrchestrationPage() {
                 </select>
               </div>
 
-              {}
               <div className="space-y-2">
                 <label className="text-[11px] font-medium text-[#a1a1a1]">Environment Variables</label>
                 <div className="flex gap-2">
@@ -872,7 +853,6 @@ export default function ContainersOrchestrationPage() {
                 )}
               </div>
 
-              {}
               <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#262626] sticky bottom-0 bg-[#171717]/95 backdrop-blur-xs pb-1">
                 <button
                   type="button"

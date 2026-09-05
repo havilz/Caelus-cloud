@@ -35,11 +35,11 @@ export const SecurityScoreBadge: React.FC<SecurityScoreBadgeProps> = ({
   };
 
   const getStatusText = () => {
-    if (criticalCount > 0) return "Tindakan Kritis Diperlukan";
-    if (highCount > 0) return "Risiko Tinggi Terdeteksi";
-    if (score >= 90) return "Infrastruktur Terlindungi";
-    if (score >= 70) return "Kondisi Cukup Aman";
-    return "Postur Rentan";
+    if (criticalCount > 0) return "Critical Action Required";
+    if (highCount > 0) return "High Risk Detected";
+    if (score >= 90) return "Infrastructure Well Protected";
+    if (score >= 70) return "Moderately Secure";
+    return "Vulnerable Posture";
   };
 
   return (
@@ -67,8 +67,8 @@ export const SecurityScoreBadge: React.FC<SecurityScoreBadgeProps> = ({
               <h2 className="text-base font-semibold text-zinc-100">{getStatusText()}</h2>
             </div>
             <p className="text-xs text-zinc-400">
-              Sentinel Security Engine menganalisis {openFindings} temuan aktif pada infrastruktur
-              cloud Anda.
+              Sentinel Security Engine analyzed {openFindings} active findings across your
+              cloud infrastructure.
             </p>
           </div>
         </div>

@@ -104,7 +104,7 @@ export const CreateServerModal: React.FC<CreateServerModalProps> = ({ isOpen, on
   const handleSubmit = async (e: React.SyntheticEvent) => {
     e.preventDefault();
     if (!name.trim()) {
-      setError("Nama server wajib diisi.");
+      setError("Server name is required.");
       return;
     }
 
@@ -138,7 +138,7 @@ export const CreateServerModal: React.FC<CreateServerModalProps> = ({ isOpen, on
       }
       fetchServers(1);
     } catch (err: any) {
-      setError(err.response?.data?.message || err.response?.data?.errors || "Gagal mendaftarkan server.");
+      setError(err.response?.data?.message || err.response?.data?.errors || "Failed to register server.");
     } finally {
       setIsLoading(false);
     }
@@ -160,11 +160,11 @@ export const CreateServerModal: React.FC<CreateServerModalProps> = ({ isOpen, on
     <Dialog
       isOpen={isOpen}
       onClose={onClose}
-      title={createdServer ? "Langkah Terakhir: Hubungkan Caelus Agent" : "Tambah atau Hubungkan Server"}
+      title={createdServer ? "Final Step: Connect Caelus Agent" : "Add or Connect Server"}
       description={
         createdServer
-          ? `Server "${createdServer.name}" berhasil didaftarkan. Jalankan perintah instalasi di VPS Anda.`
-          : "Hubungkan VPS existing (IDCloudHost, Home Server) atau deploy instance baru via Cloud IaaS"
+          ? `Server "${createdServer.name}" registered successfully. Run the install command on your VPS.`
+          : "Connect existing VPS (IDCloudHost, Home Server) or deploy new instance via Cloud IaaS"
       }
       maxWidth="lg"
     >
@@ -174,38 +174,35 @@ export const CreateServerModal: React.FC<CreateServerModalProps> = ({ isOpen, on
         </div>
       )}
 
-      {}
       {createdServer ? (
         <div className="space-y-4 py-1">
           <div className="p-3.5 rounded-xl bg-[#141414] border border-emerald-500/30 bg-emerald-950/20 flex items-center justify-between">
             <div>
-              <span className="text-[10px] text-emerald-400 font-semibold uppercase tracking-wider">Server Terdaftar</span>
+              <span className="text-[10px] text-emerald-400 font-semibold uppercase tracking-wider">Registered Server</span>
               <h4 className="text-sm font-bold text-[#ededed]">{createdServer.name}</h4>
-              <p className="text-xs font-mono text-[#a1a1a1]">Status: Menunggu sinyal koneksi agent...</p>
+              <p className="text-xs font-mono text-[#a1a1a1]">Status: Waiting for agent connection...</p>
             </div>
             <div className="p-2 rounded-lg bg-emerald-500/20 text-emerald-400">
               <CheckCircle2 className="w-5 h-5" />
             </div>
           </div>
 
-          {}
           <div className="p-3 rounded-xl bg-[#141414] border border-[#262626] space-y-2.5">
             <div className="flex items-center justify-between">
               <label className="text-[11px] font-semibold text-[#ededed]">
-                Alamat Target API Control Plane (URL Caelus Backend)
+                Target Control Plane API Address (Caelus Backend URL)
               </label>
-              <span className="text-[10px] text-[#707070]">Bisa disesuaikan jika via IP Tailscale/Public</span>
+              <span className="text-[10px] text-[#707070]">Customizable if using Tailscale / Public IP</span>
             </div>
             <Input
               type="text"
               value={targetEndpoint}
               onChange={(e) => setTargetEndpoint(e.target.value)}
-              placeholder="http://100.x.y.z:8080 atau http://ip-public:8080"
+              placeholder="http://100.x.y.z:8080 or http://public-ip:8080"
               className="font-mono text-xs text-emerald-400 bg-[#0d0d0d] border-[#333333]"
             />
-            {}
             <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-              <span className="text-[10px] text-[#707070] mr-1">Preset Cepat:</span>
+              <span className="text-[10px] text-[#707070] mr-1">Quick Presets:</span>
               <button
                 type="button"
                 onClick={() => {
@@ -215,14 +212,14 @@ export const CreateServerModal: React.FC<CreateServerModalProps> = ({ isOpen, on
                 }}
                 className="text-[10px] px-2 py-0.5 rounded bg-[#1f1f1f] hover:bg-[#2a2a2a] text-emerald-400 border border-[#333333] transition-colors cursor-pointer"
               >
-                🎯 Hostname/IP Host ({typeof window !== "undefined" ? window.location.hostname : ""}:8080)
+                Hostname/Host IP ({typeof window !== "undefined" ? window.location.hostname : ""}:8080)
               </button>
               <button
                 type="button"
                 onClick={() => setTargetEndpoint("http://100.115.162.110:8080")}
                 className="text-[10px] px-2 py-0.5 rounded bg-[#1f1f1f] hover:bg-[#2a2a2a] text-blue-400 border border-[#333333] transition-colors cursor-pointer"
               >
-                🔒 IP Tailscale (100.115.162.110:8080)
+                Tailscale IP (100.115.162.110:8080)
               </button>
               {typeof window !== "undefined" && window.location.origin && (
                 <button
@@ -230,7 +227,7 @@ export const CreateServerModal: React.FC<CreateServerModalProps> = ({ isOpen, on
                   onClick={() => setTargetEndpoint(window.location.origin)}
                   className="text-[10px] px-2 py-0.5 rounded bg-[#1f1f1f] hover:bg-[#2a2a2a] text-[#a1a1a1] border border-[#333333] transition-colors cursor-pointer"
                 >
-                  🌐 Origin ({window.location.origin})
+                  Origin ({window.location.origin})
                 </button>
               )}
             </div>
@@ -240,7 +237,7 @@ export const CreateServerModal: React.FC<CreateServerModalProps> = ({ isOpen, on
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Terminal className="w-4 h-4 text-emerald-400" />
-                <span className="text-xs font-semibold text-[#ededed]">Perintah Instalasi 1-Line (Jalankan di Terminal VPS)</span>
+                <span className="text-xs font-semibold text-[#ededed]">1-Line Install Command (Run in VPS Terminal)</span>
               </div>
               <span className="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded">
                 Linux / Ubuntu / Debian
@@ -258,18 +255,18 @@ export const CreateServerModal: React.FC<CreateServerModalProps> = ({ isOpen, on
                 {copiedType === "oneline" ? (
                   <>
                     <Check className="w-3.5 h-3.5 text-emerald-400" />
-                    <span className="text-emerald-400 text-[11px]">Tersalin!</span>
+                    <span className="text-emerald-400 text-[11px]">Copied!</span>
                   </>
                 ) : (
                   <>
                     <Copy className="w-3.5 h-3.5" />
-                    <span className="text-[11px]">Salin Perintah</span>
+                    <span className="text-[11px]">Copy Command</span>
                   </>
                 )}
               </button>
             </div>
             <p className="text-[11px] text-[#707070]">
-              Begitu script ini dijalankan, Caelus Agent akan otomatis mendeteksi CPU, RAM, Disk, OS, dan IP VPS Anda lalu memperbarui panel secara realtime.
+              Once this script is executed, Caelus Agent automatically inspects CPU, RAM, Disk, OS, and IP address, updating the panel in real-time.
             </p>
           </div>
 
@@ -293,14 +290,13 @@ export const CreateServerModal: React.FC<CreateServerModalProps> = ({ isOpen, on
                 setCreatedServer(null);
               }}
             >
-              Selesai & Buka Daftar Server
+              Done & View Server List
             </Button>
           </div>
         </div>
       ) : (
         
         <div>
-          {}
           <div className="flex items-center gap-2 p-1 mb-4 rounded-lg bg-[#141414] border border-[#262626]">
             <button
               type="button"
@@ -312,7 +308,7 @@ export const CreateServerModal: React.FC<CreateServerModalProps> = ({ isOpen, on
               }`}
             >
               <Terminal className="w-4 h-4" />
-              <span>Hubungkan VPS / Home Server (BYOS)</span>
+              <span>Connect VPS / Home Server (BYOS)</span>
             </button>
 
             <button
@@ -325,38 +321,36 @@ export const CreateServerModal: React.FC<CreateServerModalProps> = ({ isOpen, on
               }`}
             >
               <Cloud className="w-4 h-4" />
-              <span>Deploy Cloud Baru (IaaS API)</span>
+              <span>Deploy New Cloud Instance (IaaS API)</span>
             </button>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4 pb-2">
-            {}
             {tab === "byos" ? (
               <div className="space-y-4">
                 <div className="p-3.5 rounded-xl bg-emerald-950/20 border border-emerald-500/20 text-xs text-[#ededed] flex items-start gap-3">
                   <ShieldCheck className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
                   <div>
-                    <h5 className="font-semibold text-emerald-400 mb-0.5">Integrasi Instan Bring-Your-Own-Server</h5>
+                    <h5 className="font-semibold text-emerald-400 mb-0.5">Instant Bring-Your-Own-Server Integration</h5>
                     <p className="text-[#a1a1a1] leading-relaxed">
-                      Cukup beri nama server Anda. Anda <strong>tidak perlu memasukkan spesifikasi atau OS</strong> secara manual karena Caelus Agent akan menginspeksi dan menyinkronkan seluruh hardware VPS Anda secara otomatis.
+                      Simply enter a server name. You <strong>do not need to enter specs or OS</strong> manually as Caelus Agent automatically inspects and syncs all VPS hardware.
                     </p>
                   </div>
                 </div>
 
                 <Input
                   id="create-server-name"
-                  label="Nama Server / Label"
+                  label="Server Name / Label"
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. idcloud-ubuntu-prod atau homelab-proxmox-01"
+                  placeholder="e.g. ubuntu-prod-01 or homelab-proxmox-01"
                 />
 
-                {}
                 <div className="p-4 rounded-xl bg-[#141414] border border-[#262626] space-y-3">
                   <div className="flex items-center gap-2 text-xs font-semibold text-[#ededed]">
                     <Sparkles className="w-4 h-4 text-emerald-400" />
-                    <span>Data yang Otomatis Diambil oleh Caelus Agent:</span>
+                    <span>Data Automatically Collected by Caelus Agent:</span>
                   </div>
 
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
@@ -398,7 +392,7 @@ export const CreateServerModal: React.FC<CreateServerModalProps> = ({ isOpen, on
               
               <div className="space-y-4">
                 <div className="space-y-1.5">
-                  <span className={AppText.label}>Penyedia Cloud (Provider Driver)</span>
+                  <span className={AppText.label}>Cloud Provider (Provider Driver)</span>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {providers
                       .filter((p) => p.slug !== "custom" && p.slug !== "cloudflare")
@@ -422,7 +416,7 @@ export const CreateServerModal: React.FC<CreateServerModalProps> = ({ isOpen, on
                           </div>
                           {p.slug === "mock" && (
                             <span className="text-[10px] bg-emerald-500/15 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/30">
-                              Simulasi
+                              Simulation
                             </span>
                           )}
                         </button>
@@ -430,7 +424,6 @@ export const CreateServerModal: React.FC<CreateServerModalProps> = ({ isOpen, on
                   </div>
                 </div>
 
-                {}
                 {(() => {
                   const currentProv = providers.find((p) => p.id === selectedProviderID);
                   if (!currentProv || currentProv.slug === "mock") return null;
@@ -443,10 +436,10 @@ export const CreateServerModal: React.FC<CreateServerModalProps> = ({ isOpen, on
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-medium text-zinc-300 flex items-center gap-1.5">
                           <Key className="h-3.5 w-3.5 text-emerald-400" />
-                          Kredensial Akun ({currentProv.name})
+                          Account Credentials ({currentProv.name})
                         </span>
                         <Link href="/infrastructure/providers" className="text-[11px] text-emerald-400 hover:underline">
-                          + Kelola Kredensial
+                          + Manage Credentials
                         </Link>
                       </div>
                       {matchingCreds.length > 0 ? (
@@ -455,7 +448,7 @@ export const CreateServerModal: React.FC<CreateServerModalProps> = ({ isOpen, on
                           onChange={(e) => setSelectedCredentialID(e.target.value)}
                           className="w-full rounded-lg border border-[#2e2e2e] bg-[#121212] px-3 py-2 text-xs text-[#ededed] focus:border-emerald-500 focus:outline-none"
                         >
-                          <option value="">Pilih Kredensial Terdaftar</option>
+                          <option value="">Select Registered Credentials</option>
                           {matchingCreds.map((c) => (
                             <option key={c.id} value={c.id}>
                               {c.name} {c.metadata?.region ? `(${c.metadata.region})` : ""}
@@ -464,11 +457,11 @@ export const CreateServerModal: React.FC<CreateServerModalProps> = ({ isOpen, on
                         </select>
                       ) : (
                         <p className="text-[11px] text-amber-400 bg-amber-500/10 p-2 rounded border border-amber-500/20">
-                          Belum ada kredensial terdaftar untuk provider ini. Buka menu{" "}
+                          No registered credentials found for this provider. Navigate to{" "}
                           <Link href="/infrastructure/providers" className="underline font-semibold">
                             Cloud Providers
                           </Link>{" "}
-                          untuk menambahkan API key.
+                          to add an API key.
                         </p>
                       )}
                     </div>
@@ -478,7 +471,7 @@ export const CreateServerModal: React.FC<CreateServerModalProps> = ({ isOpen, on
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Input
                     id="create-server-name"
-                    label="Nama Instance Server"
+                    label="Server Instance Name"
                     required
                     value={name}
                     onChange={(e) => setName(e.target.value)}
@@ -487,7 +480,7 @@ export const CreateServerModal: React.FC<CreateServerModalProps> = ({ isOpen, on
 
                   <div className="space-y-1.5">
                     <label htmlFor="create-server-region" className={AppText.label}>
-                      Lokasi Data Center (Region)
+                      Data Center Region
                     </label>
                     <select
                       id="create-server-region"
@@ -503,9 +496,8 @@ export const CreateServerModal: React.FC<CreateServerModalProps> = ({ isOpen, on
                   </div>
                 </div>
 
-                {}
                 <div className="space-y-1.5">
-                  <span className={AppText.label}>Sistem Operasi (OS)</span>
+                  <span className={AppText.label}>Operating System (OS)</span>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                     {[
                       { id: "ubuntu-24.04", label: "Ubuntu 24.04 LTS" },
@@ -529,9 +521,8 @@ export const CreateServerModal: React.FC<CreateServerModalProps> = ({ isOpen, on
                   </div>
                 </div>
 
-                {}
                 <div className="space-y-2 pt-2 border-t border-[#262626]">
-                  <span className={AppText.label}>Spesifikasi Komputasi Instance Baru</span>
+                  <span className={AppText.label}>Compute Specifications for New Instance</span>
                   <div className="grid grid-cols-3 gap-3">
                     <div>
                       <label htmlFor="create-server-cpu" className="block text-[11px] text-[#a1a1a1] mb-1">
@@ -589,16 +580,15 @@ export const CreateServerModal: React.FC<CreateServerModalProps> = ({ isOpen, on
               </div>
             )}
 
-            {}
             <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#262626]">
               <Button variant="outline" type="button" onClick={onClose} disabled={isLoading}>
-                Batal
+                Cancel
               </Button>
               <Button type="submit" isLoading={isLoading}>
                 {tab === "byos" ? (
                   <>
                     <Terminal className="h-4 w-4" />
-                    <span>Lanjut & Dapatkan Perintah Install</span>
+                    <span>Continue & Get Install Command</span>
                   </>
                 ) : (
                   <>

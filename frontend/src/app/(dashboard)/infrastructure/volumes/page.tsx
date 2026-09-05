@@ -59,8 +59,8 @@ export default function VolumesManagementPage() {
         setServers(serversRes.data);
       }
     } catch (err: any) {
-      console.error("Gagal memuat volume:", err);
-      setErrorMsg(err.response?.data?.message || "Gagal memuat daftar volume dari server");
+      console.error("Failed to load volumes:", err);
+      setErrorMsg(err.response?.data?.message || "Failed to load volumes list from server");
     } finally {
       setIsLoading(false);
     }
@@ -88,11 +88,11 @@ export default function VolumesManagementPage() {
     }
 
     if (!selectedTargetServer && stats && volSize > stats.free_gb) {
-      setErrorMsg(`Kapasitas (${volSize} GB) melebihi ruang bebas disk fisik host lokal (${stats.free_gb.toFixed(1)} GB tersedia).`);
+      setErrorMsg(`Capacity (${volSize} GB) exceeds host physical disk free space (${stats.free_gb.toFixed(1)} GB available).`);
       return;
     }
     if (selectedTargetServer && volSize > maxAllowedGB) {
-      setErrorMsg(`Kapasitas (${volSize} GB) melebihi sisa ruang bebas server target ${selectedTargetServer.name} (${maxAllowedGB} GB sisa tersedia).`);
+      setErrorMsg(`Capacity (${volSize} GB) exceeds remaining disk free space on target server ${selectedTargetServer.name} (${maxAllowedGB} GB remaining).`);
       return;
     }
 
@@ -108,30 +108,30 @@ export default function VolumesManagementPage() {
         mount_path: volMount.trim() || "/mnt/data",
       });
 
-      setSuccessMsg(`Volume "${volName}" berhasil dibuat secara fisik.`);
+      setSuccessMsg(`Volume "${volName}" created successfully.`);
       setVolName("");
       setVolSize(1);
       setIsCreateModalOpen(false);
       await loadData();
     } catch (err: any) {
-      setErrorMsg(err.response?.data?.message || "Gagal membuat volume fisik");
+      setErrorMsg(err.response?.data?.message || "Failed to create physical volume");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleDeleteVolume = async (id: string, name: string) => {
-    if (!confirm(`Apakah Anda yakin ingin menghapus volume "${name}" secara permanen dari server? Data di dalamnya akan dihapus.`)) {
+    if (!confirm(`Are you sure you want to permanently delete volume "${name}" from the server? All data will be destroyed.`)) {
       return;
     }
 
     try {
       setErrorMsg(null);
       await volumeService.deleteVolume(id);
-      setSuccessMsg(`Volume "${name}" berhasil dihapus.`);
+      setSuccessMsg(`Volume "${name}" deleted successfully.`);
       await loadData();
     } catch (err: any) {
-      setErrorMsg(err.response?.data?.message || "Gagal menghapus volume");
+      setErrorMsg(err.response?.data?.message || "Failed to delete volume");
     }
   };
 
@@ -170,7 +170,6 @@ export default function VolumesManagementPage() {
 
   return (
     <div className="space-y-6">
-      {}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-100 flex items-center gap-2.5">
@@ -178,11 +177,10 @@ export default function VolumesManagementPage() {
             Persistent Storage & Block Volumes
           </h1>
           <p className="text-sm text-slate-400 mt-1">
-            Kelola Block Storage Volumes, Docker Persistent Volumes, dan partisi disk server fisik secara persisten.
+            Manage block storage volumes, Docker persistent volumes, and physical disk partitions across nodes.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2.5">
-          {}
           <div className="flex items-center gap-2 bg-[#11141a] border border-[#22272e] rounded-lg px-3 py-1.5">
             <Server className="w-3.5 h-3.5 text-emerald-400" />
             <select
@@ -218,7 +216,6 @@ export default function VolumesManagementPage() {
         </div>
       </div>
 
-      {}
       {errorMsg && (
         <div className="p-3.5 bg-rose-500/10 border border-rose-500/30 rounded-xl flex items-center justify-between text-xs text-rose-300">
           <div className="flex items-center gap-2">
@@ -239,7 +236,6 @@ export default function VolumesManagementPage() {
         </div>
       )}
 
-      {}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-[#141414] border border-[#262626] rounded-xl p-4 flex flex-col justify-between shadow-sm">
           <div className="flex items-center justify-between">
@@ -311,7 +307,6 @@ export default function VolumesManagementPage() {
         </div>
       </div>
 
-      {}
       <div className="bg-[#11141a] border border-[#22272e] rounded-xl overflow-hidden shadow-sm">
         <div className="p-4 border-b border-[#22272e] flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="relative w-full sm:w-72">
@@ -334,7 +329,6 @@ export default function VolumesManagementPage() {
           </div>
         </div>
 
-        {}
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
@@ -435,9 +429,9 @@ export default function VolumesManagementPage() {
                 <tr>
                   <td colSpan={8} className="py-12 text-center text-slate-400">
                     <HardDrive className="w-8 h-8 mx-auto mb-2 text-slate-600 opacity-50" />
-                    <p className="text-sm font-medium">Belum ada persistent block volume pada node ini.</p>
+                    <p className="text-sm font-medium">No persistent block volumes found on this node.</p>
                     <p className="text-xs text-slate-400 mt-1">
-                      Klik &quot;Create Block Volume&quot; untuk membuat partisi penyimpanan fisik baru.
+                      Click &quot;Create Block Volume&quot; to provision a new physical storage partition.
                     </p>
                   </td>
                 </tr>
@@ -447,13 +441,12 @@ export default function VolumesManagementPage() {
         </div>
       </div>
 
-      {}
       {selectedVolumeDetail && (
         <Dialog
           isOpen={!!selectedVolumeDetail}
           onClose={() => setSelectedVolumeDetail(null)}
-          title={`Detail Volume: ${selectedVolumeDetail.name.length > 24 ? selectedVolumeDetail.name.slice(0, 12) + "..." + selectedVolumeDetail.name.slice(-8) : selectedVolumeDetail.name}`}
-          description="Informasi spesifikasi partisi fisik, server kepemilikan, dan status keterikatan kontainer."
+          title={`Volume Details: ${selectedVolumeDetail.name.length > 24 ? selectedVolumeDetail.name.slice(0, 12) + "..." + selectedVolumeDetail.name.slice(-8) : selectedVolumeDetail.name}`}
+          description="Physical partition specifications, host server details, and container attachment status."
           maxWidth="lg"
         >
           <div className="space-y-4 text-xs py-1">
@@ -512,19 +505,18 @@ export default function VolumesManagementPage() {
                 onClick={() => setSelectedVolumeDetail(null)}
                 className="px-4 py-2 bg-[#1a1a1a] hover:bg-[#222222] border border-[#2e2e2e] text-[#ededed] rounded-lg text-xs font-medium transition-colors cursor-pointer"
               >
-                Tutup
+                Close
               </button>
             </div>
           </div>
         </Dialog>
       )}
 
-      {}
       <Dialog
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         title="Create Persistent Block Volume"
-        description="Alokasikan ruang penyimpanan fisik persisten dari Storage Pool host Anda."
+        description="Allocate persistent block storage from your host Storage Pool."
         maxWidth="md"
       >
         <div className="space-y-4 text-xs">
@@ -571,7 +563,7 @@ export default function VolumesManagementPage() {
                     <input
                       type="text"
                       required
-                      placeholder="misal: pg-database-data"
+                      placeholder="e.g. pg-database-data"
                       value={volName}
                       onChange={(e) => setVolName(e.target.value)}
                       className="w-full bg-[#161b22] border border-slate-800 rounded-lg px-3 py-2 text-slate-100 placeholder-slate-400 focus:outline-none focus:border-emerald-500"
@@ -610,7 +602,7 @@ export default function VolumesManagementPage() {
                     <div className="flex items-center justify-between mb-1">
                       <label className="text-slate-300 font-medium">Capacity (GB)</label>
                       <span className="text-slate-400 text-[10px]">
-                        Maksimum: {maxCap} GB
+                        Maximum: {maxCap} GB
                       </span>
                     </div>
                     <input
@@ -624,7 +616,7 @@ export default function VolumesManagementPage() {
                     />
                     {volSize > maxCap && (
                       <p className="text-[11px] text-rose-400 mt-1">
-                        Kapasitas melebihi batas {currentTarget ? `server ${currentTarget.name}` : "host lokal"} ({maxCap} GB).
+                        Capacity exceeds limit for {currentTarget ? `server ${currentTarget.name}` : "local host"} ({maxCap} GB).
                       </p>
                     )}
                   </div>

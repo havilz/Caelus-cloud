@@ -53,9 +53,9 @@ func (d *CentralEventDispatcher) Publish(ctx context.Context, event domain.Syste
 
 	select {
 	case d.eventChan <- event:
-		logger.Debug("System event dipublikasikan ke dispatcher", "event_type", event.Type, "event_id", event.ID)
+		logger.Debug("System event published to dispatcher", "event_type", event.Type, "event_id", event.ID)
 	default:
-		logger.Warn("Antrean event dispatcher penuh, mendistribusikan langsung via goroutine", "event_type", event.Type)
+		logger.Warn("Event dispatcher queue full, broadcasting directly via goroutine", "event_type", event.Type)
 		go d.broadcast(context.Background(), event)
 	}
 }
@@ -85,7 +85,7 @@ func (d *CentralEventDispatcher) broadcast(ctx context.Context, event domain.Sys
 		if sub != nil {
 			go func(s EventSubscriber) {
 				if err := s(ctx, event); err != nil {
-					logger.Error("Error pada subscriber event dispatcher", "event_type", event.Type, "error", err)
+					logger.Error("Error in event dispatcher subscriber", "event_type", event.Type, "error", err)
 				}
 			}(sub)
 		}

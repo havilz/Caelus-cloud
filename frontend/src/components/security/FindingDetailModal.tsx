@@ -69,7 +69,6 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150">
       <div className="relative w-full max-w-2xl bg-[#111111] border border-[#262626] rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-        {}
         <div className="p-6 border-b border-[#262626] flex items-start justify-between gap-4">
           <div className="space-y-2">
             <div className="flex items-center gap-2 flex-wrap">
@@ -92,44 +91,40 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
           </button>
         </div>
 
-        {}
         <div className="p-6 space-y-5 overflow-y-auto">
-          {}
           <div className="grid grid-cols-2 gap-3 text-xs">
             <div className="p-3 rounded-lg bg-[#161616] border border-[#262626] flex items-center gap-2.5">
               <Server className="w-4 h-4 text-emerald-400 shrink-0" />
               <div>
-                <p className="text-zinc-500 text-[10px] uppercase font-medium">Server Target</p>
-                <p className="text-zinc-200 font-mono">{finding.server_name || "Semua Server"}</p>
+                <p className="text-zinc-500 text-[10px] uppercase font-medium">Target Server</p>
+                <p className="text-zinc-200 font-mono">{finding.server_name || "All Servers"}</p>
               </div>
             </div>
             <div className="p-3 rounded-lg bg-[#161616] border border-[#262626] flex items-center gap-2.5">
               <Layers className="w-4 h-4 text-cyan-400 shrink-0" />
               <div>
-                <p className="text-zinc-500 text-[10px] uppercase font-medium">Status Remediasi</p>
+                <p className="text-zinc-500 text-[10px] uppercase font-medium">Remediation Status</p>
                 <p className="text-zinc-200 capitalize">{finding.status.replace("_", " ")}</p>
               </div>
             </div>
           </div>
 
-          {}
           <div className="space-y-1.5">
             <h4 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
               <ShieldAlert className="w-3.5 h-3.5 text-amber-400" />
-              Deskripsi Kerentanan
+              Vulnerability Description
             </h4>
             <p className="text-sm text-zinc-300 leading-relaxed bg-[#161616] p-3.5 rounded-lg border border-[#262626]">
               {finding.description}
             </p>
           </div>
 
-          {}
           {finding.remediation_command && (
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <h4 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
                   <Terminal className="w-3.5 h-3.5 text-emerald-400" />
-                  Perintah Perbaikan (1-Click Remediation)
+                  Remediation Command (1-Click Remediation)
                 </h4>
                 <button
                   onClick={handleCopyCommand}
@@ -138,12 +133,12 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
                   {copied ? (
                     <>
                       <Check className="w-3.5 h-3.5 text-emerald-400" />
-                      <span className="text-emerald-400 text-xs">Disalin!</span>
+                      <span className="text-emerald-400 text-xs">Copied!</span>
                     </>
                   ) : (
                     <>
                       <Copy className="w-3.5 h-3.5" />
-                      <span className="text-xs">Salin Perintah</span>
+                      <span className="text-xs">Copy Command</span>
                     </>
                   )}
                 </button>
@@ -154,12 +149,11 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
             </div>
           )}
 
-          {}
           {finding.evidence && Object.keys(finding.evidence).length > 0 && (
             <div className="space-y-1.5">
               <h4 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
                 <AlertTriangle className="w-3.5 h-3.5 text-cyan-400" />
-                Bukti Pemindaian (Evidence Logs)
+                Evidence Logs
               </h4>
               <pre className="p-3 rounded-lg bg-[#0d0d0d] border border-[#222222] text-xs font-mono text-zinc-400 overflow-x-auto">
                 {JSON.stringify(finding.evidence, null, 2)}
@@ -168,7 +162,6 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
           )}
         </div>
 
-        {}
         <div className="p-4 border-t border-[#262626] bg-[#0d0d0d] flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             {finding.status !== "resolved" && (
@@ -178,7 +171,7 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
                 className={AppTheme.controls.buttonPrimary}
               >
                 <CheckCircle2 className="w-4 h-4" />
-                Tandai Terselesaikan
+                Mark as Resolved
               </button>
             )}
             {finding.status === "open" && (
@@ -187,7 +180,7 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
                 onClick={() => handleStatusChange("acknowledged")}
                 className={AppTheme.controls.buttonSecondary}
               >
-                Akui Temuan
+                Acknowledge Finding
               </button>
             )}
             {finding.status !== "false_positive" && (
@@ -201,7 +194,7 @@ export const FindingDetailModal: React.FC<FindingDetailModalProps> = ({
             )}
           </div>
           <button onClick={onClose} className={AppTheme.controls.buttonSecondary}>
-            Tutup
+            Close
           </button>
         </div>
       </div>

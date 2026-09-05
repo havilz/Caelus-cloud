@@ -16,25 +16,23 @@ export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<SettingsTab>("profile");
 
   const tabs: { id: SettingsTab; label: string; icon: React.ElementType }[] = [
-    { id: "profile", label: "Profil & Keamanan", icon: User },
-    { id: "organization", label: "Organisasi", icon: Building2 },
-    { id: "members", label: "Anggota & Role", icon: Users },
+    { id: "profile", label: "Profile & Security", icon: User },
+    { id: "organization", label: "Organization", icon: Building2 },
+    { id: "members", label: "Members & Roles", icon: Users },
     { id: "api-keys", label: "API Keys (PAT)", icon: Key },
-    { id: "webhooks", label: "Webhooks Notifikasi", icon: Send },
+    { id: "webhooks", label: "Notification Webhooks", icon: Send },
     { id: "audit-logs", label: "Audit Logs", icon: History },
   ];
 
   return (
     <div className={AppTheme.containers.pageWrapper}>
-      {}
       <div className="flex flex-col gap-1 pb-6 border-b border-[#262626]">
-        <h1 className="text-xl font-bold tracking-tight text-[#ededed]">Pengaturan Sistem & Workspace</h1>
+        <h1 className="text-xl font-bold tracking-tight text-[#ededed]">System & Workspace Settings</h1>
         <p className="text-xs text-[#707070]">
-          Kelola profil pengguna, keamanan akun, struktur organisasi, hak akses tim, token API, dan log audit platform
+          Manage user profile, account security, organization structure, team access roles, API tokens, and platform audit logs
         </p>
       </div>
 
-      {}
       <div className="flex items-center gap-1 border-b border-[#262626] overflow-x-auto no-scrollbar py-2">
         {tabs.map((tab) => {
           const Icon = tab.icon;
@@ -57,7 +55,6 @@ export default function SettingsPage() {
         })}
       </div>
 
-      {}
       <div className="pt-2">
         {activeTab === "profile" && <ProfileTab />}
         {activeTab === "organization" && <OrganizationTab />}

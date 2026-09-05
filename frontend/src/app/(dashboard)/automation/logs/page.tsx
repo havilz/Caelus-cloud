@@ -84,7 +84,6 @@ export default function AutomationLogsPage() {
 
   return (
     <div className={AppTheme.containers.pageWrapper}>
-      {}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <Link
@@ -100,7 +99,6 @@ export default function AutomationLogsPage() {
           </p>
         </div>
 
-        {}
         <div className="flex items-center gap-3">
           <select
             value={statusFilter}
@@ -126,7 +124,6 @@ export default function AutomationLogsPage() {
         </div>
       </div>
 
-      {}
       <div className={AppTheme.containers.card}>
         <div className={`${AppTheme.containers.cardHeader} flex items-center justify-between`}>
           <div>
@@ -191,7 +188,6 @@ export default function AutomationLogsPage() {
                       </div>
                     </div>
 
-                    {}
                     {log.executed_actions && log.executed_actions.length > 0 && (
                       <div className="flex flex-wrap gap-1.5 pt-1">
                         {log.executed_actions.map((act, i) => (
@@ -215,7 +211,6 @@ export default function AutomationLogsPage() {
                       </div>
                     )}
 
-                    {}
                     {log.error_message && (
                       <div className="p-2.5 rounded-lg bg-rose-950/40 border border-rose-800/30 text-rose-400 text-xs flex items-center gap-2">
                         <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
@@ -223,7 +218,6 @@ export default function AutomationLogsPage() {
                       </div>
                     )}
 
-                    {}
                     {isExpanded && (
                       <div className="pt-2 border-t border-[#202020] space-y-2">
                         <div className="flex items-center gap-1.5 text-xs text-[#a1a1a1]">
@@ -241,7 +235,6 @@ export default function AutomationLogsPage() {
             </div>
           )}
 
-          {}
           {total > 20 && (
             <div className="flex items-center justify-between pt-5 mt-4 border-t border-[#222222]">
               <div className="text-xs text-[#707070]">

@@ -49,7 +49,7 @@ func (s *DistributedScheduler) RegisterJob(name string, interval time.Duration, 
 		LastRun:     time.Now().UTC(),
 	}
 	s.jobs = append(s.jobs, job)
-	logger.Info("Pekerjaan terjadwal berhasil didaftarkan", "job_name", name, "interval", interval)
+	logger.Info("Scheduled task registered successfully", "job_name", name, "interval", interval)
 }
 
 func (s *DistributedScheduler) Start(ctx context.Context) {
@@ -88,7 +88,7 @@ func (s *DistributedScheduler) StartWithInterval(ctx context.Context, evalInterv
 		}
 	}()
 
-	logger.Info("Distributed Task Scheduler berhasil dijalankan", "eval_interval", evalInterval)
+	logger.Info("Distributed Task Scheduler started successfully", "eval_interval", evalInterval)
 }
 
 func (s *DistributedScheduler) Stop() {
@@ -102,7 +102,7 @@ func (s *DistributedScheduler) Stop() {
 	s.mu.Unlock()
 
 	s.wg.Wait()
-	logger.Info("Distributed Task Scheduler berhasil dihentikan")
+	logger.Info("Distributed Task Scheduler stopped successfully")
 }
 
 func (s *DistributedScheduler) evaluateJobs(ctx context.Context, now time.Time) {
@@ -119,7 +119,7 @@ func (s *DistributedScheduler) evaluateJobs(ctx context.Context, now time.Time) 
 
 			payload, err := job.PayloadFunc()
 			if err != nil {
-				logger.Error("Gagal membuat payload untuk pekerjaan terjadwal", "job_name", job.Name, "error", err)
+				logger.Error("Failed to generate payload for scheduled task", "job_name", job.Name, "error", err)
 				continue
 			}
 
@@ -128,9 +128,9 @@ func (s *DistributedScheduler) evaluateJobs(ctx context.Context, now time.Time) 
 			}
 
 			if err := s.queue.Enqueue(ctx, payload); err != nil {
-				logger.Error("Gagal memasukkan tugas terjadwal ke antrean", "job_name", job.Name, "error", err)
+				logger.Error("Failed to enqueue scheduled task", "job_name", job.Name, "error", err)
 			} else {
-				logger.Debug("Tugas terjadwal berhasil dimasukkan ke antrean", "job_name", job.Name, "task_id", payload.ID)
+				logger.Debug("Scheduled task enqueued successfully", "job_name", job.Name, "task_id", payload.ID)
 			}
 		}
 	}

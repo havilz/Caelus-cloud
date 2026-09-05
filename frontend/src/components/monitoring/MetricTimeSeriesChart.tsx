@@ -136,7 +136,6 @@ export const MetricTimeSeriesChart: React.FC<MetricTimeSeriesChartProps> = ({
             {description && <CardDescription className="text-[11px] mt-0.5">{description}</CardDescription>}
           </div>
 
-          {}
           <div className="flex items-center gap-1 rounded-lg bg-[#171717] p-1 border border-[#262626]">
             {["1h", "6h", "24h", "7d"].map((range) => (
               <button
@@ -155,7 +154,6 @@ export const MetricTimeSeriesChart: React.FC<MetricTimeSeriesChartProps> = ({
           </div>
         </div>
 
-        {}
         <div className="grid grid-cols-4 gap-2 pt-3 border-t border-[#1a1a1a] mt-2">
           <div>
             <p className="text-[10px] text-[#707070] uppercase tracking-wider font-mono">Current</p>
@@ -205,7 +203,6 @@ export const MetricTimeSeriesChart: React.FC<MetricTimeSeriesChartProps> = ({
                 </linearGradient>
               </defs>
 
-              {}
               {[0, 0.25, 0.5, 0.75, 1].map((ratio) => {
                 const y = padding.top + (height - padding.top - padding.bottom) * ratio;
                 return (
@@ -222,16 +219,12 @@ export const MetricTimeSeriesChart: React.FC<MetricTimeSeriesChartProps> = ({
                 );
               })}
 
-              {}
               <path d={areaD} fill={`url(#gradient-${dataKey})`} />
 
-              {}
               <path d={pathD} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" />
 
-              {}
               {hoveredPoint && (
                 <g>
-                  {}
                   <line
                     x1={hoveredPoint.x}
                     y1={padding.top}
@@ -241,14 +234,12 @@ export const MetricTimeSeriesChart: React.FC<MetricTimeSeriesChartProps> = ({
                     strokeDasharray="2 2"
                     strokeWidth="1"
                   />
-                  {}
                   <circle cx={hoveredPoint.x} cy={hoveredPoint.y} r="6" fill={color} opacity="0.3" />
                   <circle cx={hoveredPoint.x} cy={hoveredPoint.y} r="3.5" fill="#ffffff" stroke={color} strokeWidth="2" />
                 </g>
               )}
             </svg>
 
-            {}
             {hoveredPoint && (
               <div
                 className="absolute z-20 pointer-events-none rounded-lg border border-[#333333] bg-[#1a1a1a]/95 px-2.5 py-1.5 shadow-xl backdrop-blur-sm text-[11px] text-[#ededed] font-mono animate-in fade-in duration-75"
