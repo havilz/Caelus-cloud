@@ -8,6 +8,15 @@ Format penulisan mengacu pada standar formal dengan pencatatan stempel tanggal d
 
 ## [Unreleased]
 
+### [2026-09-05 19:50:00] - Architecture Realignment & Test Suite Verification: Task 9.4 Resolution (Audit C-3)
+
+- **Penyelarasan Arsitektur Self-Hosted & Penghapusan Task 9.4 (`docs/TASK.md`)**:
+  - Menyelaraskan dokumen perencanaan dengan model deployment aktual Caelus Cloud (Single-Tenant / Self-Hosted Private Instance).
+  - Menghapus Task 9.4 (Uji Integrasi Otomatis Isolasi Multi-Tenant) karena kebutuhan proteksi antar-organisasi eksternal telah usang (obsolete) pada instance mandiri yang tidak berbagi database publik.
+- **Eksekusi dan Validasi Pengujian Otomatis Menyeluruh (`backend/tests/...`, `agent/tests/...`)**:
+  - Menjalankan seluruh test suite otomatis dan pengujian integrasi backend (30 test suites, 100% PASS dalam 5.68s) yang memvalidasi stabilitas seluruh modul inti (autentikasi JWT, intra-org RBAC, sanitasi IP klien, proteksi path volume allowlist, lifecycle server, storage, backup, dan security scanners).
+  - Memverifikasi keberhasilan build binary backend (`go build ./...`) dan binary agent (`go build ./...`) tanpa error kompilasi.
+
 ### [2026-09-05 19:15:00] - Security Hardening: Container Escape Mitigation via Path Allowlist (Audit C-2)
 
 - **Package Validasi Path Keamanan (`backend/pkg/security/path.go`)**:
