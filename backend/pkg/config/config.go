@@ -48,8 +48,9 @@ type AppConfig struct {
 	Port        string
 	Debug       bool
 	LogLevel    string
-	CorsOrigins    []string
-	TrustedProxies []string
+	CorsOrigins        []string
+	TrustedProxies     []string
+	AllowedVolumeRoots []string
 }
 
 type DatabaseConfig struct {
@@ -99,8 +100,9 @@ func Load() (*Config, error) {
 			Port:        getEnv("APP_PORT", "8080"),
 			Debug:       getEnvAsBool("APP_DEBUG", true),
 			LogLevel:    getEnv("APP_LOG_LEVEL", "debug"),
-			CorsOrigins:    getEnvAsSlice("CORS_ALLOWED_ORIGINS", []string{"http://localhost:3000"}),
-			TrustedProxies: getEnvAsSlice("TRUSTED_PROXIES", []string{"127.0.0.1", "::1"}),
+			CorsOrigins:        getEnvAsSlice("CORS_ALLOWED_ORIGINS", []string{"http://localhost:3000"}),
+			TrustedProxies:     getEnvAsSlice("TRUSTED_PROXIES", []string{"127.0.0.1", "::1"}),
+			AllowedVolumeRoots: getEnvAsSlice("ALLOWED_VOLUME_ROOTS", []string{"/var/lib/caelus/volumes", "/opt/caelus/volumes"}),
 		},
 		Database: DatabaseConfig{
 			Host:            os.Getenv("DB_HOST"),

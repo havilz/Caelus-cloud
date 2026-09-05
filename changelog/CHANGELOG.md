@@ -8,6 +8,22 @@ Format penulisan mengacu pada standar formal dengan pencatatan stempel tanggal d
 
 ## [Unreleased]
 
+### [2026-09-05 19:15:00] - Security Hardening: Container Escape Mitigation via Path Allowlist (Audit C-2)
+
+- **Package Validasi Path Keamanan (`backend/pkg/security/path.go`)**:
+  - Mengimplementasikan `ValidateHostPath` dengan pendekatan *strict allowlist* (hanya mengizinkan subpath volume di bawah `/var/lib/caelus/volumes`, `/opt/caelus/volumes`, atau direktori yang dikonfigurasi via `ALLOWED_VOLUME_ROOTS`).
+  - Menerapkan resolusi canonical path dengan `filepath.Clean` dan evaluasi traversal symlink via `filepath.EvalSymlinks` yang mengecek hierarki ancestor secara mendalam untuk menggagalkan eksploitasi *symlink escape*.
+  - Melarang mounting root directory itu sendiri secara langsung untuk menjamin isolasi volume antar-aplikasi.
+- **Konfigurasi Allowed Volume Roots (`backend/pkg/config/config.go`, `.env.example`, `docker-compose.yml`, `cmd/api/main.go`)**:
+  - Menambahkan field `AllowedVolumeRoots` pada `AppConfig` dan inisialisasi allowlist saat server API bootstrap.
+  - Mendokumentasikan variabel `ALLOWED_VOLUME_ROOTS` pada `.env.example` dan meneruskannya ke kontainer `api` di `docker-compose.yml`.
+- **Harmonisasi di Layer Orchestration & IaC (`deployment_usecase.go`, `docker_pipeline.go`, `apply_engine.go`)**:
+  - Mengganti denylist hardcoded lama pada deployment usecase dan docker pipeline dengan delegasi ke `security.ValidateHostPath`.
+  - Mengamankan parsing volume bind mount pada engine eksekusi template IaC.
+- **Suite Pengujian Keamanan Komprehensif (`backend/tests/path_validator_test.go`)**:
+  - Menambahkan pengujian menyeluruh: penolakan direktori sensitif sistem (`/`, `/etc`, `/root`, `/home`, `/tmp`, `/opt`, `/var/run/docker.sock`), penolakan path traversal (`../`), penolakan relative path, serta simulasi serangan symlink escape nyata pada filesystem (`t.TempDir()`).
+  - Memverifikasi penolakan binding host path tidak aman saat pembuatan deployment melalui `CreateDeployment`.
+
 ### [2026-09-05 18:55:00] - Security Hardening: IP Sanitization & Anti-Spoofing Rate Limiter (Audit H-1)
 
 - **Konfigurasi Trusted Proxies (`backend/pkg/config/config.go`, `.env.example`, `docker-compose.yml`)**:

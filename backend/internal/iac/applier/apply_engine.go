@@ -14,6 +14,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/havilz/caelus-cloud/backend/internal/domain"
 	"github.com/havilz/caelus-cloud/backend/internal/usecase/actionqueue"
+	"github.com/havilz/caelus-cloud/backend/pkg/security"
 )
 
 type AppliedAction struct {
@@ -323,12 +324,16 @@ func (a *Applier) executeChange(ctx context.Context, orgID uuid.UUID, change dom
 				for _, v := range spec.Volumes {
 					parts := strings.Split(v, ":")
 					if len(parts) >= 2 {
+						canonicalHost, err := security.ValidateHostPath(parts[0])
+						if err != nil {
+							return nil, fmt.Errorf("volume binding tidak aman pada container %s (%s): %w", spec.Name, parts[0], err)
+						}
 						mode := "rw"
 						if len(parts) >= 3 {
 							mode = parts[2]
 						}
 						volBindings = append(volBindings, domain.VolumeBinding{
-							HostPath:      parts[0],
+							HostPath:      canonicalHost,
 							ContainerPath: parts[1],
 							Mode:          mode,
 						})

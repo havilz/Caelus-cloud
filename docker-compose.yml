@@ -142,6 +142,7 @@ services:
     environment:
       - APP_ENV=production
       - TRUSTED_PROXIES=${TRUSTED_PROXIES:-127.0.0.1,::1}
+      - ALLOWED_VOLUME_ROOTS=${ALLOWED_VOLUME_ROOTS:-/var/lib/caelus/volumes,/opt/caelus/volumes}
       - DB_HOST=postgres
       - DB_PORT=5432
       - DB_USER=${DB_USER:-caelus_user}

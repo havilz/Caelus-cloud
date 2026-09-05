@@ -44,6 +44,7 @@ import (
 	"github.com/havilz/caelus-cloud/backend/pkg/config"
 	"github.com/havilz/caelus-cloud/backend/pkg/jwt"
 	"github.com/havilz/caelus-cloud/backend/pkg/logger"
+	"github.com/havilz/caelus-cloud/backend/pkg/security"
 )
 
 func main() {
@@ -54,6 +55,7 @@ func main() {
 	}
 
 	logger.Init(cfg.App.LogLevel, cfg.App.Debug)
+	security.SetAllowedVolumeRoots(cfg.App.AllowedVolumeRoots)
 
 	if err := cfg.Validate(); err != nil {
 		logger.Warn("Peringatan konfigurasi environment", "error", err)

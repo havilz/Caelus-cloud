@@ -4,14 +4,13 @@ import (
 	"context"
 	"fmt"
 	"os/exec"
-	"path/filepath"
 	"regexp"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/havilz/caelus-cloud/backend/internal/domain"
 	"github.com/havilz/caelus-cloud/backend/internal/orchestration/pipeline"
+	"github.com/havilz/caelus-cloud/backend/pkg/security"
 )
 
 type UseCase struct {
@@ -63,10 +62,12 @@ func (u *UseCase) CreateDeployment(ctx context.Context, orgID uuid.UUID, req dom
 		return nil, err
 	}
 
-	for _, vb := range req.VolumeBindings {
-		if err := validateHostPath(vb.HostPath); err != nil {
+	for i, vb := range req.VolumeBindings {
+		canonicalPath, err := security.ValidateHostPath(vb.HostPath)
+		if err != nil {
 			return nil, fmt.Errorf("volume binding tidak aman: %w", err)
 		}
+		req.VolumeBindings[i].HostPath = canonicalPath
 	}
 
 	dep := &domain.Deployment{
@@ -96,80 +97,6 @@ func (u *UseCase) CreateDeployment(ctx context.Context, orgID uuid.UUID, req dom
 	return dep, nil
 }
 
-func validateHostPath(hostPath string) error {
-	if hostPath == "" {
-		return fmt.Errorf("host_path tidak boleh kosong")
-	}
-
-	clean := filepath.Clean(hostPath)
-
-	blockedExactPaths := []string{
-		"/",
-		"/etc",
-		"/root",
-		"/home",
-		"/opt",
-		"/tmp",
-		"/srv",
-		"/mnt",
-		"/media",
-		"/bin",
-		"/sbin",
-		"/usr",
-		"/lib",
-		"/lib64",
-		"/boot",
-		"/sys",
-		"/proc",
-		"/dev",
-		"/run",
-		"/var",
-		"/var/run",
-		"/var/run/docker.sock",
-		"/var/lib/docker",
-	}
-
-	for _, blocked := range blockedExactPaths {
-		if clean == blocked {
-			return fmt.Errorf("host_path '%s' adalah direktori sistem yang dilarang", hostPath)
-		}
-	}
-
-	sensitivePrefixes := []string{
-		"/etc/",
-		"/root/",
-		"/bin/",
-		"/sbin/",
-		"/usr/",
-		"/lib/",
-		"/lib64/",
-		"/boot/",
-		"/sys/",
-		"/proc/",
-		"/dev/",
-		"/run/",
-		"/var/run/",
-		"/var/lib/docker/",
-		"/tmp/",
-		"/srv/",
-		"/mnt/",
-		"/media/",
-	}
-
-	cleanSlash := clean + "/"
-	for _, prefix := range sensitivePrefixes {
-		if strings.HasPrefix(cleanSlash, prefix) {
-			return fmt.Errorf("host_path '%s' berada dalam direktori sistem yang dilarang", hostPath)
-		}
-	}
-
-	lowerClean := strings.ToLower(clean)
-	if strings.Contains(lowerClean, "docker.sock") || strings.Contains(lowerClean, ".env") || strings.Contains(lowerClean, "id_rsa") || strings.Contains(lowerClean, "id_ed25519") {
-		return fmt.Errorf("host_path '%s' merujuk ke file/socket sensitif yang dilarang", hostPath)
-	}
-
-	return nil
-}
 
 func (u *UseCase) GetDeployment(ctx context.Context, id uuid.UUID) (*domain.Deployment, error) {
 	return u.repo.GetDeploymentByID(ctx, id)

@@ -5,12 +5,12 @@ import (
 	"context"
 	"fmt"
 	"os/exec"
-	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/havilz/caelus-cloud/backend/internal/domain"
+	"github.com/havilz/caelus-cloud/backend/pkg/security"
 )
 
 type LogBroadcaster interface {
@@ -143,33 +143,20 @@ func (p *DockerPipeline) runPipeline(ctx context.Context, dep *domain.Deployment
 	}
 
 	for _, vb := range dep.VolumeBindings {
-
-		hostPath := vb.HostPath
-		cleanHost := filepath.Clean(hostPath)
-		cleanHostSlash := cleanHost + "/"
-		lowerHost := strings.ToLower(cleanHost)
-
-		isBlocked := cleanHost == "/" || cleanHost == "/etc" || cleanHost == "/root" || cleanHost == "/home" ||
-			cleanHost == "/opt" || cleanHost == "/tmp" || cleanHost == "/srv" || cleanHost == "/mnt" || cleanHost == "/media" ||
-			cleanHost == "/bin" || cleanHost == "/sbin" || cleanHost == "/usr" || cleanHost == "/lib" || cleanHost == "/sys" ||
-			cleanHost == "/proc" || cleanHost == "/dev" || cleanHost == "/run" || cleanHost == "/var/run" || cleanHost == "/var/lib/docker" ||
-			strings.HasPrefix(cleanHostSlash, "/etc/") || strings.HasPrefix(cleanHostSlash, "/root/") ||
-			strings.HasPrefix(cleanHostSlash, "/sys/") || strings.HasPrefix(cleanHostSlash, "/proc/") ||
-			strings.HasPrefix(cleanHostSlash, "/dev/") || strings.HasPrefix(cleanHostSlash, "/tmp/") ||
-			strings.HasPrefix(cleanHostSlash, "/srv/") || strings.HasPrefix(cleanHostSlash, "/mnt/") ||
-			strings.HasPrefix(cleanHostSlash, "/media/") || strings.HasPrefix(cleanHostSlash, "/run/") ||
-			strings.HasPrefix(cleanHostSlash, "/var/run/") || strings.HasPrefix(cleanHostSlash, "/var/lib/docker/") ||
-			strings.Contains(lowerHost, "docker.sock") || strings.Contains(lowerHost, ".env") ||
-			strings.Contains(lowerHost, "id_rsa") || strings.Contains(lowerHost, "id_ed25519")
-
-		if hostPath == "" || isBlocked {
-			p.log(ctx, dep.ID, "stderr", fmt.Sprintf("Pipeline menolak bind-mount tidak aman: %s (C-2 host escape prevention)", hostPath))
+		canonicalHost, err := security.ValidateHostPath(vb.HostPath)
+		if err != nil {
+			p.log(ctx, dep.ID, "stderr", fmt.Sprintf("Pipeline menolak bind-mount tidak aman: %s (%v)", vb.HostPath, err))
 			_ = p.deploymentRepo.UpdateDeploymentStatus(ctx, dep.ID, domain.DeploymentStatusFailed,
-				fmt.Sprintf("bind-mount path tidak aman ditolak: %s", hostPath), nil)
+				fmt.Sprintf("bind-mount path tidak aman ditolak: %s (%v)", vb.HostPath, err), nil)
 			return
 		}
-		p.log(ctx, dep.ID, "system", fmt.Sprintf("Mounting volume: %s -> %s (%s)", vb.HostPath, vb.ContainerPath, vb.Mode))
-		runArgs = append(runArgs, "-v", fmt.Sprintf("%s:%s", vb.HostPath, vb.ContainerPath))
+
+		p.log(ctx, dep.ID, "system", fmt.Sprintf("Mounting volume: %s -> %s (%s)", canonicalHost, vb.ContainerPath, vb.Mode))
+		if vb.Mode != "" {
+			runArgs = append(runArgs, "-v", fmt.Sprintf("%s:%s:%s", canonicalHost, vb.ContainerPath, vb.Mode))
+		} else {
+			runArgs = append(runArgs, "-v", fmt.Sprintf("%s:%s", canonicalHost, vb.ContainerPath))
+		}
 	}
 
 	for k, v := range dep.EnvironmentVariables {
