@@ -3,9 +3,7 @@ package middleware
 import (
 	"context"
 	"log/slog"
-	"net"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -72,7 +70,7 @@ func recordAuditEntry(ctx context.Context, auditRepo domain.AuditLogRepository, 
 		return
 	}
 
-	clientIP := extractClientIP(r)
+	clientIP := ExtractClientIP(r)
 	userAgent := r.UserAgent()
 	action := r.Method + " " + r.URL.Path
 
@@ -128,38 +126,4 @@ func isMutatingMethod(method string) bool {
 	default:
 		return false
 	}
-}
-
-func extractClientIP(r *http.Request) string {
-	remoteIP, _, err := net.SplitHostPort(r.RemoteAddr)
-	if err != nil {
-		remoteIP = r.RemoteAddr
-	}
-
-	if isTrustedProxy(remoteIP) {
-		if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
-			ips := strings.Split(xff, ",")
-			clientIP := strings.TrimSpace(ips[0])
-			if parsed := net.ParseIP(clientIP); parsed != nil {
-				return clientIP
-			}
-		}
-
-		if xrip := r.Header.Get("X-Real-IP"); xrip != "" {
-			clientIP := strings.TrimSpace(xrip)
-			if parsed := net.ParseIP(clientIP); parsed != nil {
-				return clientIP
-			}
-		}
-	}
-
-	return remoteIP
-}
-
-func isTrustedProxy(ipStr string) bool {
-	ip := net.ParseIP(ipStr)
-	if ip == nil {
-		return false
-	}
-	return ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast()
 }

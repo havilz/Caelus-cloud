@@ -3,12 +3,11 @@ package v1
 import (
 	"context"
 	"encoding/json"
-	"net"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
+	customMiddleware "github.com/havilz/caelus-cloud/backend/internal/delivery/http/middleware"
 	"github.com/havilz/caelus-cloud/backend/internal/delivery/http/response"
 	"github.com/havilz/caelus-cloud/backend/internal/domain"
 	"github.com/havilz/caelus-cloud/backend/internal/usecase/auth"
@@ -89,7 +88,7 @@ func (h *AuthHandler) recordAuthAudit(r *http.Request, action, email string, use
 		return
 	}
 
-	clientIP := extractIP(r)
+	clientIP := customMiddleware.ExtractClientIP(r)
 	userAgent := r.UserAgent()
 
 	payload := map[string]any{
@@ -111,21 +110,6 @@ func (h *AuthHandler) recordAuthAudit(r *http.Request, action, email string, use
 	}
 
 	_ = h.auditRepo.Create(context.Background(), auditEntry)
-}
-
-func extractIP(r *http.Request) string {
-	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
-		ips := strings.Split(xff, ",")
-		return strings.TrimSpace(ips[0])
-	}
-	if xrip := r.Header.Get("X-Real-IP"); xrip != "" {
-		return strings.TrimSpace(xrip)
-	}
-	host, _, err := net.SplitHostPort(r.RemoteAddr)
-	if err != nil {
-		return r.RemoteAddr
-	}
-	return host
 }
 
 func getAuthErrorStatusCode(err error) int {

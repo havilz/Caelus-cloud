@@ -38,7 +38,7 @@ func NewAuthRateLimiter(limit int, window time.Duration) *AuthRateLimiter {
 func (l *AuthRateLimiter) Limit() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ip := extractClientIP(r)
+			ip := ExtractClientIP(r)
 			email := extractEmailFromPayload(r)
 
 			key := ip

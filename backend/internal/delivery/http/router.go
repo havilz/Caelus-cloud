@@ -53,8 +53,15 @@ type RouterConfig struct {
 func NewRouter(rc RouterConfig) *chi.Mux {
 	r := chi.NewRouter()
 
+	var trustedProxies []string
+	if rc.Config != nil {
+		trustedProxies = rc.Config.App.TrustedProxies
+	}
+	customMiddleware.SetTrustedProxies(trustedProxies)
+	ipValidator := customMiddleware.NewIPValidator(trustedProxies)
+
 	r.Use(chimiddleware.RequestID)
-	r.Use(chimiddleware.RealIP)
+	r.Use(customMiddleware.ClientIPMiddleware(ipValidator))
 	r.Use(chimiddleware.Recoverer)
 	if rc.Config != nil {
 		r.Use(customMiddleware.CORS(rc.Config.App.CorsOrigins))
